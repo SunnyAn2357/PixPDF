@@ -28,8 +28,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # V1.9.1 폴더의 온라인 에셋(index.html 등)을 웹 루트로 배포
-          path: 'V1.9.1'
+          # V1.9.2 폴더의 온라인 에셋(index.html 등)을 웹 루트로 배포
+          path: 'V1.9.2'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

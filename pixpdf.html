@@ -946,23 +946,36 @@
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
         width: 100% !important;
-        height: 100vh;
+        height: 100% !important;
+        height: 100dvh !important;
         z-index: 150;
         display: none;
+        background: var(--panel-bg);
       }
       .col-control.mobile-open { display: flex; }
+      .mobile-control-header {
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border-light);
+        margin-bottom: 6px;
+      }
       .mobile-close-btn {
-        display: block !important;
-        padding: 8px 12px;
+        display: inline-flex !important;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 12px;
         background: #f1f5f9;
         border: 1px solid var(--border);
         border-radius: 6px;
         font-weight: 700;
+        font-size: 13px;
+        color: var(--text-main);
         cursor: pointer;
-        align-self: flex-end;
-        margin-bottom: 6px;
       }
     }
+    .mobile-control-header { display: none; }
     .mobile-close-btn { display: none; }
 
     @keyframes fadeInDown {
@@ -1108,7 +1121,14 @@
     <!-- 3열: 우측 컨트롤 패널 (컴팩트 압축) -->
     <div class="col-control" id="colControl">
       <div class="control-body">
-        <button class="mobile-close-btn" onclick="toggleMobileControl(false)">✕ 닫기</button>
+        <!-- 모바일 전용 상단 헤더 바 -->
+        <div class="mobile-control-header">
+          <div style="font-size: 14.5px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+            <span>⚙️ 페이지 편집 & 저장</span>
+            <span id="mobilePageIndicator" style="font-size: 11.5px; color: var(--primary); font-weight: 700; background: var(--primary-subtle); padding: 2px 7px; border-radius: 10px;">- / -</span>
+          </div>
+          <button class="mobile-close-btn" onclick="toggleMobileControl(false)">✕ 닫기</button>
+        </div>
 
         <!-- [통합 컨트롤 패널] PDF 및 이미지 모드 통일 -->
         <div id="optionsUnified" style="display: flex; flex-direction: column; gap: 10px;">
@@ -1178,6 +1198,17 @@
               <option value="ico">ICO (아이콘 규격 / 256px)</option>
               <option value="tiff">TIFF (인쇄 / 출판 규격)</option>
             </select>
+          </div>
+
+          <!-- 5-1. 배경 투명화 옵션 (PNG 선택 시 모바일 및 사이드바 노출) -->
+          <div class="control-group" id="grpTransparentBgControl" style="display: none;">
+            <label id="lblTransparentBgControl" style="display: flex; align-items: center; justify-content: space-between; background: #f8fafc; border: 1px solid var(--border-light); border-radius: 6px; padding: 7px 11px; cursor: pointer; user-select: none;">
+              <span style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--text-main); font-size: 13px;">
+                <input type="checkbox" id="chkTransparentBgControl" checked onchange="onTransparentBgChange(this.checked)" style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary);">
+                배경 투명화
+              </span>
+              <span style="font-size: 11px; color: var(--text-muted); font-weight: 500;">여백 및 모서리 투명</span>
+            </label>
           </div>
 
           <!-- 6. 회전 설정 (페이지 & 이미지 선택적 회전 및 90도 원클릭 버튼) -->
@@ -1288,7 +1319,7 @@
     </div>
 
     <!-- 모바일 전용 플로팅 액션 버튼 (FAB) -->
-    <button class="mobile-fab" id="mobileFab" onclick="toggleMobileControl(true)">⚡ 변환</button>
+    <button class="mobile-fab" id="mobileFab" onclick="toggleMobileControl(true)">⚙️ 편집 & 저장</button>
 
   </div>
 
@@ -1432,7 +1463,7 @@
   <div id="printContainer"></div>
 
   <script>
-    console.log("PixPDF v1.9.1 초기화 (PDF/Img 양방향 듀얼 변환, 페이지 개별 설정, 휠/키보드 네비게이션, PWA 지원, PNG 배경 투명화)");
+    console.log("PixPDF v1.9.2 초기화 (PDF/Img 양방향 듀얼 변환, 페이지 개별 설정, 휠/키보드 네비게이션, PWA 지원, 모바일 UI 최적화, PNG 배경 투명화)");
 
     // PWA Service Worker 등록 및 새 버전 자동 감지/새로고침 (Auto-Update)
     if ('serviceWorker' in navigator) {
@@ -1756,28 +1787,39 @@
       if (lblRot) lblRot.textContent = `${cfg.rot || 0}°`;
     }
 
-    // PNG 포맷 선택 시에만 가운데 창 상단 [배경 투명화] 체크박스 동적 노출/숨김
+    // PNG 포맷 선택 시에만 [배경 투명화] 체크박스 동적 노출/숨김 (가운데 툴바 및 우측/모바일 패널 동시 지원)
     function syncTransparentBgVisibility() {
       const isPdfMode = appMode === 'pdf2img';
       const cur = isPdfMode ? pdfState.currentIndex : imgState.currentIndex;
       const cfg = isPdfMode ? getEffectivePdfSettings(cur) : getEffectiveImgSettings(cur);
       const isPng = (cfg.format || 'png') === 'png';
+      const isTrans = cfg.transparentBg !== false;
+
+      // 1. 가운데 메인 뷰어 툴바 체크박스 (데스크톱)
       const wrap = document.getElementById('chkTransparentBgWrap');
       const chk = document.getElementById('chkTransparentBg');
-      if (wrap) {
-        wrap.style.display = isPng ? 'inline-flex' : 'none';
-      }
-      if (chk) {
-        chk.checked = cfg.transparentBg !== false;
-      }
+      if (wrap) wrap.style.display = isPng ? 'inline-flex' : 'none';
+      if (chk) chk.checked = isTrans;
+
+      // 2. 우측/모바일 컨트롤 패널 체크박스
+      const grpControl = document.getElementById('grpTransparentBgControl');
+      const chkControl = document.getElementById('chkTransparentBgControl');
+      if (grpControl) grpControl.style.display = isPng ? 'flex' : 'none';
+      if (chkControl) chkControl.checked = isTrans;
     }
 
-    // 가운데 창 상단 [배경 투명화] 체크박스 변경 핸들러
+    // [배경 투명화] 체크박스 변경 핸들러 (데스크톱 툴바와 모바일 패널 양방향 동기화)
     async function onTransparentBgChange(checked) {
       const isPdfMode = appMode === 'pdf2img';
       const cur = isPdfMode ? pdfState.currentIndex : imgState.currentIndex;
       const cfg = isPdfMode ? getEffectivePdfSettings(cur) : getEffectiveImgSettings(cur);
       cfg.transparentBg = Boolean(checked);
+
+      const chk = document.getElementById('chkTransparentBg');
+      const chkControl = document.getElementById('chkTransparentBgControl');
+      if (chk) chk.checked = cfg.transparentBg;
+      if (chkControl) chkControl.checked = cfg.transparentBg;
+
       await renderMainViewerCanvas(cur);
       updateThumbnailCanvas(cur);
       updateMiniPreview();
@@ -2481,9 +2523,21 @@
           updateThumbCounts();
           document.getElementById('statusText').textContent = `${pdfState.pages.length}페이지 문서 대기 중`;
         } else {
-          document.getElementById('thumbList').innerHTML = '';
+          const emptyGuidePdf = `
+            <div class="thumb-empty-guide" style="padding: 32px 14px; text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center;">
+              <div style="width: 46px; height: 46px; border-radius: 12px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b; margin-bottom: 10px;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+              </div>
+              <div style="font-size: 14px; font-weight: 700; color: var(--text-sub); margin-bottom: 4px;">PDF 문서를 불러오세요</div>
+              <p style="font-size: 11.5px; line-height: 1.5; color: var(--text-muted); margin-bottom: 14px;">페이지 분할 및 이미지 변환을 시작합니다.</p>
+              <button class="btn-tool" style="background: var(--primary); color: #fff; border-color: var(--primary); padding: 8px 18px; font-size: 13px; font-weight: 700; border-radius: 6px; cursor: pointer;" onclick="triggerOpenFileDialog()">📁 파일 열기</button>
+            </div>
+          `;
+          document.getElementById('thumbList').innerHTML = emptyGuidePdf;
           document.getElementById('thumbCount').textContent = '0 항목';
           document.getElementById('viewerPageIndicator').textContent = '- / -';
+          const mpi = document.getElementById('mobilePageIndicator');
+          if (mpi) mpi.textContent = '- / -';
           viewerWrap.style.display = 'none';
           emptyMsg.style.display = 'flex';
           if (mvc) { mvc.width = 0; mvc.height = 0; }
@@ -2509,9 +2563,21 @@
           updateThumbCounts();
           document.getElementById('statusText').textContent = `${imgState.items.length}개 이미지 대기 중`;
         } else {
-          document.getElementById('thumbList').innerHTML = '';
+          const emptyGuideImg = `
+            <div class="thumb-empty-guide" style="padding: 32px 14px; text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center;">
+              <div style="width: 46px; height: 46px; border-radius: 12px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b; margin-bottom: 10px;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+              </div>
+              <div style="font-size: 14px; font-weight: 700; color: var(--text-sub); margin-bottom: 4px;">이미지를 불러오세요</div>
+              <p style="font-size: 11.5px; line-height: 1.5; color: var(--text-muted); margin-bottom: 14px;">다중 이미지를 PDF로 병합하거나 편집합니다.</p>
+              <button class="btn-tool" style="background: var(--primary); color: #fff; border-color: var(--primary); padding: 8px 18px; font-size: 13px; font-weight: 700; border-radius: 6px; cursor: pointer;" onclick="triggerOpenFileDialog()">📁 파일 열기</button>
+            </div>
+          `;
+          document.getElementById('thumbList').innerHTML = emptyGuideImg;
           document.getElementById('thumbCount').textContent = '0 항목';
           document.getElementById('viewerPageIndicator').textContent = '- / -';
+          const mpi = document.getElementById('mobilePageIndicator');
+          if (mpi) mpi.textContent = '- / -';
           viewerWrap.style.display = 'none';
           emptyMsg.style.display = 'flex';
           if (mvc) { mvc.width = 0; mvc.height = 0; }
@@ -2784,8 +2850,13 @@
         card.className = `thumb-card ${idx === pdfState.currentIndex ? 'active' : ''}`;
         card.id = `thumb-card-${idx}`;
         card.draggable = true;
-        card.dataset.index = idx;
-        card.onclick = () => loadMainViewer(idx);
+        card.onclick = (e) => {
+          if (e.target.closest('input[type="checkbox"]') || e.target.closest('button')) return;
+          loadMainViewer(idx);
+          if (window.innerWidth <= 768) {
+            toggleMobileControl(true);
+          }
+        };
 
         card.addEventListener('dragstart', (e) => {
           draggedCardIndex = idx;
@@ -3223,10 +3294,17 @@
         const total = imgState.checkList.length;
         document.getElementById('thumbCount').textContent = `${selected} / ${total} 선택`;
         document.getElementById('chkSelectAll').checked = (total > 0 && selected === total);
-        const isDisabled = selected === 0;
         if (btnSavePdf) btnSavePdf.disabled = isDisabled;
         if (btnSaveImg) btnSaveImg.disabled = isDisabled;
         if (btnAction) btnAction.disabled = isDisabled;
+      }
+
+      // 모바일 플로팅 버튼(FAB) 상태 갱신
+      const totalCount = appMode === 'pdf2img' ? pdfState.pages.length : imgState.items.length;
+      const fab = document.getElementById('mobileFab');
+      if (fab) {
+        fab.style.display = totalCount > 0 ? 'block' : 'none';
+        fab.textContent = '⚙️ 편집 & 저장';
       }
     }
 
@@ -3240,8 +3318,13 @@
         card.className = `thumb-card ${idx === imgState.currentIndex ? 'active' : ''}`;
         card.id = `thumb-card-${idx}`;
         card.draggable = true;
-        card.dataset.index = idx;
-        card.onclick = () => loadMainViewer(idx);
+        card.onclick = (e) => {
+          if (e.target.closest('input[type="checkbox"]') || e.target.closest('button')) return;
+          loadMainViewer(idx);
+          if (window.innerWidth <= 768) {
+            toggleMobileControl(true);
+          }
+        };
 
         card.addEventListener('dragstart', (e) => {
           draggedCardIndex = idx;
@@ -3470,16 +3553,21 @@
 
     // 2열 메인 뷰어 로드
     async function loadMainViewer(index) {
-      if (appMode === 'pdf2img') {
-        if (pdfState.pages.length === 0) return;
+      const isPdf = appMode === 'pdf2img';
+      const total = isPdf ? pdfState.pages.length : imgState.items.length;
+      if (total === 0) return;
+
+      if (isPdf) {
         pdfState.currentIndex = index;
-        const total = pdfState.pages.length;
-        document.getElementById('viewerPageIndicator').textContent = `${index + 1} / ${total}`;
       } else {
-        if (imgState.items.length === 0) return;
         imgState.currentIndex = index;
-        document.getElementById('viewerPageIndicator').textContent = `${index + 1} / ${imgState.items.length}`;
       }
+
+      const pageText = `${index + 1} / ${total}`;
+      const vpi = document.getElementById('viewerPageIndicator');
+      if (vpi) vpi.textContent = pageText;
+      const mpi = document.getElementById('mobilePageIndicator');
+      if (mpi) mpi.textContent = pageText;
 
       document.querySelectorAll('.thumb-card').forEach((c, i) => c.classList.toggle('active', i === index));
       const targetCard = document.getElementById(`thumb-card-${index}`);
