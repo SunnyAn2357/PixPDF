@@ -377,6 +377,16 @@
     .viewer-canvas-wrap:active {
       cursor: grabbing;
     }
+    .viewer-canvas-wrap.checkerboard-bg,
+    .preview-paper-sheet.checkerboard-bg {
+      background-image: linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+                        linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+                        linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+                        linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+      background-size: 14px 14px;
+      background-position: 0 0, 0 7px, 7px -7px, -7px 0;
+      background-color: #ffffff;
+    }
     .viewer-canvas-wrap canvas, .viewer-canvas-wrap img {
       display: block;
       max-width: 100%;
@@ -1066,10 +1076,14 @@
     <!-- 2열: 중앙 원본 메인 뷰어 -->
     <div class="col-viewer" id="colViewerArea">
       <div class="viewer-toolbar">
-        <div class="viewer-nav">
+        <div class="viewer-nav" style="display: flex; align-items: center;">
           <button class="btn-tool" id="btnPrevPage" onclick="navigateViewer(-1)">◀ 이전</button>
           <span id="viewerPageIndicator" style="font-size:13.5px; font-weight:700;">- / -</span>
           <button class="btn-tool" id="btnNextPage" onclick="navigateViewer(1)">다음 ▶</button>
+          <label id="chkTransparentBgWrap" class="transparent-bg-toggle" style="display: none; align-items: center; margin-left: 14px; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-sub); cursor: pointer; user-select: none;" title="PNG 저장 시 회전/이동/축소로 남는 여백을 투명하게 처리합니다">
+            <input type="checkbox" id="chkTransparentBg" checked onchange="onTransparentBgChange(this.checked)" style="width: 15px; height: 15px; cursor: pointer; accent-color: var(--primary);">
+            <span>배경 투명화</span>
+          </label>
         </div>
         <div class="viewer-actions">
           <button class="btn-tool" onclick="adjustZoom(0.15)">확대</button>
@@ -1157,7 +1171,7 @@
           <div class="control-group">
             <label>출력 포맷 (이미지 저장 시)</label>
             <select id="selFormat" onchange="onSettingChange('format', this.value)">
-              <option value="png" selected>PNG (무손실 / 투명 지원)</option>
+              <option value="png" selected>PNG (무손실 / 투명 배경 지원)</option>
               <option value="jpeg">JPG (사진 압축 / 고효율)</option>
               <option value="webp">WebP (최신 웹 규격)</option>
               <option value="bmp">BMP (윈도우 비트맵 표준)</option>
@@ -1312,7 +1326,7 @@
           <div class="control-group">
             <label>기본 출력 포맷</label>
             <select id="selGlobalPdfFormat">
-              <option value="png" selected>PNG (무손실 / 투명 지원)</option>
+              <option value="png" selected>PNG (무손실 / 투명 배경 지원)</option>
               <option value="jpeg">JPG (사진 압축 / 고효율)</option>
               <option value="webp">WebP (최신 웹 규격)</option>
               <option value="bmp">BMP (윈도우 비트맵 표준)</option>
@@ -1418,7 +1432,7 @@
   <div id="printContainer"></div>
 
   <script>
-    console.log("PixPDF v1.9.0 초기화 (PDF/Img 양방향 듀얼 변환, 페이지 개별 설정, 휠/키보드 네비게이션, PWA 지원)");
+    console.log("PixPDF v1.9.1 초기화 (PDF/Img 양방향 듀얼 변환, 페이지 개별 설정, 휠/키보드 네비게이션, PWA 지원, PNG 배경 투명화)");
 
     // PWA Service Worker 등록 및 새 버전 자동 감지/새로고침 (Auto-Update)
     if ('serviceWorker' in navigator) {
@@ -1530,6 +1544,7 @@
         offsetX: 0,
         offsetY: 0,
         format: 'png',
+        transparentBg: true,
         orient: 'auto',
         customW: 1920,
         customH: 1080
@@ -1561,6 +1576,8 @@
         contrast: 100,
         offsetX: 0,
         offsetY: 0,
+        format: 'png',
+        transparentBg: true,
         orient: 'auto',
         margin: 0,
         customW: 1920,
@@ -1646,6 +1663,7 @@
       if (page.settings.contrast === undefined) page.settings.contrast = 100;
       if (page.settings.offsetX === undefined) page.settings.offsetX = 0;
       if (page.settings.offsetY === undefined) page.settings.offsetY = 0;
+      if (page.settings.transparentBg === undefined) page.settings.transparentBg = (pdfState.globalSettings.transparentBg !== undefined ? pdfState.globalSettings.transparentBg : true);
       return page.settings;
     }
 
@@ -1663,6 +1681,7 @@
       if (item.settings.contrast === undefined) item.settings.contrast = 100;
       if (item.settings.offsetX === undefined) item.settings.offsetX = 0;
       if (item.settings.offsetY === undefined) item.settings.offsetY = 0;
+      if (item.settings.transparentBg === undefined) item.settings.transparentBg = (imgState.globalSettings.transparentBg !== undefined ? imgState.globalSettings.transparentBg : true);
       return item.settings;
     }
 
@@ -1722,6 +1741,7 @@
       // 5. 출력 포맷
       const selFormat = document.getElementById('selFormat');
       if (selFormat) selFormat.value = cfg.format || 'png';
+      syncTransparentBgVisibility();
 
       // 6. 회전 타겟 및 슬라이더 동기화
       const target = cfg.rotTarget || { page: true, image: true };
@@ -1734,6 +1754,33 @@
       if (sliderRot) sliderRot.value = cfg.rot || 0;
       const lblRot = document.getElementById('lblRotationVal');
       if (lblRot) lblRot.textContent = `${cfg.rot || 0}°`;
+    }
+
+    // PNG 포맷 선택 시에만 가운데 창 상단 [배경 투명화] 체크박스 동적 노출/숨김
+    function syncTransparentBgVisibility() {
+      const isPdfMode = appMode === 'pdf2img';
+      const cur = isPdfMode ? pdfState.currentIndex : imgState.currentIndex;
+      const cfg = isPdfMode ? getEffectivePdfSettings(cur) : getEffectiveImgSettings(cur);
+      const isPng = (cfg.format || 'png') === 'png';
+      const wrap = document.getElementById('chkTransparentBgWrap');
+      const chk = document.getElementById('chkTransparentBg');
+      if (wrap) {
+        wrap.style.display = isPng ? 'inline-flex' : 'none';
+      }
+      if (chk) {
+        chk.checked = cfg.transparentBg !== false;
+      }
+    }
+
+    // 가운데 창 상단 [배경 투명화] 체크박스 변경 핸들러
+    async function onTransparentBgChange(checked) {
+      const isPdfMode = appMode === 'pdf2img';
+      const cur = isPdfMode ? pdfState.currentIndex : imgState.currentIndex;
+      const cfg = isPdfMode ? getEffectivePdfSettings(cur) : getEffectiveImgSettings(cur);
+      cfg.transparentBg = Boolean(checked);
+      await renderMainViewerCanvas(cur);
+      updateThumbnailCanvas(cur);
+      updateMiniPreview();
     }
 
     // 회전 대상(페이지 vs 이미지) 체크박스 변경 핸들러
@@ -1784,6 +1831,7 @@
         cfg.margin = parseInt(value, 10) || 0;
       } else if (key === 'format') {
         cfg.format = value;
+        syncTransparentBgVisibility();
       } else if (key === 'customW') {
         cfg.customW = parseInt(value, 10) || 1920;
       } else if (key === 'customH') {
@@ -3507,6 +3555,9 @@
           mvc.style.transform = transformStr;
           mvc.style.transformOrigin = 'center center';
         }
+        const wrap = document.getElementById('viewerWrap');
+        const isTransparent = (isPdf ? ((cfg.format || 'png') === 'png') : true) && (cfg.transparentBg !== false);
+        if (wrap) wrap.classList.toggle('checkerboard-bg', isTransparent);
       }
 
       const tc = isPdf ? document.getElementById(`thumb-canvas-pdf-${curIdx}`) : document.getElementById(`thumb-canvas-img-${curIdx}`);
@@ -3708,9 +3759,16 @@
         mctx.setTransform(1, 0, 0, 1, 0, 0);
         mctx.scale(dpr, dpr);
 
-        // 하얀색 용지 바탕
-        mctx.fillStyle = '#ffffff';
-        mctx.fillRect(0, 0, sheetW, sheetH);
+        // 하얀색 용지 바탕 또는 투명 처리
+        const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
+        if (isTransparent) {
+          mctx.clearRect(0, 0, sheetW, sheetH);
+          miniSheet.classList.add('checkerboard-bg');
+        } else {
+          mctx.fillStyle = '#ffffff';
+          mctx.fillRect(0, 0, sheetW, sheetH);
+          miniSheet.classList.remove('checkerboard-bg');
+        }
 
         // 용지 안에 들어갈 이미지 기본 크기 (fit)
         const fitScale = Math.min(sheetW / imgOrigW, sheetH / imgOrigH);
@@ -3794,8 +3852,16 @@
         mctx.setTransform(1, 0, 0, 1, 0, 0);
         mctx.scale(dpr, dpr);
 
-        mctx.fillStyle = '#ffffff';
-        mctx.fillRect(0, 0, sheetW, sheetH);
+        // 하얀색 용지 바탕 또는 투명 처리
+        const isTransparent = (cfg.transparentBg !== false);
+        if (isTransparent) {
+          mctx.clearRect(0, 0, sheetW, sheetH);
+          miniSheet.classList.add('checkerboard-bg');
+        } else {
+          mctx.fillStyle = '#ffffff';
+          mctx.fillRect(0, 0, sheetW, sheetH);
+          miniSheet.classList.remove('checkerboard-bg');
+        }
 
         // 여백 비율 계산 (미리보기 크기에 맞춘 여백)
         const scaleFactor = sheetW / paper.widthPx;
@@ -3900,8 +3966,13 @@
             tempCanvas.width = srcRotW;
             tempCanvas.height = srcRotH;
             const tctx = tempCanvas.getContext('2d');
-            tctx.fillStyle = '#ffffff';
-            tctx.fillRect(0, 0, srcRotW, srcRotH);
+            const isTransparent = (cfg.format === 'png') && (cfg.transparentBg !== false);
+            if (isTransparent) {
+              tctx.clearRect(0, 0, srcRotW, srcRotH);
+            } else {
+              tctx.fillStyle = '#ffffff';
+              tctx.fillRect(0, 0, srcRotW, srcRotH);
+            }
             tctx.translate(srcRotW / 2, srcRotH / 2);
             tctx.rotate(rotRad);
             tctx.drawImage(p.imgObj, -p.width / 2, -p.height / 2);
@@ -3944,9 +4015,14 @@
           finalCanvas.width = paperW;
           finalCanvas.height = paperH;
 
-          // 용지 배경 채우기 (흰색)
-          fctx.fillStyle = '#ffffff';
-          fctx.fillRect(0, 0, paperW, paperH);
+          // 용지 배경 채우기 (흰색 또는 PNG 투명 처리)
+          const isTransparent = (cfg.format === 'png') && (cfg.transparentBg !== false);
+          if (isTransparent) {
+            fctx.clearRect(0, 0, paperW, paperH);
+          } else {
+            fctx.fillStyle = '#ffffff';
+            fctx.fillRect(0, 0, paperW, paperH);
+          }
 
           const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
           const brightness = cfg.brightness !== undefined ? cfg.brightness : 100;
@@ -4370,8 +4446,13 @@
           tempCanvas.width = srcRotW;
           tempCanvas.height = srcRotH;
           const tctx = tempCanvas.getContext('2d');
-          tctx.fillStyle = '#ffffff';
-          tctx.fillRect(0, 0, srcRotW, srcRotH);
+          const isTransparent = (cfg.transparentBg !== false);
+          if (isTransparent) {
+            tctx.clearRect(0, 0, srcRotW, srcRotH);
+          } else {
+            tctx.fillStyle = '#ffffff';
+            tctx.fillRect(0, 0, srcRotW, srcRotH);
+          }
           tctx.translate(srcRotW / 2, srcRotH / 2);
           tctx.rotate(rotRad);
           tctx.drawImage(item.imgObj, -w / 2, -h / 2);
@@ -4389,8 +4470,12 @@
           finalCanvas.width = paperW;
           finalCanvas.height = paperH;
           const fctx = finalCanvas.getContext('2d');
-          fctx.fillStyle = '#ffffff';
-          fctx.fillRect(0, 0, paperW, paperH);
+          if (isTransparent) {
+            fctx.clearRect(0, 0, paperW, paperH);
+          } else {
+            fctx.fillStyle = '#ffffff';
+            fctx.fillRect(0, 0, paperW, paperH);
+          }
 
           const innerW = paperW - (targetMargin * 2);
           const innerH = paperH - (targetMargin * 2);
