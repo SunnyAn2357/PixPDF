@@ -1,0 +1,2173 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PixConverter-ADS</title>
+  <!-- 클라이언트 로컬 전용 라이브러리 (브라우저 메모리 내 100% 처리) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/utif/3.1.0/UTIF.min.js"></script>
+  <style>
+    :root {
+      --primary: #0f766e;
+      --primary-hover: #115e59;
+      --primary-light: #ccfbf1;
+      --primary-subtle: #f0fdfa;
+      --success: #059669;
+      --success-hover: #047857;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --bg: #f8fafc;
+      --panel-bg: #ffffff;
+      --border: #cbd5e1;
+      --border-light: #e2e8f0;
+      --text-main: #0f172a;
+      --text-sub: #475569;
+      --text-muted: #64748b;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      /* 클릭 시 불필요한 텍스트 I자 커서 방지 (Global-GEMINI 2.3 준수) */
+      user-select: none;
+      -webkit-user-select: none;
+      caret-color: transparent;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    /* 상단 헤더 (단일 1행 고정) */
+    header {
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      position: relative;
+      z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    
+    /* 햄버거 메뉴 버튼 */
+    .btn-hamburger {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      color: var(--primary);
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-hamburger:hover {
+      background: var(--primary-subtle);
+      border-color: var(--primary);
+    }
+
+    /* 햄버거 드롭다운 메뉴 */
+    .menu-dropdown {
+      position: absolute;
+      top: 54px;
+      left: 18px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      width: 190px;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 200;
+      animation: fadeInDown 0.15s ease;
+    }
+    .menu-dropdown.show { display: flex; }
+    .menu-item {
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: none;
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.15s;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .menu-item:last-child { border-bottom: none; }
+    .menu-item:hover { background: var(--primary-subtle); color: var(--primary); }
+    .menu-item.danger:hover { background: #fee2e2; color: var(--danger); }
+
+    h1 {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.3px;
+    }
+
+    /* 모드 탭 (PDF to Img / Img to PDF) */
+    .tab-group {
+      display: flex;
+      gap: 4px;
+      background: #f1f5f9;
+      padding: 3px;
+      border-radius: 8px;
+      border: 1px solid var(--border-light);
+    }
+    .tab-btn {
+      padding: 7px 16px;
+      font-size: 13.5px;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      color: var(--text-sub);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      min-height: 34px;
+    }
+    .tab-btn.active {
+      background: var(--panel-bg);
+      color: var(--primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      font-weight: 700;
+    }
+
+    /* 메인 3단 워크스페이스 */
+    .workspace {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 59px);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* 1열: 좌측 썸네일 바 */
+    .col-thumb {
+      width: 250px;
+      min-width: 180px;
+      max-width: 500px;
+      background: var(--panel-bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .thumb-toolbar {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-sub);
+      background: #f8fafc;
+    }
+    .thumb-toolbar label { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 2px 4px; }
+    .thumb-toolbar input[type="checkbox"] { width: 19px; height: 19px; accent-color: var(--primary); cursor: pointer; }
+    .thumb-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+    .thumb-card {
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 8px;
+      background: #ffffff;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+      position: relative;
+    }
+    .thumb-card:hover { border-color: var(--primary); }
+    .thumb-card.active {
+      border-color: var(--primary);
+      background: var(--primary-subtle);
+      box-shadow: 0 0 0 1.5px var(--primary);
+    }
+    /* 드래그 앤 드롭 삽입 진한 가이드 줄 */
+    .thumb-card.drag-over-top { border-top: 4px solid var(--primary) !important; transform: translateY(2px); }
+    .thumb-card.drag-over-bottom { border-bottom: 4px solid var(--primary) !important; transform: translateY(-2px); }
+    .thumb-card.dragging { opacity: 0.4; border: 1.5px dashed var(--primary); }
+
+    .thumb-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-sub);
+      margin-bottom: 6px;
+    }
+    /* 체크박스 클릭 영역 1.5배 확대 */
+    .chk-touch-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 6px;
+      margin: -4px -6px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .chk-touch-wrap:hover { background: #e2e8f0; }
+    .chk-touch-wrap input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .thumb-card canvas, .thumb-card img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 4px;
+      border: 1px solid var(--border-light);
+      background: #ffffff;
+      pointer-events: none;
+    }
+    .thumb-btn-row { display: flex; gap: 4px; }
+    .btn-icon-sm {
+      padding: 3px 7px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--text-sub);
+    }
+    .btn-icon-sm:hover { background: #e2e8f0; color: var(--text-main); }
+
+    /* 1열과 2열 사이 리사이저 바 */
+    .col-resizer {
+      width: 5px;
+      cursor: col-resize;
+      background: transparent;
+      transition: background 0.15s;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+    .col-resizer:hover, .col-resizer.resizing {
+      background: var(--primary);
+    }
+
+    /* 2열: 중앙 원본 메인 뷰어 */
+    .col-viewer {
+      flex: 1;
+      background: #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+    .viewer-toolbar {
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 9px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 5;
+    }
+    .viewer-nav { display: flex; align-items: center; gap: 8px; }
+    .viewer-actions { display: flex; align-items: center; gap: 6px; }
+    .btn-tool {
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-main);
+      transition: background 0.15s;
+    }
+    .btn-tool:hover { background: #e2e8f0; }
+
+    .viewer-viewport {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+    }
+    .viewer-canvas-wrap {
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      border-radius: 4px;
+      background: #ffffff;
+      line-height: 0;
+      transition: transform 0.15s ease;
+      display: none;
+    }
+    .viewer-canvas-wrap canvas, .viewer-canvas-wrap img {
+      display: block;
+      max-width: 100%;
+      max-height: 80vh;
+      width: auto;
+      height: auto;
+      border-radius: 4px;
+    }
+    
+    .viewer-empty {
+      text-align: center;
+      color: var(--text-muted);
+      max-width: 420px;
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      pointer-events: none;
+    }
+    .viewer-empty-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      background: #cbd5e1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+    }
+    .viewer-empty h3 { font-size: 18px; font-weight: 700; color: var(--text-sub); }
+    .viewer-empty p { font-size: 13.5px; line-height: 1.6; color: var(--text-muted); }
+
+    /* 3열: 우측 컨트롤 패널 (컴팩트 압축) */
+    .col-control {
+      width: 350px;
+      background: var(--panel-bg);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+    .control-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .control-group { display: flex; flex-direction: column; gap: 5px; }
+    .control-group label {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text-sub);
+    }
+    select, input[type="number"] {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13.5px;
+      background: #ffffff;
+      color: var(--text-main);
+      min-height: 38px;
+      outline: none;
+      transition: border 0.15s;
+      box-sizing: border-box;
+    }
+    select:focus, input[type="number"]:focus { border-color: var(--primary); }
+    .custom-px-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .custom-px-row input[type="number"] {
+      flex: 1;
+      width: 100%;
+    }
+    .custom-px-row span {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    /* 미리보기 섹션 (확대/축소 버튼 포함) */
+    .preview-section {
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 12px;
+      background: #f8fafc;
+      text-align: center;
+    }
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .preview-title { font-size: 12px; font-weight: 700; color: var(--text-sub); }
+    .preview-zoom-btns { display: flex; gap: 4px; }
+    .btn-zoom-mini {
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--text-sub);
+    }
+    .btn-zoom-mini:hover { background: #e2e8f0; color: var(--text-main); }
+
+    /* 용지 미리보기 영역: 이중 박스 제거, 문서 시트만 돋보이도록 */
+    .preview-sheet-stage {
+      width: 100%;
+      min-height: 230px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 0;
+      box-sizing: border-box;
+    }
+    .preview-paper-sheet {
+      background: #ffffff;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.14), 0 0 0 1px rgba(0,0,0,0.08);
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .preview-paper-sheet canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .mini-info-text { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-top: 6px; }
+
+    /* 실행 버튼 및 진행률 */
+    .action-section {
+      margin-top: auto;
+      padding-top: 10px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .btn-action {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #ffffff;
+      background: var(--primary);
+      transition: background 0.15s;
+      min-height: 44px;
+    }
+    .btn-action:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn-action:disabled { background: #94a3b8; cursor: not-allowed; }
+    .btn-abort { background: var(--danger); font-size: 13px; padding: 7px; min-height: 34px; }
+
+    .progress-bar-wrap {
+      height: 7px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+      display: none;
+    }
+    .progress-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: var(--primary);
+      transition: width 0.1s;
+    }
+    .status-text {
+      font-size: 12px;
+      color: var(--text-sub);
+      font-weight: 600;
+      min-height: 16px;
+    }
+
+    /* 모바일 플로팅 액션 버튼 (FAB) */
+    .mobile-fab {
+      position: absolute;
+      right: 20px;
+      bottom: 24px;
+      padding: 12px 22px;
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      border-radius: 30px;
+      font-size: 15px;
+      font-weight: 700;
+      box-shadow: 0 4px 14px rgba(15, 118, 110, 0.4);
+      cursor: pointer;
+      display: none;
+      z-index: 60;
+    }
+
+    /* 모바일 반응형 (768px 이하) */
+    @media (max-width: 768px) {
+      .col-viewer, .col-resizer { display: none !important; }
+      .col-thumb {
+        width: 100% !important;
+        max-width: 100% !important;
+        border-right: none;
+      }
+      .mobile-fab { display: block; }
+      .col-control {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        width: 100% !important;
+        height: 100vh;
+        z-index: 150;
+        display: none;
+      }
+      .col-control.mobile-open { display: flex; }
+      .mobile-close-btn {
+        display: block !important;
+        padding: 8px 12px;
+        background: #f1f5f9;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-weight: 700;
+        cursor: pointer;
+        align-self: flex-end;
+        margin-bottom: 6px;
+      }
+    }
+    .mobile-close-btn { display: none; }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* [전용 인쇄 스타일] 브라우저 UI 완전 배제 & 순수 문서 페이지만 출력 */
+    #printContainer {
+      display: none;
+    }
+    @page {
+      /* 브라우저 기본 머리글(날짜, 제목) 및 바닥글(URL, 페이지 번호) 원천 제거 */
+      margin: 0;
+    }
+    @media print {
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        width: 100% !important;
+        height: 100% !important;
+      }
+      header, .workspace, .mobile-fab, .menu-dropdown {
+        display: none !important;
+      }
+      #printContainer {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+      }
+      .print-page-item {
+        page-break-after: always;
+        break-after: page;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100vw;
+        height: 100vh;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      .print-page-item:last-child {
+        page-break-after: avoid;
+        break-after: avoid;
+      }
+      .print-page-canvas {
+        display: block;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 숨겨진 공용 파일 인풋 -->
+  <input type="file" id="fileInput" style="display:none;" accept="application/pdf,image/*">
+
+  <!-- 상단 헤더 (단일 1행) -->
+  <header>
+    <div class="header-left">
+      <!-- 햄버거 메뉴 버튼 -->
+      <button class="btn-hamburger" id="btnHamburger" title="메뉴 열기">☰</button>
+      
+      <!-- 햄버거 드롭다운 메뉴 -->
+      <div class="menu-dropdown" id="menuDropdown">
+        <button class="menu-item" onclick="triggerOpenFileDialog()">📁 파일 열기</button>
+        <button class="menu-item" onclick="triggerPrint()">🖨️ 인쇄</button>
+        <button class="menu-item" onclick="triggerConvertAction()">⚡ 변환</button>
+        <button class="menu-item danger" onclick="triggerCloseDocument()">✕ 문서 닫기</button>
+      </div>
+
+      <h1>PixConverter-ADS</h1>
+    </div>
+
+    <!-- 모드 탭 -->
+    <div class="tab-group">
+      <button id="tabPdf2Img" class="tab-btn active" onclick="setAppMode('pdf2img')">PDF to Img</button>
+      <button id="tabImg2Pdf" class="tab-btn" onclick="setAppMode('img2pdf')">Img to PDF</button>
+    </div>
+  </header>
+
+  <!-- 메인 3단 워크스페이스 -->
+  <div class="workspace" id="mainWorkspace">
+
+    <!-- 1열: 좌측 썸네일 바 -->
+    <div class="col-thumb" id="colThumb">
+      <div class="thumb-toolbar">
+        <label id="lblSelectAll"><input type="checkbox" id="chkSelectAll"> 전체 선택</label>
+        <span id="thumbCount">0 항목</span>
+      </div>
+      <div id="thumbList" class="thumb-list"></div>
+    </div>
+
+    <!-- 1열과 2열 사이 너비 조절 리사이저 바 -->
+    <div class="col-resizer" id="colResizer"></div>
+
+    <!-- 2열: 중앙 원본 메인 뷰어 -->
+    <div class="col-viewer" id="colViewerArea">
+      <div class="viewer-toolbar">
+        <div class="viewer-nav">
+          <button class="btn-tool" id="btnPrevPage" onclick="navigateViewer(-1)">◀ 이전</button>
+          <span id="viewerPageIndicator" style="font-size:13.5px; font-weight:700;">- / -</span>
+          <button class="btn-tool" id="btnNextPage" onclick="navigateViewer(1)">다음 ▶</button>
+        </div>
+        <div class="viewer-actions">
+          <button class="btn-tool" onclick="adjustZoom(0.15)">확대</button>
+          <button class="btn-tool" onclick="adjustZoom(-0.15)">축소</button>
+          <button class="btn-tool" onclick="resetZoom()">100%</button>
+        </div>
+      </div>
+      <div class="viewer-viewport" id="viewerViewport">
+        <div class="viewer-canvas-wrap" id="viewerWrap">
+          <canvas id="mainViewerCanvas"></canvas>
+        </div>
+        <div id="viewerEmptyMsg" class="viewer-empty">
+          <div class="viewer-empty-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+          </div>
+          <h3>문서를 불러오거나 끌어다 놓으세요</h3>
+          <p>상단 메뉴의 <b>[☰ ➡️ 파일 열기]</b>를 누르거나,<br>화면 어디든 파일을 <b>드래그 앤 드롭</b>해 보세요.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3열: 우측 컨트롤 패널 (컴팩트 압축) -->
+    <div class="col-control" id="colControl">
+      <div class="control-body">
+        <button class="mobile-close-btn" onclick="toggleMobileControl(false)">✕ 닫기</button>
+
+        <!-- 옵션: PDF ➡️ 이미지 분할 모드 -->
+        <div id="optionsPdf2Img" style="display: flex; flex-direction: column; gap: 10px;">
+          <div class="control-group">
+            <label>출력 포맷</label>
+            <select id="selFormat" onchange="updateMiniPreview()">
+              <option value="png" selected>PNG (무손실 / 투명 지원)</option>
+              <option value="jpeg">JPG (사진 압축 / 고효율)</option>
+              <option value="webp">WebP (최신 웹 규격)</option>
+              <option value="bmp">BMP (윈도우 비트맵 표준)</option>
+              <option value="ico">ICO (아이콘 규격 / 256px)</option>
+              <option value="tiff">TIFF (인쇄 / 출판 규격)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label>해상도 / 화질</label>
+            <select id="selScale">
+              <option value="1.5">×1.5 (화면용 / 용량 절약)</option>
+              <option value="2.0">×2.0 (고해상도 A4 권장)</option>
+              <option value="3.0" selected>×3.0 (초고해상도 인쇄용)</option>
+              <option value="4.0">×4.0 (최상급 원본 극대화 / 600DPI급)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label>용지 규격</label>
+            <select id="selPageFit" onchange="handlePaperSizeChange('pdf2img')">
+              <option value="original" selected>원본 크기</option>
+              <option value="a3">A3 (297×420mm)</option>
+              <option value="a4">A4 (210×297mm)</option>
+              <option value="a5">A5 (148×210mm)</option>
+              <option value="b3">B3 (353×500mm)</option>
+              <option value="b4">B4 (250×353mm)</option>
+              <option value="b5">B5 (176×250mm)</option>
+              <option value="custom">사용자 정의 (픽셀)</option>
+            </select>
+          </div>
+
+          <div class="control-group" id="groupCustomPxPdf" style="display: none;">
+            <label>사용자 정의 크기 (px)</label>
+            <div class="custom-px-row">
+              <input type="number" id="txtCustomWidthPdf" value="1920" min="100" max="10000" placeholder="너비" oninput="updateMiniPreview()">
+              <span>×</span>
+              <input type="number" id="txtCustomHeightPdf" value="1080" min="100" max="10000" placeholder="높이" oninput="updateMiniPreview()">
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label>회전 각도</label>
+            <select id="selRotation" onchange="updateMiniPreview()">
+              <option value="0" selected>0°</option>
+              <option value="90">90° (오른쪽 회전)</option>
+              <option value="180">180° (상하 반전)</option>
+              <option value="270">270° (왼쪽 회전)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 옵션: 이미지 ➡️ PDF 병합 모드 -->
+        <div id="optionsImg2Pdf" style="display: none; flex-direction: column; gap: 10px;">
+          <div class="control-group">
+            <label>용지 규격</label>
+            <select id="selPdfPageSize" onchange="handlePaperSizeChange('img2pdf')">
+              <option value="original" selected>원본 크기</option>
+              <option value="a3">A3 (297×420mm)</option>
+              <option value="a4">A4 (210×297mm)</option>
+              <option value="a5">A5 (148×210mm)</option>
+              <option value="b3">B3 (353×500mm)</option>
+              <option value="b4">B4 (250×353mm)</option>
+              <option value="b5">B5 (176×250mm)</option>
+              <option value="custom">사용자 정의 (픽셀)</option>
+            </select>
+          </div>
+
+          <div class="control-group" id="groupCustomPxImg" style="display: none;">
+            <label>사용자 정의 크기 (px)</label>
+            <div class="custom-px-row">
+              <input type="number" id="txtCustomWidthImg" value="1920" min="100" max="10000" placeholder="너비" oninput="updateMiniPreview()">
+              <span>×</span>
+              <input type="number" id="txtCustomHeightImg" value="1080" min="100" max="10000" placeholder="높이" oninput="updateMiniPreview()">
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label>해상도 / 화질</label>
+            <select id="selPdfQuality">
+              <option value="ultra" selected>최상급 (무손실 / 100% 원본 픽셀 보존)</option>
+              <option value="high">고화질 (JPEG 98% / 고효율)</option>
+              <option value="normal">일반 (JPEG 90% / 용량 절약)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label>용지 방향</label>
+            <select id="selPdfOrientation" onchange="updateMiniPreview()">
+              <option value="auto" selected>자동 (비율 기준)</option>
+              <option value="p">세로 (Portrait)</option>
+              <option value="l">가로 (Landscape)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label>여백 설정</label>
+            <select id="selPdfMargin" onchange="updateMiniPreview()">
+              <option value="0" selected>0px (여백 없음)</option>
+              <option value="10">10px (기본)</option>
+              <option value="20">20px (넓음)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 미리보기 영역 (확대/축소 버튼 포함) -->
+        <div class="preview-section">
+          <div class="preview-header">
+            <span class="preview-title">미리보기</span>
+            <div class="preview-zoom-btns">
+              <button class="btn-zoom-mini" onclick="adjustPreviewScale(0.1)">확대</button>
+              <button class="btn-zoom-mini" onclick="adjustPreviewScale(-0.1)">축소</button>
+              <button class="btn-zoom-mini" onclick="resetPreviewScale()">100%</button>
+            </div>
+          </div>
+          <div class="preview-sheet-stage">
+            <div id="miniSheet" class="preview-paper-sheet">
+              <canvas id="miniCanvas"></canvas>
+            </div>
+          </div>
+          <div id="miniInfo" class="mini-info-text">선택 항목 기준 윤곽</div>
+        </div>
+
+        <!-- 실행 영역 (단일 변환 버튼으로 자동 저장 완결) -->
+        <div class="action-section">
+          <div class="status-text" id="statusText">준비 완료</div>
+          <div class="progress-bar-wrap" id="progWrap">
+            <div class="progress-bar-fill" id="progFill"></div>
+          </div>
+          <button id="btnAction" class="btn-action" disabled onclick="handleAction()">선택 페이지 변환</button>
+          <button id="btnAbort" class="btn-action btn-abort" style="display:none;" onclick="abortAction()">변환 중단</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 모바일 전용 플로팅 액션 버튼 (FAB) -->
+    <button class="mobile-fab" id="mobileFab" onclick="toggleMobileControl(true)">⚡ 변환</button>
+
+  </div>
+
+  <!-- [전용 인쇄 컨테이너] 화면에서는 숨김, 브라우저 인쇄 창에서만 나타남 -->
+  <div id="printContainer"></div>
+
+  <script>
+    console.log("PixConverter-ADS v1.7.0 초기화 (확장 용지 규격 A3~B5 & 사용자 정의 픽셀 지원)");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    // 표준 용지 밀리미터(mm) 및 300DPI 기준 픽셀(px) 규격표
+    const PAPER_SPECS = {
+      a3: { name: 'A3 (297×420mm)', wMm: 297, hMm: 420, ratio: 1.414, pxW: 3508, pxH: 4960 },
+      a4: { name: 'A4 (210×297mm)', wMm: 210, hMm: 297, ratio: 1.414, pxW: 2480, pxH: 3508 },
+      a5: { name: 'A5 (148×210mm)', wMm: 148, hMm: 210, ratio: 1.414, pxW: 1748, pxH: 2480 },
+      b3: { name: 'B3 (353×500mm)', wMm: 353, hMm: 500, ratio: 1.416, pxW: 4169, pxH: 5906 },
+      b4: { name: 'B4 (250×353mm)', wMm: 250, hMm: 353, ratio: 1.412, pxW: 2953, pxH: 4169 },
+      b5: { name: 'B5 (176×250mm)', wMm: 176, hMm: 250, ratio: 1.420, pxW: 2079, pxH: 2953 }
+    };
+
+    function handlePaperSizeChange(mode) {
+      if (mode === 'pdf2img') {
+        const val = document.getElementById('selPageFit').value;
+        document.getElementById('groupCustomPxPdf').style.display = val === 'custom' ? 'flex' : 'none';
+      } else {
+        const val = document.getElementById('selPdfPageSize').value;
+        document.getElementById('groupCustomPxImg').style.display = val === 'custom' ? 'flex' : 'none';
+      }
+      updateMiniPreview();
+    }
+
+    // 용지 규격 해석 유틸리티 (규격명, 방향, 원본 크기 등을 기반으로 최적 치수 산출)
+    function resolvePaperGeometry(key, isLandscape, origW, origH, customW, customH) {
+      if (key === 'original') {
+        return {
+          name: '원본 규격',
+          ratio: origW / origH,
+          widthPx: origW,
+          heightPx: origH,
+          isLandscape: origW > origH
+        };
+      }
+      if (key === 'custom') {
+        const cw = Math.max(100, customW || 1920);
+        const ch = Math.max(100, customH || 1080);
+        return {
+          name: `사용자 정의 (${cw}×${ch}px)`,
+          ratio: cw / ch,
+          widthPx: cw,
+          heightPx: ch,
+          isLandscape: cw > ch
+        };
+      }
+      const spec = PAPER_SPECS[key] || PAPER_SPECS.a4;
+      const w = isLandscape ? Math.max(spec.pxW, spec.pxH) : Math.min(spec.pxW, spec.pxH);
+      const h = isLandscape ? Math.min(spec.pxW, spec.pxH) : Math.max(spec.pxW, spec.pxH);
+      return {
+        name: `${spec.name.split(' ')[0]} ${isLandscape ? '가로' : '세로'}`,
+        ratio: w / h,
+        widthPx: w,
+        heightPx: h,
+        isLandscape: isLandscape
+      };
+    }
+
+    // [핵심] 두 모드의 독립적인 상태 보존 객체
+    const pdfState = {
+      doc: null,
+      fileName: 'document',
+      checkList: [],
+      currentIndex: 0,
+      zoom: 1.0,
+      contentScale: 1.0 // 용지 내부 내용물 배율 (기본 100%)
+    };
+
+    const imgState = {
+      items: [], // [{ file, imgObj, name, width, height }]
+      checkList: [], // 이미지 다중 선택 체크박스 (기본 전체 선택 true)
+      currentIndex: 0,
+      zoom: 1.0,
+      contentScale: 1.0 // 용지 내부 내용물 배율 (기본 100%)
+    };
+
+    let appMode = 'pdf2img'; // 'pdf2img' | 'img2pdf'
+    let isAborted = false;
+    let zipBlobs = [];
+    let draggedCardIndex = null;
+
+    // 햄버거 메뉴 토글
+    const btnHamburger = document.getElementById('btnHamburger');
+    const menuDropdown = document.getElementById('menuDropdown');
+    btnHamburger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menuDropdown.classList.toggle('show');
+    });
+    window.addEventListener('click', () => {
+      menuDropdown.classList.remove('show');
+    });
+
+    function triggerOpenFileDialog() {
+      const fileInput = document.getElementById('fileInput');
+      fileInput.accept = appMode === 'pdf2img' ? 'application/pdf' : 'image/*';
+      fileInput.multiple = appMode !== 'pdf2img';
+      fileInput.click();
+      menuDropdown.classList.remove('show');
+    }
+    async function triggerPrint() {
+      menuDropdown.classList.remove('show');
+
+      // 선택된 페이지/이미지 인덱스 추출
+      const selectedIndices = [];
+      if (appMode === 'pdf2img') {
+        if (!pdfState.doc) {
+          alert('인쇄할 PDF 문서가 없습니다.');
+          return;
+        }
+        pdfState.checkList.forEach((chk, i) => { if (chk) selectedIndices.push(i); });
+      } else {
+        if (imgState.items.length === 0) {
+          alert('인쇄할 이미지가 없습니다.');
+          return;
+        }
+        imgState.checkList.forEach((chk, i) => { if (chk) selectedIndices.push(i); });
+      }
+
+      if (selectedIndices.length === 0) {
+        alert('인쇄할 페이지(항목)를 1개 이상 선택해 주세요.');
+        return;
+      }
+
+      const printContainer = document.getElementById('printContainer');
+      printContainer.innerHTML = '';
+      document.getElementById('statusText').textContent = `인쇄 데이터 준비 중 (${selectedIndices.length}페이지)...`;
+
+      try {
+        if (appMode === 'pdf2img') {
+          const fitKey = document.getElementById('selPageFit').value;
+          const rot = parseInt(document.getElementById('selRotation').value, 10);
+          const cScale = pdfState.contentScale || 1.0;
+          const customW = parseInt(document.getElementById('txtCustomWidthPdf').value, 10) || 1920;
+          const customH = parseInt(document.getElementById('txtCustomHeightPdf').value, 10) || 1080;
+
+          for (let step = 0; step < selectedIndices.length; step++) {
+            const pageIndex = selectedIndices[step];
+            const page = await pdfState.doc.getPage(pageIndex + 1);
+            // 최상급 인쇄 품질: 3.0 초고해상도 렌더링
+            const vp = page.getViewport({ scale: 3.0, rotation: rot });
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = vp.width;
+            tempCanvas.height = vp.height;
+            const tctx = tempCanvas.getContext('2d');
+            tctx.fillStyle = '#ffffff';
+            tctx.fillRect(0, 0, vp.width, vp.height);
+            await page.render({ canvasContext: tctx, viewport: vp }).promise;
+
+            const isLandscape = vp.width > vp.height;
+            const paper = resolvePaperGeometry(fitKey, isLandscape, vp.width, vp.height, customW, customH);
+
+            let paperW, paperH;
+            if (fitKey === 'original') {
+              paperW = vp.width;
+              paperH = vp.height;
+            } else if (fitKey === 'custom') {
+              paperW = paper.widthPx;
+              paperH = paper.heightPx;
+            } else {
+              // 300DPI 기준 용지 비율 유지 (vp 크기에 맞춰 축척)
+              if (paper.isLandscape) {
+                paperW = Math.max(vp.width, Math.round(vp.height * paper.ratio));
+                paperH = Math.round(paperW / paper.ratio);
+              } else {
+                paperH = Math.max(vp.height, Math.round(vp.width * paper.ratio));
+                paperW = Math.round(paperH / paper.ratio);
+              }
+            }
+
+            let finalCanvas = document.createElement('canvas');
+            let fctx = finalCanvas.getContext('2d');
+            finalCanvas.width = paperW;
+            finalCanvas.height = paperH;
+            fctx.fillStyle = '#ffffff';
+            fctx.fillRect(0, 0, paperW, paperH);
+
+            const baseScale = Math.min(paperW / vp.width, paperH / vp.height);
+            const drawW = vp.width * baseScale * cScale;
+            const drawH = vp.height * baseScale * cScale;
+            const posX = (paperW - drawW) / 2;
+            const posY = (paperH - drawH) / 2;
+
+            fctx.drawImage(tempCanvas, posX, posY, drawW, drawH);
+            tempCanvas.width = 0; tempCanvas.height = 0;
+
+            const pageItem = document.createElement('div');
+            pageItem.className = 'print-page-item';
+            finalCanvas.className = 'print-page-canvas';
+            pageItem.appendChild(finalCanvas);
+            printContainer.appendChild(pageItem);
+          }
+        } else {
+          // [Img to PDF] 모드 인쇄
+          const sizeModeKey = document.getElementById('selPdfPageSize').value;
+          const orientOpt = document.getElementById('selPdfOrientation').value;
+          const margin = parseInt(document.getElementById('selPdfMargin').value, 10);
+          const cScale = imgState.contentScale || 1.0;
+          const customW = parseInt(document.getElementById('txtCustomWidthImg').value, 10) || 1920;
+          const customH = parseInt(document.getElementById('txtCustomHeightImg').value, 10) || 1080;
+
+          for (let step = 0; step < selectedIndices.length; step++) {
+            const idx = selectedIndices[step];
+            const item = imgState.items[idx];
+            const w = item.width;
+            const h = item.height;
+
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = w;
+            tempCanvas.height = h;
+            const tctx = tempCanvas.getContext('2d');
+            tctx.fillStyle = '#ffffff';
+            tctx.fillRect(0, 0, w, h);
+            tctx.drawImage(item.imgObj, 0, 0);
+
+            const isLandscape = orientOpt === 'l' || (orientOpt === 'auto' && w > h);
+            const paper = resolvePaperGeometry(sizeModeKey, isLandscape, w + margin * 2, h + margin * 2, customW, customH);
+
+            const paperW = paper.widthPx;
+            const paperH = paper.heightPx;
+            const targetMargin = (sizeModeKey === 'original' || sizeModeKey === 'custom') ? margin : Math.round(margin * 3.5);
+
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = paperW;
+            finalCanvas.height = paperH;
+            const fctx = finalCanvas.getContext('2d');
+            fctx.fillStyle = '#ffffff';
+            fctx.fillRect(0, 0, paperW, paperH);
+
+            const innerW = paperW - (targetMargin * 2);
+            const innerH = paperH - (targetMargin * 2);
+            const fitScale = Math.min(innerW / w, innerH / h);
+            const drawW = w * fitScale * cScale;
+            const drawH = h * fitScale * cScale;
+            const posX = (paperW - drawW) / 2;
+            const posY = (paperH - drawH) / 2;
+
+            fctx.drawImage(tempCanvas, posX, posY, drawW, drawH);
+            tempCanvas.width = 0; tempCanvas.height = 0;
+
+            const pageItem = document.createElement('div');
+            pageItem.className = 'print-page-item';
+            finalCanvas.className = 'print-page-canvas';
+            pageItem.appendChild(finalCanvas);
+            printContainer.appendChild(pageItem);
+          }
+        }
+
+        document.getElementById('statusText').textContent = '인쇄 대화상자 호출 중...';
+        await new Promise(r => setTimeout(r, 100)); // DOM 렌더링 완료 대기
+
+        window.print();
+
+        // 인쇄창이 닫힌 후 메모리 해제
+        setTimeout(() => {
+          printContainer.innerHTML = '';
+          document.getElementById('statusText').textContent = '준비 완료';
+        }, 1000);
+
+      } catch (err) {
+        console.error(err);
+        alert(`인쇄 처리 중 오류: ${err.message}`);
+        printContainer.innerHTML = '';
+        document.getElementById('statusText').textContent = '인쇄 오류 발생';
+      }
+    }
+    function triggerConvertAction() {
+      menuDropdown.classList.remove('show');
+      if (window.innerWidth <= 768) {
+        toggleMobileControl(true);
+      } else {
+        handleAction();
+      }
+    }
+
+    // 문서 닫기 (현재 활성화된 모드의 문서만 초기화)
+    function triggerCloseDocument() {
+      menuDropdown.classList.remove('show');
+      if (appMode === 'pdf2img') {
+        pdfState.doc = null;
+        pdfState.checkList = [];
+        pdfState.currentIndex = 0;
+      } else {
+        imgState.items = [];
+        imgState.currentIndex = 0;
+      }
+      refreshWorkspaceDisplay();
+    }
+
+    // 모바일 설정 패널 토글
+    function toggleMobileControl(show) {
+      const col = document.getElementById('colControl');
+      if (show) col.classList.add('mobile-open');
+      else col.classList.remove('mobile-open');
+    }
+
+    // 1열 리사이저 (너비 조절)
+    const colThumb = document.getElementById('colThumb');
+    const colResizer = document.getElementById('colResizer');
+    let isResizing = false;
+
+    colResizer.addEventListener('mousedown', () => {
+      isResizing = true;
+      colResizer.classList.add('resizing');
+      document.body.style.cursor = 'col-resize';
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!isResizing) return;
+      if (e.clientX >= 160 && e.clientX <= 500) {
+        colThumb.style.width = `${e.clientX}px`;
+      }
+    });
+    window.addEventListener('mouseup', () => {
+      if (isResizing) {
+        isResizing = false;
+        colResizer.classList.remove('resizing');
+        document.body.style.cursor = 'default';
+      }
+    });
+
+    // 커스텀 바이너리 인코더
+    const CustomEncoders = {
+      canvasToBMP(ctx, w, h) {
+        const imgData = ctx.getImageData(0, 0, w, h).data;
+        const rowSize = Math.floor((24 * w + 31) / 32) * 4;
+        const pixelArraySize = rowSize * h;
+        const buffer = new ArrayBuffer(54 + pixelArraySize);
+        const view = new DataView(buffer);
+
+        view.setUint16(0, 0x424D, false); // 'B', 'M'
+        view.setUint32(2, 54 + pixelArraySize, true);
+        view.setUint32(10, 54, true);
+
+        view.setUint32(14, 40, true);
+        view.setInt32(18, w, true);
+        view.setInt32(22, h, true);
+        view.setUint16(26, 1, true);
+        view.setUint16(28, 24, true);
+        view.setUint32(34, pixelArraySize, true);
+
+        let offset = 54;
+        for (let y = h - 1; y >= 0; y--) {
+          for (let x = 0; x < w; x++) {
+            const idx = (y * w + x) * 4;
+            view.setUint8(offset++, imgData[idx + 2]);
+            view.setUint8(offset++, imgData[idx + 1]);
+            view.setUint8(offset++, imgData[idx]);
+          }
+          while ((offset - 54) % 4 !== 0) view.setUint8(offset++, 0);
+        }
+        return new Blob([buffer], { type: 'image/bmp' });
+      },
+
+      async canvasToICO(canvas) {
+        const size = Math.min(256, Math.max(canvas.width, canvas.height));
+        const icoCanvas = document.createElement('canvas');
+        icoCanvas.width = size;
+        icoCanvas.height = size;
+        const ictx = icoCanvas.getContext('2d');
+        ictx.drawImage(canvas, 0, 0, size, size);
+
+        const pngBlob = await new Promise(r => icoCanvas.toBlob(r, 'image/png'));
+        const pngBuf = await pngBlob.arrayBuffer();
+
+        const totalSize = 22 + pngBuf.byteLength;
+        const icoBuffer = new ArrayBuffer(totalSize);
+        const view = new DataView(icoBuffer);
+
+        view.setUint16(0, 0, true);
+        view.setUint16(2, 1, true);
+        view.setUint16(4, 1, true);
+
+        view.setUint8(6, size >= 256 ? 0 : size);
+        view.setUint8(7, size >= 256 ? 0 : size);
+        view.setUint8(8, 0);
+        view.setUint8(9, 0);
+        view.setUint16(10, 1, true);
+        view.setUint16(12, 32, true);
+        view.setUint32(14, pngBuf.byteLength, true);
+        view.setUint32(18, 22, true);
+
+        new Uint8Array(icoBuffer, 22).set(new Uint8Array(pngBuf));
+        return new Blob([icoBuffer], { type: 'image/x-icon' });
+      },
+
+      canvasToTIFF(ctx, w, h) {
+        const imgData = ctx.getImageData(0, 0, w, h).data;
+        const tiffBytes = UTIF.encodeImage(imgData.buffer, w, h);
+        return new Blob([tiffBytes], { type: 'image/tiff' });
+      }
+    };
+
+    // [핵심] 모드 전환: 데이터를 지우지 않고 화면 뷰만 전환!
+    function setAppMode(mode) {
+      appMode = mode;
+      document.getElementById('tabPdf2Img').classList.toggle('active', mode === 'pdf2img');
+      document.getElementById('tabImg2Pdf').classList.toggle('active', mode === 'img2pdf');
+      document.getElementById('optionsPdf2Img').style.display = mode === 'pdf2img' ? 'flex' : 'none';
+      document.getElementById('optionsImg2Pdf').style.display = mode === 'img2pdf' ? 'flex' : 'none';
+
+      const btnAction = document.getElementById('btnAction');
+      btnAction.textContent = mode === 'pdf2img' ? '선택 페이지 변환' : 'PDF 변환';
+      document.getElementById('lblSelectAll').style.display = 'flex';
+
+      // 이전 데이터 상태를 그대로 복원하여 렌더링!
+      refreshWorkspaceDisplay();
+    }
+
+    // 현재 활성화된 모드에 맞게 화면 갱신
+    async function refreshWorkspaceDisplay() {
+      const viewerWrap = document.getElementById('viewerWrap');
+      const emptyMsg = document.getElementById('viewerEmptyMsg');
+      const btnAction = document.getElementById('btnAction');
+
+      if (appMode === 'pdf2img') {
+        if (pdfState.doc) {
+          emptyMsg.style.display = 'none';
+          viewerWrap.style.display = 'block';
+          await renderPdfThumbnailList();
+          loadMainViewer(pdfState.currentIndex);
+          updateThumbCounts();
+        } else {
+          document.getElementById('thumbList').innerHTML = '';
+          document.getElementById('thumbCount').textContent = '0 항목';
+          document.getElementById('viewerPageIndicator').textContent = '- / -';
+          viewerWrap.style.display = 'none';
+          emptyMsg.style.display = 'flex';
+          btnAction.disabled = true;
+          document.getElementById('statusText').textContent = '준비 완료';
+          const mc = document.getElementById('miniCanvas'); mc.width = 0; mc.height = 0;
+        }
+      } else {
+        if (imgState.items.length > 0) {
+          emptyMsg.style.display = 'none';
+          viewerWrap.style.display = 'block';
+          renderImageThumbnailList();
+          loadMainViewer(imgState.currentIndex);
+          updateThumbCounts();
+          document.getElementById('statusText').textContent = `${imgState.items.length}개 이미지 대기 중`;
+        } else {
+          document.getElementById('thumbList').innerHTML = '';
+          document.getElementById('thumbCount').textContent = '0 항목';
+          document.getElementById('viewerPageIndicator').textContent = '- / -';
+          viewerWrap.style.display = 'none';
+          emptyMsg.style.display = 'flex';
+          btnAction.disabled = true;
+          document.getElementById('statusText').textContent = '준비 완료';
+          const mc = document.getElementById('miniCanvas'); mc.width = 0; mc.height = 0;
+        }
+      }
+    }
+
+    // 파일 인풋 이벤트
+    document.getElementById('fileInput').addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+      await processFiles(files, -1, 'auto');
+      e.target.value = '';
+    });
+
+    // -------------------------------------------------------------
+    // [핵심] 전역 스마트 드래그 앤 드롭 라우터 (거슬리는 초록 오버레이 제거)
+    // -------------------------------------------------------------
+    window.addEventListener('dragover', (e) => {
+      e.preventDefault();
+    });
+
+    window.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      if (!e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
+
+      const files = Array.from(e.dataTransfer.files);
+      
+      // 드롭된 위치 파악
+      const colThumbElem = document.getElementById('colThumb');
+      const isOverThumb = colThumbElem.contains(e.target);
+
+      if (isOverThumb) {
+        // 1열 썸네일 영역에 떨어진 경우 (위치 정밀 삽입)
+        await processFiles(files, -1, 'thumb-area');
+      } else {
+        // 가운데 창이나 오른쪽 창 등 화면 어디든 떨어진 경우
+        await processFiles(files, -1, 'center-area');
+      }
+    });
+
+    // 통합 파일 처리기 (규칙 100% 반영)
+    async function processFiles(files, customInsertIndex = -1, targetArea = 'center-area') {
+      const pdfFile = files.find(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+      const imgFiles = files.filter(f => f.type.startsWith('image/') || /\.(png|jpe?g|webp|bmp)$/i.test(f.name));
+
+      // 1. PDF 파일이 들어온 경우: 처음이든 교체든 창 전체 아무 데나 떨어뜨려도 열림!
+      if (pdfFile) {
+        setAppMode('pdf2img'); // PDF 모드로 전환
+
+        // 기존 PDF가 있으면 닫고 새 PDF로 즉시 교체 로드 (이미지 목록은 유지!)
+        pdfState.fileName = pdfFile.name.replace(/\.[^/.]+$/, "");
+        document.getElementById('statusText').textContent = 'PDF 문서를 로드하는 중...';
+
+        try {
+          const arrayBuf = await pdfFile.arrayBuffer();
+          pdfState.doc = await pdfjsLib.getDocument({ data: arrayBuf }).promise;
+          const total = pdfState.doc.numPages;
+
+          pdfState.checkList = new Array(total).fill(false); // 기본 체크 해제
+          pdfState.currentIndex = 0;
+          document.getElementById('chkSelectAll').checked = false;
+
+          document.getElementById('thumbCount').textContent = `0 / ${total} 선택`;
+          document.getElementById('statusText').textContent = `로드 완료: 총 ${total}페이지`;
+
+          refreshWorkspaceDisplay();
+        } catch (err) {
+          console.error(err);
+          document.getElementById('statusText').textContent = 'PDF 문서를 읽을 수 없습니다.';
+        }
+        return;
+      }
+
+      // 2. 이미지 파일들이 들어온 경우
+      if (imgFiles.length > 0) {
+        setAppMode('img2pdf'); // 이미지 모드로 전환
+
+        document.getElementById('statusText').textContent = '이미지를 읽어오는 중...';
+        const newItems = [];
+        for (const file of imgFiles) {
+          const imgObj = await loadImageSafe(file);
+          newItems.push({
+            file: file,
+            imgObj: imgObj,
+            name: file.name,
+            width: imgObj.width,
+            height: imgObj.height
+          });
+        }
+
+        const newChecks = new Array(newItems.length).fill(true); // 기본 전체 선택
+        let targetViewIdx = 0;
+
+        if (imgState.items.length === 0) {
+          // [최초의 이미지]: 창 전체 아무데나 넣어도 등록!
+          imgState.items.push(...newItems);
+          imgState.checkList.push(...newChecks);
+          targetViewIdx = 0;
+        } else {
+          // [두 번째 이미지부터]:
+          if (customInsertIndex >= 0) {
+            // 1열에서 위치를 지정해서 삽입한 경우
+            imgState.items.splice(customInsertIndex, 0, ...newItems);
+            imgState.checkList.splice(customInsertIndex, 0, ...newChecks);
+            targetViewIdx = customInsertIndex;
+          } else {
+            // 가운데 창이나 오른쪽 창 등에 던져 넣으면:
+            // "가운데 창에 뜬 이미지(currentIndex)의 바로 다음(뒤)에 삽입!"
+            const insertPos = imgState.currentIndex + 1;
+            imgState.items.splice(insertPos, 0, ...newItems);
+            imgState.checkList.splice(insertPos, 0, ...newChecks);
+            targetViewIdx = insertPos;
+          }
+        }
+
+        imgState.currentIndex = targetViewIdx;
+        refreshWorkspaceDisplay();
+      }
+    }
+
+    async function loadImageSafe(file) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("이미지 로드 실패")); };
+        img.src = url;
+      });
+    }
+
+    // 1열 PDF 썸네일 렌더링
+    async function renderPdfThumbnailList() {
+      const container = document.getElementById('thumbList');
+      container.innerHTML = '';
+      if (!pdfState.doc) return;
+      const total = pdfState.doc.numPages;
+
+      for (let i = 1; i <= total; i++) {
+        const card = document.createElement('div');
+        card.className = `thumb-card ${i - 1 === pdfState.currentIndex ? 'active' : ''}`;
+        card.id = `thumb-card-${i - 1}`;
+        card.onclick = () => loadMainViewer(i - 1);
+
+        const header = document.createElement('div');
+        header.className = 'thumb-card-header';
+        header.innerHTML = `<span>#${i}</span>`;
+
+        const touchWrap = document.createElement('label');
+        touchWrap.className = 'chk-touch-wrap';
+        touchWrap.onclick = (e) => e.stopPropagation();
+
+        const chk = document.createElement('input');
+        chk.type = 'checkbox';
+        chk.checked = pdfState.checkList[i - 1];
+        chk.onchange = () => {
+          pdfState.checkList[i - 1] = chk.checked;
+          updateThumbCounts();
+        };
+        touchWrap.appendChild(chk);
+        header.appendChild(touchWrap);
+        card.appendChild(header);
+
+        const page = await pdfState.doc.getPage(i);
+        const vp = page.getViewport({ scale: 0.25 });
+        const canvas = document.createElement('canvas');
+        canvas.width = vp.width;
+        canvas.height = vp.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+        card.appendChild(canvas);
+
+        container.appendChild(card);
+      }
+      updateThumbCounts();
+    }
+
+    document.getElementById('chkSelectAll').addEventListener('change', (e) => {
+      const checked = e.target.checked;
+      if (appMode === 'pdf2img') {
+        pdfState.checkList = pdfState.checkList.map(() => checked);
+      } else {
+        imgState.checkList = imgState.checkList.map(() => checked);
+      }
+      document.querySelectorAll('#thumbList input[type="checkbox"]').forEach(c => c.checked = checked);
+      updateThumbCounts();
+    });
+
+    function updateThumbCounts() {
+      if (appMode === 'pdf2img') {
+        if (!pdfState.doc) {
+          document.getElementById('thumbCount').textContent = '0 항목';
+          document.getElementById('chkSelectAll').checked = false;
+          document.getElementById('btnAction').disabled = true;
+          return;
+        }
+        const selected = pdfState.checkList.filter(Boolean).length;
+        const total = pdfState.checkList.length;
+        document.getElementById('thumbCount').textContent = `${selected} / ${total} 선택`;
+        document.getElementById('chkSelectAll').checked = (total > 0 && selected === total);
+        document.getElementById('btnAction').disabled = selected === 0;
+      } else {
+        if (imgState.items.length === 0) {
+          document.getElementById('thumbCount').textContent = '0 항목';
+          document.getElementById('chkSelectAll').checked = false;
+          document.getElementById('btnAction').disabled = true;
+          return;
+        }
+        const selected = imgState.checkList.filter(Boolean).length;
+        const total = imgState.checkList.length;
+        document.getElementById('thumbCount').textContent = `${selected} / ${total} 선택`;
+        document.getElementById('chkSelectAll').checked = (total > 0 && selected === total);
+        document.getElementById('btnAction').disabled = selected === 0;
+      }
+    }
+
+    // 1열 이미지 썸네일 렌더링 (체크박스 및 드래그 앤 드롭 위치 지정 삽입 지원)
+    function renderImageThumbnailList() {
+      const container = document.getElementById('thumbList');
+      container.innerHTML = '';
+
+      imgState.items.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = `thumb-card ${idx === imgState.currentIndex ? 'active' : ''}`;
+        card.id = `thumb-card-${idx}`;
+        card.draggable = true;
+        card.dataset.index = idx;
+        card.onclick = () => loadMainViewer(idx);
+
+        card.addEventListener('dragstart', (e) => {
+          draggedCardIndex = idx;
+          card.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', idx);
+        });
+
+        card.addEventListener('dragend', () => {
+          card.classList.remove('dragging');
+          clearThumbDropLines();
+        });
+
+        // 마우스 위치에 따른 상단/하단 진한 가이드 라인
+        card.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const rect = card.getBoundingClientRect();
+          const relY = e.clientY - rect.top;
+          clearThumbDropLines();
+          if (relY < rect.height / 2) {
+            card.classList.add('drag-over-top');
+          } else {
+            card.classList.add('drag-over-bottom');
+          }
+        });
+
+        card.addEventListener('dragleave', (e) => {
+          e.stopPropagation();
+          card.classList.remove('drag-over-top', 'drag-over-bottom');
+        });
+
+        // 카드 사이에 드롭 (새 파일 삽입 또는 순서 이동)
+        card.addEventListener('drop', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const rect = card.getBoundingClientRect();
+          const isTop = (e.clientY - rect.top) < rect.height / 2;
+          let insertAt = isTop ? idx : idx + 1;
+          clearThumbDropLines();
+
+          if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            // [왼쪽 창에서 위치를 정해서 삽입!]
+            await processFiles(Array.from(e.dataTransfer.files), insertAt, 'thumb-slot');
+          } else if (draggedCardIndex !== null && draggedCardIndex !== idx) {
+            // 내부 카드 순서 이동 (아이템 및 체크 상태 동시 이동)
+            const movedItem = imgState.items.splice(draggedCardIndex, 1)[0];
+            const movedChk = imgState.checkList.splice(draggedCardIndex, 1)[0];
+            if (draggedCardIndex < insertAt) insertAt--;
+            imgState.items.splice(insertAt, 0, movedItem);
+            imgState.checkList.splice(insertAt, 0, movedChk);
+            imgState.currentIndex = insertAt;
+            renderImageThumbnailList();
+            loadMainViewer(insertAt);
+          }
+          draggedCardIndex = null;
+        });
+
+        const header = document.createElement('div');
+        header.className = 'thumb-card-header';
+        
+        const titleSpan = document.createElement('span');
+        titleSpan.textContent = `#${idx + 1}`;
+        header.appendChild(titleSpan);
+
+        const headerRight = document.createElement('div');
+        headerRight.style.display = 'flex';
+        headerRight.style.alignItems = 'center';
+        headerRight.style.gap = '8px';
+
+        const btnRow = document.createElement('div');
+        btnRow.className = 'thumb-btn-row';
+
+        const btnUp = document.createElement('button');
+        btnUp.className = 'btn-icon-sm';
+        btnUp.textContent = '▲';
+        btnUp.title = '위로 이동';
+        btnUp.onclick = (e) => { e.stopPropagation(); moveImageOrder(idx, -1); };
+
+        const btnDown = document.createElement('button');
+        btnDown.className = 'btn-icon-sm';
+        btnDown.textContent = '▼';
+        btnDown.title = '아래로 이동';
+        btnDown.onclick = (e) => { e.stopPropagation(); moveImageOrder(idx, 1); };
+
+        const btnDel = document.createElement('button');
+        btnDel.className = 'btn-icon-sm';
+        btnDel.textContent = '✕';
+        btnDel.title = '삭제';
+        btnDel.onclick = (e) => { e.stopPropagation(); removeImageItem(idx); };
+
+        btnRow.appendChild(btnUp);
+        btnRow.appendChild(btnDown);
+        btnRow.appendChild(btnDel);
+        headerRight.appendChild(btnRow);
+
+        // 이미지 선택 체크박스 (클릭 영역 1.5배 확대 래퍼 적용)
+        const touchWrap = document.createElement('label');
+        touchWrap.className = 'chk-touch-wrap';
+        touchWrap.onclick = (e) => e.stopPropagation();
+
+        const chk = document.createElement('input');
+        chk.type = 'checkbox';
+        chk.checked = imgState.checkList[idx] !== false;
+        chk.onchange = () => {
+          imgState.checkList[idx] = chk.checked;
+          updateThumbCounts();
+        };
+        touchWrap.appendChild(chk);
+        headerRight.appendChild(touchWrap);
+
+        header.appendChild(headerRight);
+        card.appendChild(header);
+
+        const thumbCanvas = document.createElement('canvas');
+        const tw = 180;
+        const th = Math.round((item.height / item.width) * tw);
+        thumbCanvas.width = tw;
+        thumbCanvas.height = th;
+        const tctx = thumbCanvas.getContext('2d');
+        tctx.drawImage(item.imgObj, 0, 0, tw, th);
+        card.appendChild(thumbCanvas);
+
+        container.appendChild(card);
+      });
+
+      updateThumbCounts();
+    }
+
+    function clearThumbDropLines() {
+      document.querySelectorAll('.thumb-card').forEach(c => {
+        c.classList.remove('drag-over-top', 'drag-over-bottom');
+      });
+    }
+
+    function moveImageOrder(index, delta) {
+      const target = index + delta;
+      if (target < 0 || target >= imgState.items.length) return;
+      const tempItem = imgState.items[index];
+      const tempChk = imgState.checkList[index];
+      imgState.items[index] = imgState.items[target];
+      imgState.checkList[index] = imgState.checkList[target];
+      imgState.items[target] = tempItem;
+      imgState.checkList[target] = tempChk;
+      imgState.currentIndex = target;
+      renderImageThumbnailList();
+      loadMainViewer(target);
+    }
+
+    function removeImageItem(index) {
+      imgState.items.splice(index, 1);
+      imgState.checkList.splice(index, 1);
+      if (imgState.currentIndex >= imgState.items.length) {
+        imgState.currentIndex = Math.max(0, imgState.items.length - 1);
+      }
+      renderImageThumbnailList();
+      if (imgState.items.length > 0) {
+        loadMainViewer(imgState.currentIndex);
+      } else {
+        refreshWorkspaceDisplay();
+      }
+    }
+
+    // 2열 메인 뷰어 로드
+    async function loadMainViewer(index) {
+      if (appMode === 'pdf2img') {
+        if (!pdfState.doc) return;
+        pdfState.currentIndex = index;
+      } else {
+        if (imgState.items.length === 0) return;
+        imgState.currentIndex = index;
+      }
+
+      document.querySelectorAll('.thumb-card').forEach((c, i) => c.classList.toggle('active', i === index));
+      const targetCard = document.getElementById(`thumb-card-${index}`);
+      if (targetCard) targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      document.getElementById('viewerEmptyMsg').style.display = 'none';
+      const wrap = document.getElementById('viewerWrap');
+      wrap.style.display = 'block';
+
+      const canvas = document.getElementById('mainViewerCanvas');
+      const ctx = canvas.getContext('2d');
+
+      if (appMode === 'pdf2img' && pdfState.doc) {
+        const total = pdfState.doc.numPages;
+        document.getElementById('viewerPageIndicator').textContent = `${index + 1} / ${total}`;
+        const page = await pdfState.doc.getPage(index + 1);
+        const vp = page.getViewport({ scale: 1.5 });
+        canvas.width = vp.width;
+        canvas.height = vp.height;
+        await page.render({ canvasContext: ctx, viewport: vp }).promise;
+      } else if (appMode === 'img2pdf' && imgState.items[index]) {
+        const item = imgState.items[index];
+        document.getElementById('viewerPageIndicator').textContent = `${index + 1} / ${imgState.items.length}`;
+        canvas.width = item.width;
+        canvas.height = item.height;
+        ctx.drawImage(item.imgObj, 0, 0);
+      }
+
+      applyZoom();
+      updateMiniPreview();
+    }
+
+    function navigateViewer(delta) {
+      const max = appMode === 'pdf2img' ? (pdfState.doc ? pdfState.doc.numPages : 0) : imgState.items.length;
+      if (max === 0) return;
+      const curIdx = appMode === 'pdf2img' ? pdfState.currentIndex : imgState.currentIndex;
+      let next = curIdx + delta;
+      if (next < 0) next = 0;
+      if (next >= max) next = max - 1;
+      loadMainViewer(next);
+    }
+
+    function adjustZoom(delta) {
+      const curZoom = appMode === 'pdf2img' ? pdfState.zoom : imgState.zoom;
+      const nextZoom = Math.max(0.3, Math.min(3.0, curZoom + delta));
+      if (appMode === 'pdf2img') pdfState.zoom = nextZoom;
+      else imgState.zoom = nextZoom;
+      applyZoom();
+    }
+    function resetZoom() {
+      if (appMode === 'pdf2img') pdfState.zoom = 1.0;
+      else imgState.zoom = 1.0;
+      applyZoom();
+    }
+    function applyZoom() {
+      const curZoom = appMode === 'pdf2img' ? pdfState.zoom : imgState.zoom;
+      const wrap = document.getElementById('viewerWrap');
+      wrap.style.transform = `scale(${curZoom})`;
+    }
+
+    function adjustPreviewScale(delta) {
+      const state = appMode === 'pdf2img' ? pdfState : imgState;
+      state.contentScale = Math.max(0.2, Math.min(3.0, Math.round((state.contentScale + delta) * 100) / 100));
+      updateMiniPreview();
+    }
+
+    function resetPreviewScale() {
+      const state = appMode === 'pdf2img' ? pdfState : imgState;
+      state.contentScale = 1.0;
+      updateMiniPreview();
+    }
+
+    // [핵심] 정해진 용지 크기(A3~B5, 사용자 정의, 원본)를 고정 유지하고 내부 내용물만 확대/축소/회전
+    function updateMiniPreview() {
+      const miniCanvas = document.getElementById('miniCanvas');
+      if (!miniCanvas) return;
+      const mctx = miniCanvas.getContext('2d');
+      const miniSheet = document.getElementById('miniSheet');
+      const info = document.getElementById('miniInfo');
+
+      const srcCanvas = document.getElementById('mainViewerCanvas');
+      if (!srcCanvas || srcCanvas.width === 0 || srcCanvas.height === 0) return;
+
+      const maxBoxW = 270;
+      const maxBoxH = 220;
+
+      if (appMode === 'pdf2img') {
+        const rot = parseInt(document.getElementById('selRotation').value, 10);
+        const fitKey = document.getElementById('selPageFit').value;
+        const cScale = pdfState.contentScale || 1.0;
+
+        const customW = parseInt(document.getElementById('txtCustomWidthPdf').value, 10) || 1920;
+        const customH = parseInt(document.getElementById('txtCustomHeightPdf').value, 10) || 1080;
+
+        // 원본 이미지 가로세로 (회전 적용)
+        const isRot90 = (rot === 90 || rot === 270);
+        const imgOrigW = isRot90 ? srcCanvas.height : srcCanvas.width;
+        const imgOrigH = isRot90 ? srcCanvas.width : srcCanvas.height;
+
+        const isLandscape = imgOrigW > imgOrigH;
+        const paper = resolvePaperGeometry(fitKey, isLandscape, imgOrigW, imgOrigH, customW, customH);
+
+        // 미리보기 박스(maxBoxW x maxBoxH) 안에 들어갈 시트 크기 계산
+        let sheetW, sheetH;
+        if (paper.ratio >= (maxBoxW / maxBoxH)) {
+          sheetW = maxBoxW;
+          sheetH = Math.round(maxBoxW / paper.ratio);
+        } else {
+          sheetH = maxBoxH;
+          sheetW = Math.round(maxBoxH * paper.ratio);
+        }
+
+        // 종이 용지 CSS 크기 확정 (용지는 확대/축소에도 절대 변하지 않음!)
+        miniSheet.style.width = `${sheetW}px`;
+        miniSheet.style.height = `${sheetH}px`;
+        info.textContent = `${paper.name} [${rot}°] · 내용물 ${Math.round(cScale * 100)}%`;
+
+        // 고해상도 Canvas 렌더링
+        const dpr = 2; // 선명한 캔버스
+        miniCanvas.width = sheetW * dpr;
+        miniCanvas.height = sheetH * dpr;
+        mctx.setTransform(1, 0, 0, 1, 0, 0);
+        mctx.scale(dpr, dpr);
+
+        // 하얀색 용지 바탕
+        mctx.fillStyle = '#ffffff';
+        mctx.fillRect(0, 0, sheetW, sheetH);
+
+        // 용지 안에 들어갈 이미지 기본 크기 (fit)
+        const fitScale = Math.min(sheetW / imgOrigW, sheetH / imgOrigH);
+        const baseDrawW = imgOrigW * fitScale;
+        const baseDrawH = imgOrigH * fitScale;
+
+        // 사용자 내용물 확대/축소 배율 적용
+        const finalDrawW = baseDrawW * cScale;
+        const finalDrawH = baseDrawH * cScale;
+
+        mctx.save();
+        // 용지 중앙 기준 좌표계
+        mctx.translate(sheetW / 2, sheetH / 2);
+        mctx.rotate((rot * Math.PI) / 180);
+
+        // 원본 캔버스 크기 대비 출력
+        const rawW = isRot90 ? finalDrawH : finalDrawW;
+        const rawH = isRot90 ? finalDrawW : finalDrawH;
+        mctx.drawImage(srcCanvas, -rawW / 2, -rawH / 2, rawW, rawH);
+        mctx.restore();
+
+      } else {
+        // [Img to PDF] 모드
+        const sizeModeKey = document.getElementById('selPdfPageSize').value;
+        const orientOpt = document.getElementById('selPdfOrientation').value;
+        const marginPx = parseInt(document.getElementById('selPdfMargin').value, 10);
+        const cScale = imgState.contentScale || 1.0;
+
+        const customW = parseInt(document.getElementById('txtCustomWidthImg').value, 10) || 1920;
+        const customH = parseInt(document.getElementById('txtCustomHeightImg').value, 10) || 1080;
+
+        const imgOrigW = srcCanvas.width;
+        const imgOrigH = srcCanvas.height;
+
+        const isLandscape = orientOpt === 'l' || (orientOpt === 'auto' && imgOrigW > imgOrigH);
+        const paper = resolvePaperGeometry(sizeModeKey, isLandscape, imgOrigW + marginPx * 2, imgOrigH + marginPx * 2, customW, customH);
+
+        let sheetW, sheetH;
+        if (paper.ratio >= (maxBoxW / maxBoxH)) {
+          sheetW = maxBoxW;
+          sheetH = Math.round(maxBoxW / paper.ratio);
+        } else {
+          sheetH = maxBoxH;
+          sheetW = Math.round(maxBoxH * paper.ratio);
+        }
+
+        // 종이 용지 크기 확정 (절대 불변)
+        miniSheet.style.width = `${sheetW}px`;
+        miniSheet.style.height = `${sheetH}px`;
+        info.textContent = `${paper.name} (여백 ${marginPx}px) · 내용물 ${Math.round(cScale * 100)}%`;
+
+        const dpr = 2;
+        miniCanvas.width = sheetW * dpr;
+        miniCanvas.height = sheetH * dpr;
+        mctx.setTransform(1, 0, 0, 1, 0, 0);
+        mctx.scale(dpr, dpr);
+
+        mctx.fillStyle = '#ffffff';
+        mctx.fillRect(0, 0, sheetW, sheetH);
+
+        // 여백 비율 계산 (미리보기 크기에 맞춘 여백)
+        const scaleFactor = sheetW / paper.widthPx;
+        const viewMargin = Math.round(marginPx * scaleFactor);
+
+        const innerW = Math.max(10, sheetW - (viewMargin * 2));
+        const innerH = Math.max(10, sheetH - (viewMargin * 2));
+
+        const fitScale = Math.min(innerW / imgOrigW, innerH / imgOrigH);
+        const baseDrawW = imgOrigW * fitScale;
+        const baseDrawH = imgOrigH * fitScale;
+
+        const finalDrawW = baseDrawW * cScale;
+        const finalDrawH = baseDrawH * cScale;
+
+        mctx.save();
+        mctx.translate(sheetW / 2, sheetH / 2);
+        mctx.drawImage(srcCanvas, -finalDrawW / 2, -finalDrawH / 2, finalDrawW, finalDrawH);
+        mctx.restore();
+      }
+    }
+
+    // 변환 실행 (단일 버튼으로 변환 및 자동 다운로드)
+    async function handleAction() {
+      if (appMode === 'pdf2img') {
+        await executePdfToImages();
+      } else {
+        await executeImagesToPdf();
+      }
+      toggleMobileControl(false);
+    }
+
+    // PDF ➡️ 이미지 분할 & ZIP 자동 저장 (용지 크기 고정 및 내용물 확대/축소/회전 완벽 반영)
+    async function executePdfToImages() {
+      if (!pdfState.doc) return;
+      const selectedPages = [];
+      pdfState.checkList.forEach((chk, i) => { if (chk) selectedPages.push(i + 1); });
+      if (selectedPages.length === 0) return;
+
+      const format = document.getElementById('selFormat').value;
+      const scale = parseFloat(document.getElementById('selScale').value);
+      const fit = document.getElementById('selPageFit').value;
+      const rot = parseInt(document.getElementById('selRotation').value, 10);
+      const cScale = pdfState.contentScale || 1.0;
+
+      document.getElementById('btnAction').disabled = true;
+      document.getElementById('btnAbort').style.display = 'inline-block';
+      document.getElementById('progWrap').style.display = 'block';
+      isAborted = false;
+      zipBlobs = [];
+
+      try {
+        for (let idx = 0; idx < selectedPages.length; idx++) {
+          if (isAborted) {
+            document.getElementById('statusText').textContent = '변환이 중단되었습니다.';
+            break;
+          }
+
+          const pageNum = selectedPages[idx];
+          const pct = Math.round(((idx + 1) / selectedPages.length) * 100);
+          document.getElementById('progFill').style.width = `${pct}%`;
+          document.getElementById('statusText').textContent = `변환 중: [${pageNum}페이지] (${pct}%)...`;
+
+          await new Promise(r => setTimeout(r, 0));
+
+          const page = await pdfState.doc.getPage(pageNum);
+          // scale 배율로 렌더링된 원본 뷰포트
+          const vp = page.getViewport({ scale: scale, rotation: rot });
+
+          // 1단계: 임시 캔버스에 해당 페이지를 렌더링
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = vp.width;
+          tempCanvas.height = vp.height;
+          const tctx = tempCanvas.getContext('2d');
+          tctx.fillStyle = '#ffffff';
+          tctx.fillRect(0, 0, vp.width, vp.height);
+          await page.render({ canvasContext: tctx, viewport: vp }).promise;
+
+          const isLandscape = vp.width > vp.height;
+          const customW = parseInt(document.getElementById('txtCustomWidthPdf').value, 10) || 1920;
+          const customH = parseInt(document.getElementById('txtCustomHeightPdf').value, 10) || 1080;
+          const paper = resolvePaperGeometry(fit, isLandscape, vp.width, vp.height, customW, customH);
+
+          // 2단계: 최종 용지 캔버스 생성 (규격에 따른 용지 캔버스 산출)
+          let finalCanvas = document.createElement('canvas');
+          let fctx = finalCanvas.getContext('2d');
+
+          let paperW, paperH;
+          if (fit === 'original') {
+            paperW = vp.width;
+            paperH = vp.height;
+          } else if (fit === 'custom') {
+            paperW = paper.widthPx;
+            paperH = paper.heightPx;
+          } else {
+            // 표준 용지(A3~B5): 비율 유지하며 vp 해상도에 맞춘 최적 캔버스 생성
+            if (paper.isLandscape) {
+              paperW = Math.max(vp.width, Math.round(vp.height * paper.ratio));
+              paperH = Math.round(paperW / paper.ratio);
+            } else {
+              paperH = Math.max(vp.height, Math.round(vp.width * paper.ratio));
+              paperW = Math.round(paperH / paper.ratio);
+            }
+          }
+
+          finalCanvas.width = paperW;
+          finalCanvas.height = paperH;
+
+          // 용지 배경 채우기 (흰색)
+          fctx.fillStyle = '#ffffff';
+          fctx.fillRect(0, 0, paperW, paperH);
+
+          // 내용물 맞춤 크기 계산
+          const baseScale = Math.min(paperW / vp.width, paperH / vp.height);
+          const drawW = vp.width * baseScale * cScale;
+          const drawH = vp.height * baseScale * cScale;
+          const posX = (paperW - drawW) / 2;
+          const posY = (paperH - drawH) / 2;
+
+          // 용지 중앙에 내용물 그리기
+          fctx.drawImage(tempCanvas, posX, posY, drawW, drawH);
+
+          tempCanvas.width = 0; tempCanvas.height = 0;
+
+          let blob;
+          if (format === 'png') {
+            blob = await new Promise(r => finalCanvas.toBlob(r, 'image/png'));
+          } else if (format === 'jpeg') {
+            blob = await new Promise(r => finalCanvas.toBlob(r, 'image/jpeg', 0.95));
+          } else if (format === 'webp') {
+            blob = await new Promise(r => finalCanvas.toBlob(r, 'image/webp', 0.95));
+          } else if (format === 'bmp') {
+            blob = CustomEncoders.canvasToBMP(fctx, finalCanvas.width, finalCanvas.height);
+          } else if (format === 'ico') {
+            blob = await CustomEncoders.canvasToICO(finalCanvas);
+          } else if (format === 'tiff') {
+            blob = CustomEncoders.canvasToTIFF(fctx, finalCanvas.width, finalCanvas.height);
+          }
+
+          finalCanvas.width = 0; finalCanvas.height = 0;
+
+          const fileName = `${pdfState.fileName}_p${String(pageNum).padStart(3, '0')}.${format}`;
+          zipBlobs.push({ name: fileName, blob });
+        }
+
+        if (!isAborted) {
+          document.getElementById('statusText').textContent = 'ZIP 파일 생성 중...';
+          const zip = new JSZip();
+          zipBlobs.forEach(item => zip.file(item.name, item.blob));
+          const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+          const url = URL.createObjectURL(zipBlob);
+          const a = document.createElement('a');
+          a.download = `${pdfState.fileName}_images.zip`;
+          a.href = url;
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+          document.getElementById('statusText').textContent = `완료! ${zipBlobs.length}장 저장됨.`;
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById('statusText').textContent = `오류: ${err.message}`;
+      } finally {
+        document.getElementById('btnAction').disabled = false;
+        document.getElementById('btnAbort').style.display = 'none';
+      }
+    }
+
+    // 이미지 ➡️ PDF 병합 & 자동 다운로드 (선택된 이미지만 병합, 최상급 화질 및 배율 완벽 반영)
+    async function executeImagesToPdf() {
+      const selectedIndices = [];
+      imgState.checkList.forEach((chk, idx) => {
+        if (chk) selectedIndices.push(idx);
+      });
+      if (selectedIndices.length === 0) return;
+
+      document.getElementById('btnAction').disabled = true;
+      document.getElementById('progWrap').style.display = 'block';
+
+      const { jsPDF } = window.jspdf;
+      const sizeMode = document.getElementById('selPdfPageSize').value;
+      const orientOpt = document.getElementById('selPdfOrientation').value;
+      const margin = parseInt(document.getElementById('selPdfMargin').value, 10);
+      const qualityOpt = document.getElementById('selPdfQuality') ? document.getElementById('selPdfQuality').value : 'ultra';
+      const cScale = imgState.contentScale || 1.0;
+      let doc = null;
+
+      try {
+        for (let step = 0; step < selectedIndices.length; step++) {
+          const i = selectedIndices[step];
+          const pct = Math.round(((step + 1) / selectedIndices.length) * 100);
+          document.getElementById('progFill').style.width = `${pct}%`;
+          document.getElementById('statusText').textContent = `PDF 생성 중: [${step + 1} / ${selectedIndices.length}]...`;
+
+          await new Promise(r => setTimeout(r, 0));
+
+          const item = imgState.items[i];
+          const w = item.width;
+          const h = item.height;
+
+          // 원본 화질을 100% 보존하는 고해상도 캔버스 생성
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = w;
+          tempCanvas.height = h;
+          const tctx = tempCanvas.getContext('2d');
+          tctx.fillStyle = '#ffffff';
+          tctx.fillRect(0, 0, w, h);
+          tctx.drawImage(item.imgObj, 0, 0);
+
+          let imgDataUrl;
+          let imgCompressFormat = 'JPEG';
+          if (qualityOpt === 'ultra') {
+            // [최상급 무손실]: PNG 포맷으로 1픽셀도 손실 없이 인코딩
+            imgDataUrl = tempCanvas.toDataURL('image/png');
+            imgCompressFormat = 'PNG';
+          } else if (qualityOpt === 'high') {
+            // [고화질]: JPEG 98%
+            imgDataUrl = tempCanvas.toDataURL('image/jpeg', 0.98);
+            imgCompressFormat = 'JPEG';
+          } else {
+            // [일반]: JPEG 90%
+            imgDataUrl = tempCanvas.toDataURL('image/jpeg', 0.90);
+            imgCompressFormat = 'JPEG';
+          }
+          tempCanvas.width = 0; tempCanvas.height = 0;
+
+          const isLandscape = orientOpt === 'l' || (orientOpt === 'auto' && w > h);
+          const orientation = isLandscape ? 'l' : 'p';
+
+          const customW = parseInt(document.getElementById('txtCustomWidthImg').value, 10) || 1920;
+          const customH = parseInt(document.getElementById('txtCustomHeightImg').value, 10) || 1080;
+          const paper = resolvePaperGeometry(sizeMode, isLandscape, w + margin * 2, h + margin * 2, customW, customH);
+
+          const pWidth = paper.widthPx;
+          const pHeight = paper.heightPx;
+          const targetMargin = (sizeMode === 'original' || sizeMode === 'custom') ? margin : Math.round(margin * 3.5);
+
+          if (step === 0) {
+            doc = new jsPDF({
+              orientation: orientation,
+              unit: 'px',
+              format: [pWidth, pHeight],
+              compress: true
+            });
+          } else {
+            doc.addPage([pWidth, pHeight], orientation);
+          }
+
+          const pageW = doc.internal.pageSize.getWidth();
+          const pageH = doc.internal.pageSize.getHeight();
+
+          // 여백 안쪽 유효 영역
+          const innerW = pageW - (targetMargin * 2);
+          const innerH = pageH - (targetMargin * 2);
+
+          // 비율에 맞춘 기준 크기
+          const fitScale = Math.min(innerW / w, innerH / h);
+          const baseDrawW = w * fitScale;
+          const baseDrawH = h * fitScale;
+
+          // 내용물 확대/축소 적용
+          const finalDrawW = baseDrawW * cScale;
+          const finalDrawH = baseDrawH * cScale;
+
+          // 페이지 정중앙 배치
+          const posX = (pageW - finalDrawW) / 2;
+          const posY = (pageH - finalDrawH) / 2;
+
+          doc.addImage(imgDataUrl, imgCompressFormat, posX, posY, finalDrawW, finalDrawH, undefined, 'FAST');
+        }
+
+        const outName = imgState.items[0].name.replace(/\.[^/.]+$/, "");
+        doc.save(`${outName}_merged.pdf`);
+        document.getElementById('statusText').textContent = `완료! ${selectedIndices.length}개 이미지 PDF 저장됨.`;
+      } catch (err) {
+        console.error(err);
+        document.getElementById('statusText').textContent = `PDF 병합 실패: ${err.message}`;
+      } finally {
+        document.getElementById('btnAction').disabled = false;
+      }
+    }
+
+    function abortAction() {
+      isAborted = true;
+      document.getElementById('btnAbort').disabled = true;
+    }
+  </script>
+</body>
+</html>
