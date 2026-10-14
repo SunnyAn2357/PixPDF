@@ -1496,7 +1496,7 @@
   <div id="printContainer"></div>
 
   <script>
-    console.log("PixPDF v1.9.5 초기화 (PDF/Img 양방향 듀얼 변환, 페이지 개별 설정, 휠/키보드 네비게이션, PWA 지원, 모바일 UI 최적화, PNG 배경 투명화, 모바일 뒤로가기/ESC 및 종료 보호, 선택 썸네일 투명 초록 오버레이)");
+    console.log("PixPDF v1.9.6 초기화 (PDF/Img 양방향 듀얼 변환, 페이지 개별 설정, 휠/키보드 네비게이션, PWA 지원, 모바일 UI 최적화, PNG 배경 투명화, 모바일 뒤로가기/ESC 및 종료 보호, 선택 썸네일 투명 초록 오버레이, 문서 닫기 분리)");
 
     // PWA Service Worker 등록 및 새 버전 자동 감지/새로고침 (Auto-Update)
     if ('serviceWorker' in navigator) {
@@ -2093,32 +2093,23 @@
       updateMiniPreview();
     }
 
-    // 햄버거 메뉴 토글 및 히스토리 관리
+    // 햄버거 메뉴 토글
     const btnHamburger = document.getElementById('btnHamburger');
     const menuDropdown = document.getElementById('menuDropdown');
 
-    function closeMenuDropdown(syncHistory = true) {
+    function closeMenuDropdown() {
       if (menuDropdown && menuDropdown.classList.contains('show')) {
         menuDropdown.classList.remove('show');
-        if (syncHistory && history.state && history.state.appLayer === 'menu') {
-          history.back();
-        }
       }
     }
 
     btnHamburger.addEventListener('click', (e) => {
       e.stopPropagation();
-      const willShow = !menuDropdown.classList.contains('show');
-      if (willShow) {
-        menuDropdown.classList.add('show');
-        try { history.pushState({ appLayer: 'menu' }, ''); } catch (err) {}
-      } else {
-        closeMenuDropdown(true);
-      }
+      menuDropdown.classList.toggle('show');
     });
 
     window.addEventListener('click', () => {
-      closeMenuDropdown(true);
+      closeMenuDropdown();
     });
 
     function triggerOpenFileDialog() {
@@ -2126,11 +2117,11 @@
       fileInput.accept = appMode === 'pdf2img' ? 'application/pdf,image/*' : 'image/*';
       fileInput.multiple = true;
       fileInput.click();
-      closeMenuDropdown(true);
+      closeMenuDropdown();
     }
 
     async function triggerPrint() {
-      closeMenuDropdown(true);
+      closeMenuDropdown();
 
       // 선택된 페이지/이미지 인덱스 추출 (유효한 아이템만 엄격 필터링)
       const selectedIndices = [];
@@ -2405,7 +2396,7 @@
       }
     }
     function triggerConvertAction() {
-      closeMenuDropdown(true);
+      closeMenuDropdown();
       if (window.innerWidth <= 768) {
         toggleMobileControl(true);
       } else {
@@ -2417,9 +2408,9 @@
       }
     }
 
-    // 문서 닫기 (현재 활성화된 모드의 문서만 초기화)
+    // 문서 닫기 (현재 활성화된 모드의 모든 이미지 또는 PDF 닫기)
     function triggerCloseDocument() {
-      closeMenuDropdown(true);
+      closeMenuDropdown();
       if (appMode === 'pdf2img') {
         pdfState.pages = [];
         pdfState.doc = null;
@@ -2431,6 +2422,7 @@
         imgState.currentIndex = 0;
       }
       refreshWorkspaceDisplay();
+      document.getElementById('statusText').textContent = '문서를 닫았습니다.';
     }
 
     // 활성 작업 존재 여부 확인 (이탈/새로고침 방어용)
@@ -4962,7 +4954,7 @@
         }
         const menu = document.getElementById('menuDropdown');
         if (menu && menu.classList.contains('show')) {
-          closeMenuDropdown(true);
+          closeMenuDropdown();
           return;
         }
         const col = document.getElementById('colControl');
@@ -5017,7 +5009,8 @@
       // 4. 햄버거 메뉴 닫기
       const menu = document.getElementById('menuDropdown');
       if (menu && menu.classList.contains('show')) {
-        closeMenuDropdown(false);
+        closeMenuDropdown();
+        try { history.pushState({ pixpdfRoot: true }, ''); } catch (err) {}
         return;
       }
 
