@@ -1,5 +1,5 @@
 // PixPDF Service Worker - 100% 로컬 및 오프라인 구동 보장
-const CACHE_NAME = 'pixpdf-cache-v2.3.3';
+const CACHE_NAME = 'pixpdf-cache-v2.3.4';
 
 const PRECACHE_ASSETS = [
   './',
@@ -18,7 +18,8 @@ const PRECACHE_ASSETS = [
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/utif/3.1.0/UTIF.min.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -73,7 +74,7 @@ self.addEventListener('fetch', (event) => {
 
         return networkResponse;
       }).catch(() => {
-        if (event.request.headers.get('accept').includes('text/html')) {
+        if (event.request.headers.get('accept')?.includes('text/html')) {
           return caches.match('./index.html');
         }
       });

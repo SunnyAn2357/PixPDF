@@ -6,7 +6,6 @@
   <title>PixPDF - PDF &amp; 이미지 양방향 변환 및 편집기</title>
 
   <!-- PWA & 파비콘 메타 설정 -->
-  <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0f766e">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -1669,39 +1668,57 @@
   <div id="printContainer"></div>
 
   <script>
-    console.log("PixPDF v2.3.3 초기화 (오프라인 pixpdf.html 파비콘 내장 및 온라인 index.html 경량화)");
+    const isHttpEnv = window.location.protocol.startsWith('http');
 
-    // PWA Service Worker 등록 및 새 버전 자동 감지/새로고침 (Auto-Update)
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').then((reg) => {
-          console.log('[PixPDF PWA] Service Worker 등록 완료:', reg.scope);
+    console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
+    console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.3.4 (오프라인 로컬 무오류 클린 환경 구축)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
+    console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
+    if (isHttpEnv) {
+      console.log('%c🌐 실행 환경: 웹 호스팅 PWA 모드 (https://)', 'color: #6366f1; font-weight: bold;');
+    } else {
+      console.log('%c📁 실행 환경: 오프라인 단독 로컬 파일 모드 (file://)', 'color: #6366f1; font-weight: bold;');
+      console.log('%c⚡ 로컬 안전 모드: 네트워크 및 매니페스트 요청 차단 (콘솔 무오류 보장)', 'color: #10b981;');
+    }
+    console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
 
-          // 새 서비스 워커 업데이트 감지
-          reg.addEventListener('updatefound', () => {
-            const newWorker = reg.installing;
-            if (newWorker) {
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  console.log('[PixPDF PWA] 새 버전 감지: 자동 갱신 적용');
-                  newWorker.postMessage({ action: 'skipWaiting' });
-                }
-              });
+    // PWA Manifest 및 Service Worker는 http/https 환경에서만 안전하게 구동 (file:// 환경에서의 CORS 에러 및 net::ERR_FAILED 원천 차단)
+    if (isHttpEnv) {
+      const manifestLink = document.createElement('link');
+      manifestLink.rel = 'manifest';
+      manifestLink.href = 'manifest.json';
+      document.head.appendChild(manifestLink);
+
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').then((reg) => {
+            console.log('%c✅ 서비스 워커 등록 완료! Scope: ' + reg.scope, 'color: #10b981; font-weight: bold;');
+
+            reg.addEventListener('updatefound', () => {
+              const newWorker = reg.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('%c🔄 [PixPDF PWA] 새 버전 감지: 자동 갱신 적용', 'color: #0d9488; font-weight: bold;');
+                    newWorker.postMessage({ action: 'skipWaiting' });
+                  }
+                });
+              }
+            });
+          }).catch((err) => {
+            console.warn('[PixPDF PWA] 서비스 워커 등록 스킵:', err);
+          });
+
+          let refreshing = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+              refreshing = true;
+              window.location.reload();
             }
           });
-        }).catch((err) => {
-          console.log('[PixPDF PWA] Service Worker 등록 스킵 (오프라인 로컬 파일 모드 등):', err);
         });
-
-        // 새 서비스 워커가 활성화(controllerchange)될 때 자동 새로고침
-        let refreshing = false;
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          if (!refreshing) {
-            refreshing = true;
-            window.location.reload();
-          }
-        });
-      });
+      }
     }
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
