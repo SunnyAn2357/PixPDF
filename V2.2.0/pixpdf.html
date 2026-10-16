@@ -558,13 +558,33 @@
     }
     .mini-info-text {
       font-size: 10px;
+      line-height: 1.35;
       font-weight: 600;
       color: var(--text-muted);
-      margin-top: 4px;
+      margin-top: 5px;
+      text-align: center;
+      max-width: 165px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5px;
+    }
+    .mini-info-line1 {
+      color: var(--text-main);
+      font-weight: 700;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 155px;
+    }
+    .mini-info-line2 {
+      color: #0f766e;
+      font-size: 9px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      background: rgba(15, 118, 110, 0.08);
+      padding: 1px 4px;
+      border-radius: 4px;
     }
 
     /* 우측 이미지 편집 메뉴 */
@@ -1175,8 +1195,30 @@
   <!-- 상단 헤더 (단일 1행) -->
   <header>
     <div class="header-left">
-      <!-- 햄버거 메뉴 버튼 -->
-      <button class="btn-hamburger" id="btnHamburger" title="메뉴 열기">☰</button>
+      <!-- PixPDF 메뉴 버튼 (아이콘 클릭 시 드롭다운 메뉴 오픈) -->
+      <button class="btn-hamburger" id="btnHamburger" title="메뉴 열기">
+        <svg width="24" height="24" viewBox="0 0 512 512" style="border-radius:5px; pointer-events:none; display:block;">
+          <defs>
+            <linearGradient id="hdrBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#042024"/><stop offset="50%" stop-color="#0d3b40"/><stop offset="100%" stop-color="#0f766e"/>
+            </linearGradient>
+            <linearGradient id="hdrDocGrad" x1="0%" y1="0%" x2="10%" y2="100%">
+              <stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#e2e8f0"/>
+            </linearGradient>
+            <linearGradient id="hdrPdfGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#f43f5e"/><stop offset="100%" stop-color="#e11d48"/>
+            </linearGradient>
+          </defs>
+          <rect width="512" height="512" rx="112" fill="url(#hdrBgGrad)"/>
+          <path d="M120 112 C120 90, 138 72, 160 72 L320 72 L400 152 L400 400 C400 422, 382 440, 360 440 L160 440 C138 440, 120 422, 120 400 Z" fill="url(#hdrDocGrad)"/>
+          <path d="M320 72 L320 132 C320 144, 328 152, 340 152 L400 152 Z" fill="#94a3b8"/>
+          <rect x="144" y="220" width="128" height="52" rx="10" fill="url(#hdrPdfGrad)"/>
+          <text x="208" y="258" font-family="system-ui, sans-serif" font-size="34" font-weight="900" fill="#ffffff" text-anchor="middle">PDF</text>
+          <circle cx="330" cy="246" r="22" fill="#0d9488"/>
+          <path d="M160 380 L230 290 L300 380 Z" fill="#0f766e"/>
+          <path d="M260 380 L320 310 L380 380 Z" fill="#14b8a6"/>
+        </svg>
+      </button>
       
       <!-- 햄버거 드롭다운 메뉴 -->
       <div class="menu-dropdown" id="menuDropdown">
@@ -1189,7 +1231,6 @@
 
       <div style="display:flex; align-items:center; gap:8px;">
         <h1>PixPDF</h1>
-        <span style="font-size:11px; font-weight:700; background:var(--primary-light); color:var(--primary); padding:2px 7px; border-radius:10px; border:1px solid #99f6e4;">v2.2.0</span>
       </div>
     </div>
 
@@ -1409,8 +1450,8 @@
               </div>
               <!-- 3행: 대두 / 소두 / 1:1 (사다리꼴 변형) -->
               <div class="edit-btn-row">
-                <button type="button" class="btn-edit-tool" title="상단 확대 사다리꼴 (대두)" onclick="adjustTrapezoid(0.1)">대두</button>
-                <button type="button" class="btn-edit-tool" title="하단 확대 사다리꼴 (소두)" onclick="adjustTrapezoid(-0.1)">소두</button>
+                <button type="button" class="btn-edit-tool" title="밑변 고정 + 윗변 1% 확대 (대두)" onclick="adjustTrapezoid(0.01)">대두</button>
+                <button type="button" class="btn-edit-tool" title="윗변 고정 + 밑변 1% 확대 (소두)" onclick="adjustTrapezoid(-0.01)">소두</button>
                 <button type="button" class="btn-edit-tool" title="사다리꼴 변형 1:1 초기화" onclick="resetTrapezoid()">1:1</button>
               </div>
               <!-- 4행: 투시 변환 (네 모서리 개별 조절 & 리셋) -->
@@ -1811,7 +1852,7 @@
       return { rot, rotPage, rotImg, isPageRot90, isImgRot90, target };
     }
 
-    // [핵심] 사다리꼴 변형(대두: 상단 확대, 소두: 하단 확대) 스트라이프 슬라이싱 렌더링
+    // [핵심] 사다리꼴 변형 (대두: 밑변 고정 + 윗변만 확대 / 소두: 윗변 고정 + 밑변만 확대)
     function drawImageWithTrapezoid(ctx, imgSource, dx, dy, dw, dh, trapezoid) {
       const trap = trapezoid || 0;
       if (trap === 0) {
@@ -1826,9 +1867,11 @@
 
       for (let i = 0; i < slices; i++) {
         const t = i / (slices - 1); // 0 (상단) ~ 1 (하단)
-        // trap > 0 (대두): 상단 폭 확대, 하단 폭 축소
-        // trap < 0 (소두): 상단 폭 축소, 하단 폭 확대
-        const widthMult = Math.max(0.05, 1 + trap * (1 - 2 * t));
+        // trap > 0 (대두): 밑변(t=1)은 1.0 고정, 윗변(t=0)은 1 + trap 확대
+        // trap < 0 (소두): 윗변(t=0)은 1.0 고정, 밑변(t=1)은 1 + |trap| 확대
+        const widthMult = trap > 0
+          ? (1 + trap * (1 - t))
+          : (1 + Math.abs(trap) * t);
         const curW = dw * widthMult;
         const curX = dx + (dw - curW) / 2;
         const curY = dy + i * sliceDstH;
@@ -1856,32 +1899,32 @@
         return;
       }
 
-      // 사다리꼴 오프셋 계산 (대두/소두)
-      const trapTopMult = 1 + trap;
-      const trapBotMult = 1 - trap;
-      const trapTopOffset = (dw * (trapTopMult - 1)) / 2;
-      const trapBotOffset = (dw * (trapBotMult - 1)) / 2;
-
-      // 4개 코너 목적지 좌표 (dx, dy 기준)
-      const pTL = {
-        x: dx - trapTopOffset + dw * ((c.tl?.x || 0) / 100),
-        y: dy + dh * ((c.tl?.y || 0) / 100)
-      };
-      const pTR = {
-        x: dx + dw + trapTopOffset + dw * ((c.tr?.x || 0) / 100),
-        y: dy + dh * ((c.tr?.y || 0) / 100)
-      };
-      const pBR = {
-        x: dx + dw + trapBotOffset + dw * ((c.br?.x || 0) / 100),
-        y: dy + dh + dh * ((c.br?.y || 0) / 100)
-      };
-      const pBL = {
-        x: dx - trapBotOffset + dw * ((c.bl?.x || 0) / 100),
-        y: dy + dh + dh * ((c.bl?.y || 0) / 100)
-      };
+      // 사다리꼴 오프셋 계산 (대두: 밑변 고정 + 윗변만 확대 / 소두: 윗변 고정 + 밑변만 확대)
+      const trapTopOffset = trap > 0 ? (dw * trap) / 2 : 0;
+      const trapBotOffset = trap < 0 ? (dw * Math.abs(trap)) / 2 : 0;
 
       const srcW = imgSource.naturalWidth || imgSource.width || dw;
       const srcH = imgSource.naturalHeight || imgSource.height || dh;
+      const scalePxX = dw / srcW;
+      const scalePxY = dh / srcH;
+
+      // 4개 코너 목적지 좌표 (dx, dy 기준 + 원본 픽셀 단위 1:1 오프셋 매핑)
+      const pTL = {
+        x: dx - trapTopOffset + ((c.tl?.x || 0) * scalePxX),
+        y: dy + ((c.tl?.y || 0) * scalePxY)
+      };
+      const pTR = {
+        x: dx + dw + trapTopOffset + ((c.tr?.x || 0) * scalePxX),
+        y: dy + ((c.tr?.y || 0) * scalePxY)
+      };
+      const pBR = {
+        x: dx + dw + trapBotOffset + ((c.br?.x || 0) * scalePxX),
+        y: dy + dh + ((c.br?.y || 0) * scalePxY)
+      };
+      const pBL = {
+        x: dx - trapBotOffset + ((c.bl?.x || 0) * scalePxX),
+        y: dy + dh + ((c.bl?.y || 0) * scalePxY)
+      };
 
       const gridX = 12;
       const gridY = 12;
@@ -3782,7 +3825,7 @@
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       const cur = cfg.trapezoid !== undefined ? cfg.trapezoid : 0;
-      cfg.trapezoid = Math.max(-0.6, Math.min(0.6, Math.round((cur + delta) * 10) / 10));
+      cfg.trapezoid = Math.max(-1.0, Math.min(1.0, Math.round((cur + delta) * 100) / 100));
       updateViewerEdits();
       updateMiniPreview();
     }
@@ -3892,29 +3935,32 @@
       const dh = origDrawH;
 
       const trap = cfg.trapezoid || 0;
-      const trapTopMult = 1 + trap;
-      const trapBotMult = 1 - trap;
-      const trapTopOffset = (dw * (trapTopMult - 1)) / 2;
-      const trapBotOffset = (dw * (trapBotMult - 1)) / 2;
+      const trapTopOffset = trap > 0 ? (dw * trap) / 2 : 0;
+      const trapBotOffset = trap < 0 ? (dw * Math.abs(trap)) / 2 : 0;
+
+      const srcW = item.imgObj.naturalWidth || item.imgObj.width || dw;
+      const srcH = item.imgObj.naturalHeight || item.imgObj.height || dh;
+      const scalePxX = dw / srcW;
+      const scalePxY = dh / srcH;
 
       const c = cfg.corners || { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
 
       const pLocal = {
         tl: {
-          x: dx - trapTopOffset + dw * ((c.tl?.x || 0) / 100),
-          y: dy + dh * ((c.tl?.y || 0) / 100)
+          x: dx - trapTopOffset + ((c.tl?.x || 0) * scalePxX),
+          y: dy + ((c.tl?.y || 0) * scalePxY)
         },
         tr: {
-          x: dx + dw + trapTopOffset + dw * ((c.tr?.x || 0) / 100),
-          y: dy + dh * ((c.tr?.y || 0) / 100)
+          x: dx + dw + trapTopOffset + ((c.tr?.x || 0) * scalePxX),
+          y: dy + ((c.tr?.y || 0) * scalePxY)
         },
         br: {
-          x: dx + dw + trapBotOffset + dw * ((c.br?.x || 0) / 100),
-          y: dy + dh + dh * ((c.br?.y || 0) / 100)
+          x: dx + dw + trapBotOffset + ((c.br?.x || 0) * scalePxX),
+          y: dy + dh + ((c.br?.y || 0) * scalePxY)
         },
         bl: {
-          x: dx - trapBotOffset + dw * ((c.bl?.x || 0) / 100),
-          y: dy + dh + dh * ((c.bl?.y || 0) / 100)
+          x: dx - trapBotOffset + ((c.bl?.x || 0) * scalePxX),
+          y: dy + dh + ((c.bl?.y || 0) * scalePxY)
         }
       };
 
@@ -4051,8 +4097,11 @@
           cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
         }
         const c = cfg.corners[selectedCornerKey];
-        c.x = Math.max(-100, Math.min(100, Math.round((c.x + dx) * 10) / 10));
-        c.y = Math.max(-100, Math.min(100, Math.round((c.y + dy) * 10) / 10));
+        // 리모콘 클릭 시 정확히 1픽셀(1px) 단위 이동
+        const stepX = dx > 0 ? 1 : (dx < 0 ? -1 : 0);
+        const stepY = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
+        c.x = Math.round((c.x || 0) + stepX);
+        c.y = Math.round((c.y || 0) + stepY);
         updateViewerEdits();
         updateMiniPreview();
         updateCornerPins();
@@ -4162,16 +4211,29 @@
       if (target.page) rotTargetsText.push('페이지');
       if (target.image) rotTargetsText.push('이미지');
       const rotLabelStr = rotTargetsText.length > 0 ? ` [${rotTargetsText.join('+')} ${rot}°]` : ` [0°]`;
-      let editDetails = `${Math.round(cScale * 100)}%`;
-      if (scaleX !== 1.0) editDetails += ` · 가로${Math.round(scaleX * 100)}%`;
+
+      // 1줄: 용지 규격 및 회전
+      const line1 = `${paper.name}${rotLabelStr}`;
+
+      // 2줄: 사용자가 이미지에 적용한 편집 내용 압축 요약
+      const line2Parts = [];
+      line2Parts.push(`크기${Math.round(cScale * 100)}%`);
+      if (scaleX !== 1.0) line2Parts.push(`가로${Math.round(scaleX * 100)}%`);
       if (cfg.trapezoid) {
-        const trapVal = Math.round(cfg.trapezoid * 10);
-        editDetails += trapVal > 0 ? ` · 대두+${trapVal}` : ` · 소두${Math.abs(trapVal)}`;
+        const trapVal = Math.round(cfg.trapezoid * 100);
+        line2Parts.push(trapVal > 0 ? `대두+${trapVal}%` : `소두+${Math.abs(trapVal)}%`);
       }
-      if (brightness !== 100) editDetails += ` · 밝기${brightness}%`;
-      if (contrast !== 100) editDetails += ` · 명암${contrast}%`;
-      info.textContent = `${paper.name}${rotLabelStr} · ${editDetails}`;
-      info.title = `${paper.name}${rotLabelStr} · 크기 ${Math.round(cScale * 100)}% (가로 ${Math.round(scaleX * 100)}%, 사다리꼴 ${cfg.trapezoid || 0}, 밝기 ${brightness}%, 대비 ${contrast}%, 이동 ${offsetX}%,${offsetY}%)`;
+      const c = cfg.corners;
+      if (c && (c.tl?.x || c.tl?.y || c.tr?.x || c.tr?.y || c.br?.x || c.br?.y || c.bl?.x || c.bl?.y)) {
+        line2Parts.push(`투시📐`);
+      }
+      if (brightness !== 100) line2Parts.push(`밝기${brightness}%`);
+      if (contrast !== 100) line2Parts.push(`명암${contrast}%`);
+      if (offsetX !== 0 || offsetY !== 0) line2Parts.push(`위치(${offsetX},${offsetY})`);
+      const line2 = line2Parts.join(' · ');
+
+      info.innerHTML = `<div class="mini-info-line1" title="${line1}">${line1}</div><div class="mini-info-line2" title="${line2}">${line2}</div>`;
+      info.title = `${line1}\n${line2}`;
 
       // 고해상도 Canvas 렌더링
       const dpr = 2; // 선명한 캔버스
@@ -4703,16 +4765,21 @@
           const deltaLocalX = deltaCanvX * cos - deltaCanvY * sin;
           const deltaLocalY = deltaCanvX * sin + deltaCanvY * cos;
 
-          // 이미지 너비/높이 기준 백분율 환산
-          const pctDx = (deltaLocalX / pts.dw) * 100;
-          const pctDy = (deltaLocalY / pts.dh) * 100;
+          const srcW = item.imgObj?.naturalWidth || item.imgObj?.width || pts.dw;
+          const srcH = item.imgObj?.naturalHeight || item.imgObj?.height || pts.dh;
+          const scalePxX = pts.dw / srcW;
+          const scalePxY = pts.dh / srcH;
+
+          // 원본 이미지 픽셀 단위로 환산
+          const deltaOrigPxX = Math.round(deltaLocalX / scalePxX);
+          const deltaOrigPxY = Math.round(deltaLocalY / scalePxY);
 
           if (!cfg.corners) {
             cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
           }
           cfg.corners[activeDraggingPinKey] = {
-            x: Math.max(-100, Math.min(100, Math.round((pinDragStartCornerVal.x + pctDx) * 10) / 10)),
-            y: Math.max(-100, Math.min(100, Math.round((pinDragStartCornerVal.y + pctDy) * 10) / 10))
+            x: pinDragStartCornerVal.x + deltaOrigPxX,
+            y: pinDragStartCornerVal.y + deltaOrigPxY
           };
 
           updateViewerEdits(curIdx);
@@ -4834,15 +4901,21 @@
           const deltaLocalX = deltaCanvX * cos - deltaCanvY * sin;
           const deltaLocalY = deltaCanvX * sin + deltaCanvY * cos;
 
-          const pctDx = (deltaLocalX / pts.dw) * 100;
-          const pctDy = (deltaLocalY / pts.dh) * 100;
+          const srcW = item.imgObj?.naturalWidth || item.imgObj?.width || pts.dw;
+          const srcH = item.imgObj?.naturalHeight || item.imgObj?.height || pts.dh;
+          const scalePxX = pts.dw / srcW;
+          const scalePxY = pts.dh / srcH;
+
+          // 원본 이미지 픽셀 단위로 환산
+          const deltaOrigPxX = Math.round(deltaLocalX / scalePxX);
+          const deltaOrigPxY = Math.round(deltaLocalY / scalePxY);
 
           if (!cfg.corners) {
             cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
           }
           cfg.corners[activeDraggingPinKey] = {
-            x: Math.max(-100, Math.min(100, Math.round((pinDragStartCornerVal.x + pctDx) * 10) / 10)),
-            y: Math.max(-100, Math.min(100, Math.round((pinDragStartCornerVal.y + pctDy) * 10) / 10))
+            x: pinDragStartCornerVal.x + deltaOrigPxX,
+            y: pinDragStartCornerVal.y + deltaOrigPxY
           };
 
           updateViewerEdits(curIdx);
