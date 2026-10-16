@@ -1450,8 +1450,8 @@
               </div>
               <!-- 3행: 대두 / 소두 / 1:1 (사다리꼴 변형) -->
               <div class="edit-btn-row">
-                <button type="button" class="btn-edit-tool" title="밑변 고정 + 윗변 1% 확대 (대두)" onclick="adjustTrapezoid(0.01)">대두</button>
-                <button type="button" class="btn-edit-tool" title="윗변 고정 + 밑변 1% 확대 (소두)" onclick="adjustTrapezoid(-0.01)">소두</button>
+                <button type="button" class="btn-edit-tool" title="밑변 고정 + 윗변 1% 확대 (대두)" onclick="adjustTrapezoid('top')">대두</button>
+                <button type="button" class="btn-edit-tool" title="윗변 고정 + 밑변 1% 확대 (소두)" onclick="adjustTrapezoid('bot')">소두</button>
                 <button type="button" class="btn-edit-tool" title="사다리꼴 변형 1:1 초기화" onclick="resetTrapezoid()">1:1</button>
               </div>
               <!-- 4행: 투시 변환 (네 모서리 개별 조절 & 리셋) -->
@@ -1852,27 +1852,43 @@
       return { rot, rotPage, rotImg, isPageRot90, isImgRot90, target };
     }
 
-    // [핵심] 사다리꼴 변형 (대두: 밑변 고정 + 윗변만 확대 / 소두: 윗변 고정 + 밑변만 확대)
+    // 사다리꼴 변형 상단/하단 확장량 해석 헬퍼 함수 (상단과 하단이 독립적으로 유지·확장)
+    function resolveTrapezoidExpands(trapezoid, dw, scalePxX = 1) {
+      let topExp = 0, botExp = 0;
+      if (typeof trapezoid === 'object' && trapezoid !== null) {
+        topExp = (trapezoid.top || 0) * scalePxX;
+        botExp = (trapezoid.bot || 0) * scalePxX;
+      } else if (typeof trapezoid === 'number' && trapezoid !== 0) {
+        if (trapezoid > 0) {
+          topExp = dw * trapezoid;
+        } else {
+          botExp = dw * Math.abs(trapezoid);
+        }
+      }
+      return { topExp, botExp };
+    }
+
+    // [핵심] 사다리꼴 변형 (상단 폭 / 하단 폭 독립적 확장 지원)
     function drawImageWithTrapezoid(ctx, imgSource, dx, dy, dw, dh, trapezoid) {
-      const trap = trapezoid || 0;
-      if (trap === 0) {
+      const srcW = imgSource.naturalWidth || imgSource.width || dw;
+      const srcH = imgSource.naturalHeight || imgSource.height || dh;
+      const scalePxX = dw / srcW;
+      const { topExp, botExp } = resolveTrapezoidExpands(trapezoid, dw, scalePxX);
+
+      if (topExp === 0 && botExp === 0) {
         ctx.drawImage(imgSource, dx, dy, dw, dh);
         return;
       }
       const slices = 60;
-      const srcW = imgSource.naturalWidth || imgSource.width || dw;
-      const srcH = imgSource.naturalHeight || imgSource.height || dh;
       const sliceSrcH = srcH / slices;
       const sliceDstH = dh / slices;
 
+      const topW = dw + topExp;
+      const botW = dw + botExp;
+
       for (let i = 0; i < slices; i++) {
         const t = i / (slices - 1); // 0 (상단) ~ 1 (하단)
-        // trap > 0 (대두): 밑변(t=1)은 1.0 고정, 윗변(t=0)은 1 + trap 확대
-        // trap < 0 (소두): 윗변(t=0)은 1.0 고정, 밑변(t=1)은 1 + |trap| 확대
-        const widthMult = trap > 0
-          ? (1 + trap * (1 - t))
-          : (1 + Math.abs(trap) * t);
-        const curW = dw * widthMult;
+        const curW = topW * (1 - t) + botW * t;
         const curX = dx + (dw - curW) / 2;
         const curY = dy + i * sliceDstH;
 
@@ -1886,27 +1902,27 @@
 
     // [핵심] 사각 투시 변환(Perspective Warp / 4-Corner Pinning) 12x12 메쉬 아핀 매핑 렌더링
     function drawPerspectiveQuad(ctx, imgSource, dx, dy, dw, dh, corners, trapezoid) {
-      const trap = trapezoid || 0;
-      const c = corners || { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
-      const isZeroCorners = (!c.tl || (c.tl.x === 0 && c.tl.y === 0 && c.tr.x === 0 && c.tr.y === 0 && c.br.x === 0 && c.br.y === 0 && c.bl.x === 0 && c.bl.y === 0));
-
-      if (isZeroCorners && trap === 0) {
-        ctx.drawImage(imgSource, dx, dy, dw, dh);
-        return;
-      }
-      if (isZeroCorners && trap !== 0) {
-        drawImageWithTrapezoid(ctx, imgSource, dx, dy, dw, dh, trap);
-        return;
-      }
-
-      // 사다리꼴 오프셋 계산 (대두: 밑변 고정 + 윗변만 확대 / 소두: 윗변 고정 + 밑변만 확대)
-      const trapTopOffset = trap > 0 ? (dw * trap) / 2 : 0;
-      const trapBotOffset = trap < 0 ? (dw * Math.abs(trap)) / 2 : 0;
-
       const srcW = imgSource.naturalWidth || imgSource.width || dw;
       const srcH = imgSource.naturalHeight || imgSource.height || dh;
       const scalePxX = dw / srcW;
       const scalePxY = dh / srcH;
+      const { topExp, botExp } = resolveTrapezoidExpands(trapezoid, dw, scalePxX);
+
+      const c = corners || { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+      const isZeroCorners = (!c.tl || (c.tl.x === 0 && c.tl.y === 0 && c.tr.x === 0 && c.tr.y === 0 && c.br.x === 0 && c.br.y === 0 && c.bl.x === 0 && c.bl.y === 0));
+
+      if (isZeroCorners && topExp === 0 && botExp === 0) {
+        ctx.drawImage(imgSource, dx, dy, dw, dh);
+        return;
+      }
+      if (isZeroCorners && (topExp !== 0 || botExp !== 0)) {
+        drawImageWithTrapezoid(ctx, imgSource, dx, dy, dw, dh, trapezoid);
+        return;
+      }
+
+      // 사다리꼴 오프셋 계산 (상단 및 하단 각각 독립적 좌우 확장)
+      const trapTopOffset = topExp / 2;
+      const trapBotOffset = botExp / 2;
 
       // 4개 코너 목적지 좌표 (dx, dy 기준 + 원본 픽셀 단위 1:1 오프셋 매핑)
       const pTL = {
@@ -1993,6 +2009,32 @@
           );
         }
       }
+    }
+
+    // PDF 페이지의 비트맵 캔버스를 보장하여 이미지와 100% 동일한 편집 파이프라인(회전, 용지 맞춤, 대두/소두, 투시변환) 제공
+    async function ensureItemCanvas(item) {
+      if (!item) return null;
+      if (item.type === 'image') return item.imgObj;
+      if (item.type === 'pdf') {
+        if (!item.imgObj) {
+          const page = await item.doc.getPage(item.pageNum);
+          const origVp = page.getViewport({ scale: 1.0 });
+          item.width = origVp.width;
+          item.height = origVp.height;
+          // 고화질 2.0x 오프스크린 캔버스 렌더링
+          const offCanvas = document.createElement('canvas');
+          const vp = page.getViewport({ scale: 2.0 });
+          offCanvas.width = vp.width;
+          offCanvas.height = vp.height;
+          const offCtx = offCanvas.getContext('2d');
+          offCtx.fillStyle = '#ffffff';
+          offCtx.fillRect(0, 0, vp.width, vp.height);
+          await page.render({ canvasContext: offCtx, viewport: vp }).promise;
+          item.imgObj = offCanvas;
+        }
+        return item.imgObj;
+      }
+      return null;
     }
 
     // [핵심] 바탕 용지(Paper) 규격/방향/여백 위에 내용물(Image)의 위치/회전/스케일/필터/투시변환을 합성하여 캔버스에 렌더링
@@ -2092,7 +2134,7 @@
 
       const origDrawW = isImgRot90 ? (baseDrawH * cScale) : (baseDrawW * cScale * scaleX);
       const origDrawH = isImgRot90 ? (baseDrawW * cScale * scaleX) : (baseDrawH * cScale);
-      drawPerspectiveQuad(ctx, item.imgObj, -origDrawW / 2, -origDrawH / 2, origDrawW, origDrawH, cfg.corners, cfg.trapezoid);
+      drawPerspectiveQuad(ctx, item.imgObj, -origDrawW / 2, -origDrawH / 2, origDrawW, origDrawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
       ctx.restore();
 
       return paper;
@@ -2156,6 +2198,9 @@
       if (item.settings.offsetX === undefined) item.settings.offsetX = 0;
       if (item.settings.offsetY === undefined) item.settings.offsetY = 0;
       if (item.settings.transparentBg === undefined) item.settings.transparentBg = (docState.globalSettings.transparentBg !== undefined ? docState.globalSettings.transparentBg : true);
+      if (!item.settings.trapExp) {
+        item.settings.trapExp = { top: 0, bot: 0 };
+      }
       if (!item.settings.corners) {
         item.settings.corners = {
           tl: { x: 0, y: 0 },
@@ -2334,15 +2379,18 @@
       const canvas = document.getElementById(`thumb-canvas-${index}`);
       if (!canvas) return;
       const cfg = getEffectiveItemSettings(index);
-      const { rotImg } = getResolvedRotations(cfg);
 
-      if (item.type === 'pdf') {
+      if (item.type === 'pdf' && !item.imgObj) {
+        const { rotImg } = getResolvedRotations(cfg);
         const b = cfg.brightness !== undefined ? cfg.brightness : 100;
         const c = cfg.contrast !== undefined ? cfg.contrast : 100;
         canvas.style.filter = (b !== 100 || c !== 100) ? `brightness(${b}%) contrast(${c}%)` : 'none';
         const page = await item.doc.getPage(item.pageNum);
         await renderPdfPageToCanvas(page, 0.65, rotImg, canvas);
       } else {
+        if (item.type === 'pdf') {
+          await ensureItemCanvas(item);
+        }
         canvas.style.filter = 'none';
         canvas.style.transform = 'none';
         drawPaperWithImage(canvas, item, cfg, { isThumbnail: true });
@@ -2704,7 +2752,7 @@
           if (brightness !== 100 || contrast !== 100) {
             fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
           }
-          drawPerspectiveQuad(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.corners, cfg.trapezoid);
+          drawPerspectiveQuad(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
           fctx.restore();
           tempCanvas.width = 0; tempCanvas.height = 0;
 
@@ -3657,22 +3705,15 @@
       if (!item) return;
 
       const cfg = getEffectiveItemSettings(index);
-      const { rotImg } = getResolvedRotations(cfg);
 
       if (item.type === 'pdf') {
-        const b = cfg.brightness !== undefined ? cfg.brightness : 100;
-        const c = cfg.contrast !== undefined ? cfg.contrast : 100;
-        canvas.style.filter = (b !== 100 || c !== 100) ? `brightness(${b}%) contrast(${c}%)` : 'none';
-        const page = await item.doc.getPage(item.pageNum);
-        await renderPdfPageToCanvas(page, 1.5, rotImg, canvas);
-        if (wrap) wrap.classList.remove('checkerboard-bg');
-      } else {
-        canvas.style.filter = 'none';
-        canvas.style.transform = 'none';
-        drawPaperWithImage(canvas, item, cfg, { isThumbnail: false });
-        const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
-        if (wrap) wrap.classList.toggle('checkerboard-bg', isTransparent);
+        await ensureItemCanvas(item);
       }
+      canvas.style.filter = 'none';
+      canvas.style.transform = 'none';
+      drawPaperWithImage(canvas, item, cfg, { isThumbnail: false });
+      const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
+      if (wrap) wrap.classList.toggle('checkerboard-bg', isTransparent);
     }
 
     // 2열 메인 뷰어 로드
@@ -3706,7 +3747,12 @@
       applyZoom();
       updateViewerEdits(index);
       updateMiniPreview();
-      if (isPerspectiveActive) updateCornerPins();
+      if (isPerspectiveActive) {
+        updateCornerPins();
+      } else {
+        const overlay = document.getElementById('perspectiveOverlay');
+        if (overlay) overlay.style.display = 'none';
+      }
     }
 
     function navigateViewer(delta) {
@@ -3744,41 +3790,17 @@
       const mvc = document.getElementById('mainViewerCanvas');
       const tc = document.getElementById(`thumb-canvas-${curIdx}`);
 
-      if (item.type === 'pdf') {
-        const b = cfg.brightness !== undefined ? cfg.brightness : 100;
-        const c = cfg.contrast !== undefined ? cfg.contrast : 100;
-        const filterStr = (b !== 100 || c !== 100) ? `brightness(${b}%) contrast(${c}%)` : 'none';
-        const cScale = cfg.contentScale || 1.0;
-        const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
-        const ox = cfg.offsetX !== undefined ? cfg.offsetX : 0;
-        const oy = cfg.offsetY !== undefined ? cfg.offsetY : 0;
-        const transformStr = (cScale === 1.0 && scaleX === 1.0 && ox === 0 && oy === 0)
-          ? 'none'
-          : `translate(${ox}%, ${oy}%) scale(${cScale * scaleX}, ${cScale})`;
-
-        if (curIdx === activeCurIdx && mvc) {
-          mvc.style.filter = filterStr;
-          mvc.style.transform = transformStr;
-          mvc.style.transformOrigin = 'center center';
-        }
-        if (tc) {
-          tc.style.filter = filterStr;
-          tc.style.transform = transformStr;
-          tc.style.transformOrigin = 'center center';
-        }
-      } else {
-        if (curIdx === activeCurIdx && mvc) {
-          mvc.style.filter = 'none';
-          mvc.style.transform = 'none';
-          renderMainViewerCanvas(curIdx);
-        }
-        if (tc) {
-          tc.style.filter = 'none';
-          tc.style.transform = 'none';
-          updateThumbnailCanvas(curIdx);
-        }
+      if (curIdx === activeCurIdx && mvc) {
+        mvc.style.filter = 'none';
+        mvc.style.transform = 'none';
+        renderMainViewerCanvas(curIdx);
       }
-      if (isPerspectiveActive) {
+      if (tc) {
+        tc.style.filter = 'none';
+        tc.style.transform = 'none';
+        updateThumbnailCanvas(curIdx);
+      }
+      if (isPerspectiveActive && curIdx === activeCurIdx) {
         updateCornerPins();
       }
     }
@@ -3821,21 +3843,44 @@
       updateMiniPreview();
     }
 
-    function adjustTrapezoid(delta) {
+    function adjustTrapezoid(mode) {
       const curIdx = docState.currentIndex;
+      const item = docState.items[curIdx];
+      if (!item) return;
       const cfg = getEffectiveItemSettings(curIdx);
-      const cur = cfg.trapezoid !== undefined ? cfg.trapezoid : 0;
-      cfg.trapezoid = Math.max(-1.0, Math.min(1.0, Math.round((cur + delta) * 100) / 100));
+      if (!cfg.trapExp) {
+        cfg.trapExp = { top: 0, bot: 0 };
+      }
+
+      // 원본 이미지/PDF 가로 크기 기준
+      const baseW = item.width || item.imgObj?.naturalWidth || item.imgObj?.width || 1000;
+      const curTopW = baseW + (cfg.trapExp.top || 0);
+      const curBotW = baseW + (cfg.trapExp.bot || 0);
+
+      // 밑변과 윗변 중 더 짧은 길이의 1% 픽셀 계산 (최소 1px)
+      const stepPx = Math.max(1, Math.round(Math.min(curTopW, curBotW) * 0.01));
+
+      if (mode === 'top' || mode > 0) {
+        // 대두: 윗변 길이 확대 (밑변은 기존 크기 그대로 유지)
+        cfg.trapExp.top = (cfg.trapExp.top || 0) + stepPx;
+      } else if (mode === 'bot' || mode < 0) {
+        // 소두: 밑변 길이 확대 (윗변은 기존 크기 그대로 유지)
+        cfg.trapExp.bot = (cfg.trapExp.bot || 0) + stepPx;
+      }
+
       updateViewerEdits();
       updateMiniPreview();
+      if (isPerspectiveActive) updateCornerPins();
     }
 
     function resetTrapezoid() {
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
+      cfg.trapExp = { top: 0, bot: 0 };
       cfg.trapezoid = 0;
       updateViewerEdits();
       updateMiniPreview();
+      if (isPerspectiveActive) updateCornerPins();
     }
 
     function adjustBrightness(delta) {
@@ -3992,16 +4037,27 @@
     // 메인 뷰어 상의 4개 핀 핸들과 SVG 가이드 다각형 위치 실시간 동기화
     function updateCornerPins() {
       const overlay = document.getElementById('perspectiveOverlay');
-      if (!overlay || overlay.style.display === 'none') return;
+      if (!overlay) return;
+      if (!isPerspectiveActive) {
+        overlay.style.display = 'none';
+        return;
+      }
 
       const canvas = document.getElementById('mainViewerCanvas');
       const curIdx = docState.currentIndex;
       const item = docState.items[curIdx];
-      if (!canvas || !item || !item.imgObj || canvas.width === 0 || canvas.height === 0) return;
+      if (!canvas || !item || !item.imgObj || canvas.width === 0 || canvas.height === 0) {
+        overlay.style.display = 'none';
+        return;
+      }
 
       const cfg = getEffectiveItemSettings(curIdx);
       const pts = getCornerCanvasPoints(item, cfg, canvas.width, canvas.height);
-      if (!pts) return;
+      if (!pts) {
+        overlay.style.display = 'none';
+        return;
+      }
+      overlay.style.display = 'block';
 
       const dispW = canvas.clientWidth || canvas.offsetWidth;
       const dispH = canvas.clientHeight || canvas.offsetHeight;
@@ -4219,7 +4275,10 @@
       const line2Parts = [];
       line2Parts.push(`크기${Math.round(cScale * 100)}%`);
       if (scaleX !== 1.0) line2Parts.push(`가로${Math.round(scaleX * 100)}%`);
-      if (cfg.trapezoid) {
+      if (cfg.trapExp && (cfg.trapExp.top || cfg.trapExp.bot)) {
+        if (cfg.trapExp.top) line2Parts.push(`대두+${cfg.trapExp.top}px`);
+        if (cfg.trapExp.bot) line2Parts.push(`소두+${cfg.trapExp.bot}px`);
+      } else if (cfg.trapezoid) {
         const trapVal = Math.round(cfg.trapezoid * 100);
         line2Parts.push(trapVal > 0 ? `대두+${trapVal}%` : `소두+${Math.abs(trapVal)}%`);
       }
@@ -4279,7 +4338,7 @@
       if (brightness !== 100 || contrast !== 100) {
         mctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
       }
-      drawPerspectiveQuad(mctx, srcCanvas, posX, posY, finalDrawW, finalDrawH, cfg.corners, cfg.trapezoid);
+      drawPerspectiveQuad(mctx, srcCanvas, posX, posY, finalDrawW, finalDrawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
       mctx.restore();
     }
 
@@ -4428,7 +4487,7 @@
           if (brightness !== 100 || contrast !== 100) {
             fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
           }
-          drawPerspectiveQuad(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.corners, cfg.trapezoid);
+          drawPerspectiveQuad(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
           fctx.restore();
           tempCanvas.width = 0; tempCanvas.height = 0;
 
@@ -4615,7 +4674,7 @@
           if (brightness !== 100 || contrast !== 100) {
             fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
           }
-          drawPerspectiveQuad(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.corners, cfg.trapezoid);
+          drawPerspectiveQuad(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
           fctx.restore();
           tempCanvas.width = 0; tempCanvas.height = 0;
 
@@ -4665,6 +4724,13 @@
     if (viewerViewport) {
       viewerViewport.addEventListener('wheel', (e) => {
         e.preventDefault();
+        if (e.ctrlKey) {
+          // Ctrl + 마우스 휠: 중앙 뷰어 확대/축소 (0.1 단위)
+          const zoomDelta = e.deltaY < 0 ? 0.1 : -0.1;
+          adjustZoom(zoomDelta);
+          return;
+        }
+
         if (wheelThrottleTimer) return;
         wheelThrottleTimer = setTimeout(() => { wheelThrottleTimer = null; }, 180);
 
