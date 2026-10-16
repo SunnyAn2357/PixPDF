@@ -2198,6 +2198,7 @@
       if (item.settings.offsetX === undefined) item.settings.offsetX = 0;
       if (item.settings.offsetY === undefined) item.settings.offsetY = 0;
       if (item.settings.transparentBg === undefined) item.settings.transparentBg = (docState.globalSettings.transparentBg !== undefined ? docState.globalSettings.transparentBg : true);
+      if (item.settings.isPerspectiveActive === undefined) item.settings.isPerspectiveActive = false;
       if (!item.settings.trapExp) {
         item.settings.trapExp = { top: 0, bot: 0 };
       }
@@ -2283,6 +2284,9 @@
       if (sliderRot) sliderRot.value = cfg.rot || 0;
       const lblRot = document.getElementById('lblRotationVal');
       if (lblRot) lblRot.textContent = `${cfg.rot || 0}°`;
+
+      // 7. 투시 변환 활성화 여부 동기화 (페이지별 독립 유지)
+      syncPerspectiveUI(Boolean(cfg.isPerspectiveActive));
     }
 
     // PNG 포맷 선택 시에만 [배경 투명화] 체크박스 동적 노출/숨김 (가운데 툴바 및 우측/모바일 패널 동시 지원)
@@ -3737,11 +3741,11 @@
       const wrap = document.getElementById('viewerWrap');
       wrap.style.display = 'block';
 
-      // 1. 우측 컨트롤을 현재 페이지 상태(개별 or 글로벌)로 완전 동기화
-      syncControlsForCurrentPage();
-
-      // 2. 메인 뷰어 캔버스 렌더링 (회전 각도 정밀 반영)
+      // 1. 메인 뷰어 캔버스 렌더링 (회전 각도 정밀 반영)
       await renderMainViewerCanvas(index);
+
+      // 2. 우측 컨트롤을 현재 페이지 상태(개별 or 글로벌)로 완전 동기화 (투시변환 페이지별 상태 포함)
+      syncControlsForCurrentPage();
 
       // 3. 줌 및 미니 프리뷰 갱신
       applyZoom();
@@ -4087,9 +4091,9 @@
       });
     }
 
-    // 투시 변환 모드 온/오프 토글
-    function togglePerspectiveMode() {
-      isPerspectiveActive = !isPerspectiveActive;
+    // 현재 선택된 페이지의 투시 변환 UI 동기화 (페이지별 독립 활성화 상태 보장)
+    function syncPerspectiveUI(active) {
+      isPerspectiveActive = Boolean(active);
       const overlay = document.getElementById('perspectiveOverlay');
       const rowChips = document.getElementById('rowCornerChips');
       const btnToggle = document.getElementById('btnTogglePerspective');
@@ -4111,6 +4115,16 @@
         document.querySelectorAll('.btn-corner-chip').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.corner-pin').forEach(p => p.classList.remove('active'));
       }
+    }
+
+    // 투시 변환 모드 온/오프 토글 (현재 페이지에만 독립 적용)
+    function togglePerspectiveMode() {
+      const curIdx = docState.currentIndex;
+      const item = docState.items[curIdx];
+      if (!item) return;
+      const cfg = getEffectiveItemSettings(curIdx);
+      cfg.isPerspectiveActive = !cfg.isPerspectiveActive;
+      syncPerspectiveUI(cfg.isPerspectiveActive);
     }
 
     // 모서리 핀 선택 (D-Pad 및 시각 강조 연동)
