@@ -1416,7 +1416,7 @@
               <button type="button" class="btn-tool" style="flex:1; padding:4px 0; font-size:11px;" onclick="rotateCurrentTo(0)">0° 초기화</button>
               <button type="button" class="btn-tool" style="flex:1; padding:4px 0; font-size:11px;" onclick="rotateCurrentByDelta(90)">⟳ +90°</button>
             </div>
-            <input type="range" id="sliderRotation" min="-180" max="180" value="0" step="1" oninput="onSettingChange('rot', this.value)" style="width: 100%; accent-color: var(--primary); cursor: pointer;" title="각도 미세 조절 (-180° ~ +180°)">
+            <input type="range" id="sliderRotation" min="-180" max="180" value="0" step="1" oninput="onSliderRotationInput(this.value)" style="width: 100%; accent-color: var(--primary); cursor: pointer;" title="각도 미세 조절 (-180° ~ +180°)">
           </div>
         </div>
 
@@ -1672,7 +1672,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.3.4 (오프라인 로컬 무오류 클린 환경 구축)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.3.5 (페이지/이미지 회전 완전 분리 및 실시간 동기화 무결성 확보)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -1791,6 +1791,8 @@
         quality: 'ultra',
         scale: 3.0,
         rot: 0,
+        rotPage: 0,
+        rotImg: 0,
         rotTarget: { page: true, image: true },
         contentScale: 1.0,
         scaleX: 1.0,
@@ -1861,14 +1863,15 @@
 
     // 회전 타겟(페이지, 이미지) 해석 헬퍼 함수
     function getResolvedRotations(cfg) {
-      const rot = parseInt(cfg.rot, 10) || 0;
+      const rotPage = parseInt(cfg.rotPage !== undefined ? cfg.rotPage : (cfg.rot || 0), 10) || 0;
+      const rotImg = parseInt(cfg.rotImg !== undefined ? cfg.rotImg : (cfg.rot || 0), 10) || 0;
       const target = cfg.rotTarget || { page: true, image: true };
-      const rotPage = target.page ? rot : 0;
-      const rotImg = target.image ? rot : 0;
       const pageStep90 = Math.round(rotPage / 90);
       const imgStep90 = Math.round(rotImg / 90);
       const isPageRot90 = (Math.abs(pageStep90) % 2 === 1);
       const isImgRot90 = (Math.abs(imgStep90) % 2 === 1);
+      // rot는 슬라이더 및 UI 라벨 표시용 대표 각도 (선택된 타겟 기준)
+      const rot = target.image ? rotImg : (target.page ? rotPage : 0);
       return { rot, rotPage, rotImg, isPageRot90, isImgRot90, target };
     }
 
@@ -2079,13 +2082,11 @@
       const marginPx = cfg.margin || 0;
       const sizeKey = cfg.pageSize || cfg.fit || 'original';
 
-      const paper = resolvePaperGeometry(sizeKey, isLandscape, rotImgW + marginPx * 2, rotImgH + marginPx * 2, cfg.customW, cfg.customH);
-      if (sizeKey === 'original' && isPageRot90 && !isImgRot90) {
-        paper.ratio = rotImgH / rotImgW;
-        paper.isLandscape = !baseLandscape;
-        paper.widthPx = rotImgH;
-        paper.heightPx = rotImgW;
-      }
+      // [핵심 무결성] 용지 규격은 페이지 회전(rotPage / isPageRot90)과 방향(orient)에 의해서만 결정되며
+      // 내용물인 이미지 자체의 회전(rotImg)에 의해 바탕 용지가 회전되는 일이 원천 차단됩니다.
+      const basePaperW = (isPageRot90 ? origH : origW) + marginPx * 2;
+      const basePaperH = (isPageRot90 ? origW : origH) + marginPx * 2;
+      const paper = resolvePaperGeometry(sizeKey, isLandscape, basePaperW, basePaperH, cfg.customW, cfg.customH);
 
       // 3. 대상 캔버스 해상도 결정
       let canvasW, canvasH;
@@ -2346,6 +2347,8 @@
     }
 
     // 회전 대상(페이지 vs 이미지) 체크박스 변경 핸들러
+    // [핵심 원칙] 체크박스는 회전 제어 타겟(Target Selector)일 뿐이며,
+    // 체크를 해제하더라도 이미 적용된 회전 각도는 절대 초기화되지 않고 온전히 보존됩니다.
     async function onRotTargetChange() {
       const chkPage = document.getElementById('chkRotPage');
       const chkImg = document.getElementById('chkRotImg');
@@ -2355,8 +2358,15 @@
       const cur = docState.currentIndex;
       const cfg = getEffectiveItemSettings(cur);
       cfg.rotTarget = { page: pageChecked, image: imgChecked };
-      await renderMainViewerCanvas(cur);
-      updateThumbnailCanvas(cur);
+
+      // 슬라이더 및 라벨 표시만 현재 선택된 타겟의 값으로 동기화
+      const { rot } = getResolvedRotations(cfg);
+      const slider = document.getElementById('sliderRotation');
+      if (slider) slider.value = rot;
+      const lblRot = document.getElementById('lblRotationVal');
+      if (lblRot) lblRot.textContent = `${rot}°`;
+
+      // 미니 프리뷰 상태 텍스트 업데이트
       updateMiniPreview();
     }
 
@@ -2374,10 +2384,16 @@
         const numScale = parseFloat(value) || 3.0;
         cfg.scale = numScale;
         cfg.quality = numScale >= 3.0 ? 'ultra' : numScale >= 2.0 ? 'high' : 'standard';
-      } else if (key === 'rot') {
-        cfg.rot = parseInt(value, 10) || 0;
+      } else if (key === 'rot' || key === 'rot_updated') {
+        const num = parseInt(value, 10) || 0;
+        if (key === 'rot') {
+          const target = cfg.rotTarget || { page: true, image: true };
+          if (target.page) cfg.rotPage = num;
+          if (target.image) cfg.rotImg = num;
+        }
+        cfg.rot = num;
         const lblRot = document.getElementById('lblRotationVal');
-        if (lblRot) lblRot.textContent = `${cfg.rot}°`;
+        if (lblRot) lblRot.textContent = `${num}°`;
       } else if (key === 'orient') {
         cfg.orient = value;
       } else if (key === 'margin') {
@@ -2404,43 +2420,86 @@
       if (!canvas) return;
       const cfg = getEffectiveItemSettings(index);
 
-      if (item.type === 'pdf' && !item.imgObj) {
-        const { rotImg } = getResolvedRotations(cfg);
-        const b = cfg.brightness !== undefined ? cfg.brightness : 100;
-        const c = cfg.contrast !== undefined ? cfg.contrast : 100;
-        canvas.style.filter = (b !== 100 || c !== 100) ? `brightness(${b}%) contrast(${c}%)` : 'none';
-        const page = await item.doc.getPage(item.pageNum);
-        await renderPdfPageToCanvas(page, 0.65, rotImg, canvas);
-      } else {
-        if (item.type === 'pdf') {
-          await ensureItemCanvas(item);
-        }
-        canvas.style.filter = 'none';
-        canvas.style.transform = 'none';
-        drawPaperWithImage(canvas, item, cfg, { isThumbnail: true });
-        const wrap = canvas.closest('.thumb-canvas-wrap');
-        const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
-        if (wrap) wrap.classList.toggle('checkerboard-bg', isTransparent);
+      if (item.type === 'pdf') {
+        await ensureItemCanvas(item);
       }
+      canvas.style.filter = 'none';
+      canvas.style.transform = 'none';
+      drawPaperWithImage(canvas, item, cfg, { isThumbnail: true });
+      const wrap = canvas.closest('.thumb-canvas-wrap');
+      const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
+      if (wrap) wrap.classList.toggle('checkerboard-bg', isTransparent);
+    }
+
+    // 슬라이더 바 직접 드래그 시 선택된 타겟(페이지 및/또는 이미지)에 각도 즉시 독립 적용
+    function onSliderRotationInput(val) {
+      const num = parseInt(val, 10) || 0;
+      const cur = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(cur);
+      const target = cfg.rotTarget || { page: true, image: true };
+
+      if (!target.page && !target.image) return;
+
+      if (target.page) cfg.rotPage = num;
+      if (target.image) cfg.rotImg = num;
+      cfg.rot = num;
+
+      const lblRot = document.getElementById('lblRotationVal');
+      if (lblRot) lblRot.textContent = `${num}°`;
+
+      onSettingChange('rot_updated', num);
     }
 
     // 회전 각도 퀵 조절 유틸리티 (-90°, 0° 초기화, +90°)
     function rotateCurrentByDelta(delta) {
+      const cur = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(cur);
+      const target = cfg.rotTarget || { page: true, image: true };
+
+      if (!target.page && !target.image) return;
+
+      if (target.page) {
+        let curPage = parseInt(cfg.rotPage !== undefined ? cfg.rotPage : (cfg.rot || 0), 10) || 0;
+        let nextPage = curPage + delta;
+        if (nextPage > 180) nextPage -= 360;
+        if (nextPage < -180) nextPage += 360;
+        cfg.rotPage = nextPage;
+      }
+      if (target.image) {
+        let curImg = parseInt(cfg.rotImg !== undefined ? cfg.rotImg : (cfg.rot || 0), 10) || 0;
+        let nextImg = curImg + delta;
+        if (nextImg > 180) nextImg -= 360;
+        if (nextImg < -180) nextImg += 360;
+        cfg.rotImg = nextImg;
+      }
+
+      const { rot } = getResolvedRotations(cfg);
+      cfg.rot = rot;
       const slider = document.getElementById('sliderRotation');
-      if (!slider) return;
-      let cur = parseInt(slider.value, 10) || 0;
-      let next = cur + delta;
-      if (next > 180) next -= 360;
-      if (next < -180) next += 360;
-      slider.value = next;
-      onSettingChange('rot', next);
+      if (slider) slider.value = rot;
+      const lblRot = document.getElementById('lblRotationVal');
+      if (lblRot) lblRot.textContent = `${rot}°`;
+
+      onSettingChange('rot_updated', rot);
     }
 
+    // 0° 초기화 버튼: 오직 사용자가 초기화 버튼을 눌렀을 때만 선택된 대상을 0으로 리셋
     function rotateCurrentTo(val) {
+      const cur = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(cur);
+      const target = cfg.rotTarget || { page: true, image: true };
+
+      if (target.page) cfg.rotPage = val;
+      if (target.image) cfg.rotImg = val;
+
+      const { rot } = getResolvedRotations(cfg);
+      cfg.rot = rot;
       const slider = document.getElementById('sliderRotation');
-      if (!slider) return;
-      slider.value = val;
-      onSettingChange('rot', val);
+      if (slider) slider.value = rot;
+      const lblRot = document.getElementById('lblRotationVal');
+      if (lblRot) lblRot.textContent = `${rot}°`;
+
+      onSettingChange('rot_updated', rot);
     }
 
     // 삼선 햄버거 메뉴 ➡️ [기본 페이지 설정] 모달 제어 함수
@@ -2607,6 +2666,8 @@
         fit: sizeKey,
         quality: 'ultra',
         rot: 0,
+        rotPage: 0,
+        rotImg: 0,
         rotTarget: { page: true, image: true },
         contentScale: 1.0,
         scaleX: 1.0,
@@ -2724,7 +2785,10 @@
           }
 
           const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
-          const refW = baseScaleW * imgF, refH = baseScaleH * imgF;
+          const baseOrigW = isPageRot90 ? origH : origW;
+          const baseOrigH = isPageRot90 ? origW : origH;
+          const scaleMul = (p.type === 'pdf') ? 3.0 : imgF;
+          const refW = baseOrigW * scaleMul, refH = baseOrigH * scaleMul;
           const isOrigLandscape = origW > origH;
           const orientOpt = cfg.orient || 'auto';
           const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
@@ -2733,8 +2797,8 @@
 
           let paperW, paperH;
           if (cfg.fit === 'original' || cfg.pageSize === 'original') {
-            paperW = isPageRot90 ? (origH * (p.type === 'pdf' ? 3.0 : imgF)) : (origW * (p.type === 'pdf' ? 3.0 : imgF));
-            paperH = isPageRot90 ? (origW * (p.type === 'pdf' ? 3.0 : imgF)) : (origH * (p.type === 'pdf' ? 3.0 : imgF));
+            paperW = baseOrigW * scaleMul;
+            paperH = baseOrigH * scaleMul;
           } else if (cfg.fit === 'custom' || cfg.pageSize === 'custom') {
             paperW = paper.widthPx;
             paperH = paper.heightPx;
@@ -3964,13 +4028,11 @@
       const marginPx = cfg.margin || 0;
       const sizeKey = cfg.pageSize || cfg.fit || 'original';
 
-      const paper = resolvePaperGeometry(sizeKey, isLandscape, rotImgW + marginPx * 2, rotImgH + marginPx * 2, cfg.customW, cfg.customH);
-      if (sizeKey === 'original' && isPageRot90 && !isImgRot90) {
-        paper.ratio = rotImgH / rotImgW;
-        paper.isLandscape = !baseLandscape;
-        paper.widthPx = rotImgH;
-        paper.heightPx = rotImgW;
-      }
+      // [핵심 무결성] 용지 규격은 페이지 회전(rotPage / isPageRot90)과 방향(orient)에 의해서만 결정되며
+      // 내용물인 이미지 자체의 회전(rotImg)에 의해 바탕 용지가 회전되는 일이 원천 차단됩니다.
+      const basePaperW = (isPageRot90 ? origH : origW) + marginPx * 2;
+      const basePaperH = (isPageRot90 ? origW : origH) + marginPx * 2;
+      const paper = resolvePaperGeometry(sizeKey, isLandscape, basePaperW, basePaperH, cfg.customW, cfg.customH);
 
       const scaleFactor = canvasW / paper.widthPx;
       const viewMargin = Math.round(marginPx * scaleFactor);
@@ -4223,6 +4285,7 @@
     }
 
     // [핵심] 정해진 용지 크기를 고정 유지하고 내부 내용물만 확대/축소/비율/필터/오프셋 편집
+    // 3열 우측 '미리보기 / 이미지 편집' 창: 2열 메인 뷰어와 100% WYSIWYG 일체화 동기화
     function updateMiniPreview() {
       const miniCanvas = document.getElementById('miniCanvas');
       if (!miniCanvas) return;
@@ -4247,7 +4310,7 @@
 
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
-      const { rot, isPageRot90, isImgRot90, target } = getResolvedRotations(cfg);
+      const { rot, rotPage, rotImg, isPageRot90, isImgRot90, target } = getResolvedRotations(cfg);
       const fitKey = cfg.pageSize || cfg.fit || 'original';
       const cScale = cfg.contentScale || 1.0;
       const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
@@ -4257,35 +4320,26 @@
       const offsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
       const marginPx = cfg.margin || 0;
 
-      const customW = cfg.customW;
-      const customH = cfg.customH;
+      const item = docState.items[curIdx];
+      const origW = item ? (item.width || (item.imgObj ? item.imgObj.width : 1200)) : 1200;
+      const origH = item ? (item.height || (item.imgObj ? item.imgObj.height : 1600)) : 1600;
 
-      // srcCanvas는 이미 rotImg 회전이 적용된 캔버스
-      const imgOrigW = srcCanvas.width;
-      const imgOrigH = srcCanvas.height;
-
-      // 0도 기준 원본 방향 판별
-      const isOrigLandscape = isImgRot90 ? (imgOrigH > imgOrigW) : (imgOrigW > imgOrigH);
+      const basePaperW = (isPageRot90 ? origH : origW) + marginPx * 2;
+      const basePaperH = (isPageRot90 ? origW : origH) + marginPx * 2;
+      const isOrigLandscape = origW > origH;
       const orientOpt = cfg.orient || 'auto';
       const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
-      // 페이지 회전 여부에 따른 최종 용지 방향
       const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
-      const paper = resolvePaperGeometry(fitKey, isLandscape, imgOrigW + marginPx * 2, imgOrigH + marginPx * 2, customW, customH);
-
-      if (fitKey === 'original' && isPageRot90 && !isImgRot90) {
-        paper.ratio = imgOrigH / imgOrigW;
-        paper.isLandscape = !baseLandscape;
-        paper.name = `원본 규격 (${paper.isLandscape ? '가로' : '세로'})`;
-      }
+      const paper = resolvePaperGeometry(fitKey, isLandscape, basePaperW, basePaperH, cfg.customW, cfg.customH);
 
       // 미리보기 박스(maxBoxW x maxBoxH) 안에 들어갈 시트 크기 계산
       let sheetW, sheetH;
       if (paper.ratio >= (maxBoxW / maxBoxH)) {
         sheetW = maxBoxW;
-        sheetH = Math.round(maxBoxW / paper.ratio);
+        sheetH = Math.max(20, Math.round(maxBoxW / paper.ratio));
       } else {
         sheetH = maxBoxH;
-        sheetW = Math.round(maxBoxH * paper.ratio);
+        sheetW = Math.max(20, Math.round(maxBoxH * paper.ratio));
       }
 
       // 종이 용지 CSS 크기 확정 (용지는 확대/축소에도 절대 변하지 않음!)
@@ -4293,12 +4347,12 @@
       miniSheet.style.height = `${sheetH}px`;
       miniSheet.style.aspectRatio = `${paper.widthPx} / ${paper.heightPx}`;
 
-      const rotTargetsText = [];
-      if (target.page) rotTargetsText.push('페이지');
-      if (target.image) rotTargetsText.push('이미지');
-      const rotLabelStr = rotTargetsText.length > 0 ? ` [${rotTargetsText.join('+')} ${rot}°]` : ` [0°]`;
+      const rotParts = [];
+      if (rotPage !== 0) rotParts.push(`페이지 ${rotPage}°`);
+      if (rotImg !== 0) rotParts.push(`이미지 ${rotImg}°`);
+      const rotLabelStr = rotParts.length > 0 ? ` [${rotParts.join(', ')}]` : ` [0°]`;
 
-      // 1줄: 용지 규격 및 회전
+      // 1줄: 용지 규격 및 독립 회전 현황
       const line1 = `${paper.name}${rotLabelStr}`;
 
       // 2줄: 사용자가 이미지에 적용한 편집 내용 압축 요약
@@ -4342,34 +4396,9 @@
         miniSheet.classList.remove('checkerboard-bg');
       }
 
-      // 여백 비율 계산
-      const scaleFactor = sheetW / paper.widthPx;
-      const viewMargin = Math.round(marginPx * scaleFactor);
-      const innerW = Math.max(10, sheetW - (viewMargin * 2));
-      const innerH = Math.max(10, sheetH - (viewMargin * 2));
-
-      // 용지 안 여백 내에 들어갈 이미지 기본 크기 (fit)
-      const fitScale = Math.min(innerW / imgOrigW, innerH / imgOrigH);
-      const baseDrawW = imgOrigW * fitScale;
-      const baseDrawH = imgOrigH * fitScale;
-
-      // 사용자 내용물 확대/축소 배율 및 가로 비율, 오프셋 적용
-      const finalDrawW = baseDrawW * cScale * scaleX;
-      const finalDrawH = baseDrawH * cScale;
-      const shiftX = sheetW * (offsetX / 100);
-      const shiftY = sheetH * (offsetY / 100);
-      const posX = (sheetW - finalDrawW) / 2 + shiftX;
-      const posY = (sheetH - finalDrawH) / 2 + shiftY;
-
-      mctx.save();
-      mctx.beginPath();
-      mctx.rect(0, 0, sheetW, sheetH);
-      mctx.clip();
-      if (brightness !== 100 || contrast !== 100) {
-        mctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
-      }
-      drawPerspectiveQuad(mctx, srcCanvas, posX, posY, finalDrawW, finalDrawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
-      mctx.restore();
+      // mainViewerCanvas는 이미 drawPaperWithImage로 모든 회전/편집/여백이 완벽히 합성된 용지 캔버스이므로
+      // miniCanvas에 1:1 완벽 축약 복사하여 2열과 3열의 100% 비주얼 일체화를 보장합니다!
+      mctx.drawImage(srcCanvas, 0, 0, sheetW, sheetH);
     }
 
     // [핵심] 통합 듀얼 저장 라우터 (PDF 저장 vs Img 저장)
@@ -4455,7 +4484,10 @@
           }
 
           const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
-          const refW = baseScaleW * imgF, refH = baseScaleH * imgF;
+          const baseOrigW = isPageRot90 ? origH : origW;
+          const baseOrigH = isPageRot90 ? origW : origH;
+          const scaleMul = (p.type === 'pdf') ? cfg.scale : imgF;
+          const refW = baseOrigW * scaleMul, refH = baseOrigH * scaleMul;
           const isOrigLandscape = origW > origH;
           const orientOpt = cfg.orient || 'auto';
           const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
@@ -4468,8 +4500,8 @@
 
           let paperW, paperH;
           if (cfg.fit === 'original' || cfg.pageSize === 'original') {
-            paperW = isPageRot90 ? (origH * (p.type === 'pdf' ? cfg.scale : imgF)) : (origW * (p.type === 'pdf' ? cfg.scale : imgF));
-            paperH = isPageRot90 ? (origW * (p.type === 'pdf' ? cfg.scale : imgF)) : (origH * (p.type === 'pdf' ? cfg.scale : imgF));
+            paperW = baseOrigW * scaleMul;
+            paperH = baseOrigH * scaleMul;
           } else if (cfg.fit === 'custom' || cfg.pageSize === 'custom') {
             paperW = paper.widthPx;
             paperH = paper.heightPx;
@@ -4652,7 +4684,10 @@
           }
 
           const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
-          const refW = baseScaleW * imgF, refH = baseScaleH * imgF;
+          const baseOrigW = isPageRot90 ? origH : origW;
+          const baseOrigH = isPageRot90 ? origW : origH;
+          const scaleMul = (p.type === 'pdf') ? 3.0 : imgF;
+          const refW = baseOrigW * scaleMul, refH = baseOrigH * scaleMul;
           const isOrigLandscape = origW > origH;
           const orientOpt = cfg.orient || 'auto';
           const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
@@ -4661,8 +4696,8 @@
 
           let paperW, paperH;
           if (cfg.fit === 'original' || cfg.pageSize === 'original') {
-            paperW = isPageRot90 ? (origH * (p.type === 'pdf' ? 3.0 : imgF)) : (origW * (p.type === 'pdf' ? 3.0 : imgF));
-            paperH = isPageRot90 ? (origW * (p.type === 'pdf' ? 3.0 : imgF)) : (origH * (p.type === 'pdf' ? 3.0 : imgF));
+            paperW = baseOrigW * scaleMul;
+            paperH = baseOrigH * scaleMul;
           } else if (cfg.fit === 'custom' || cfg.pageSize === 'custom') {
             paperW = paper.widthPx;
             paperH = paper.heightPx;
