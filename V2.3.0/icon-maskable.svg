@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="mBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#042024"/>
+      <stop offset="50%" stop-color="#0d3b40"/>
+      <stop offset="100%" stop-color="#0f766e"/>
+    </linearGradient>
+    <radialGradient id="mAmbientGlow" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#14b8a6" stop-opacity="0.35"/>
+      <stop offset="60%" stop-color="#0d9488" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#042024" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mDocGrad" x1="0%" y1="0%" x2="10%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <linearGradient id="mPdfBadgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f43f5e"/>
+      <stop offset="100%" stop-color="#e11d48"/>
+    </linearGradient>
+    <linearGradient id="mSkyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="45%" stop-color="#818cf8"/>
+      <stop offset="85%" stop-color="#f472b6"/>
+      <stop offset="100%" stop-color="#fb923c"/>
+    </linearGradient>
+    <linearGradient id="mSunGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="mFoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#cbd5e1"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <linearGradient id="mPixelGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2dd4bf"/>
+      <stop offset="100%" stop-color="#0f766e"/>
+    </linearGradient>
+    <linearGradient id="mPixelGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <linearGradient id="mPixelGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a7f3d0"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <clipPath id="mDocBodyClip">
+      <path d="M 116 88 L 302 88 L 362 148 L 362 420 A 18 18 0 0 1 344 438 L 134 438 A 18 18 0 0 1 116 420 Z"/>
+    </clipPath>
+    <clipPath id="mViewportClip">
+      <rect x="142" y="166" width="186" height="156" rx="10"/>
+    </clipPath>
+  </defs>
+
+  <!-- Full Bleed Square Background for Maskable Icon -->
+  <rect x="0" y="0" width="512" height="512" fill="url(#mBgGrad)"/>
+  <rect x="0" y="0" width="512" height="512" fill="url(#mAmbientGlow)"/>
+
+  <!-- Centered Scaled Content (within 80% Safe Area) -->
+  <g transform="translate(51.2, 51.2) scale(0.8)">
+    <path d="M 116 88 L 302 88 L 362 148 L 362 420 A 18 18 0 0 1 344 438 L 134 438 A 18 18 0 0 1 116 420 Z" fill="url(#mDocGrad)"/>
+    <path d="M 302 88 L 302 136 A 12 12 0 0 0 314 148 L 362 148 Z" fill="url(#mFoldGrad)"/>
+    <path d="M 302 88 L 362 148 L 302 148 Z" fill="#f8fafc"/>
+
+    <g clip-path="url(#mDocBodyClip)">
+      <rect x="142" y="118" width="68" height="28" rx="6" fill="url(#mPdfBadgeGrad)"/>
+      <text x="176" y="137" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="1">PDF</text>
+      
+      <rect x="222" y="124" width="70" height="6" rx="3" fill="#cbd5e1"/>
+      <rect x="222" y="136" width="45" height="6" rx="3" fill="#e2e8f0"/>
+
+      <rect x="140" y="164" width="190" height="160" rx="12" fill="#0f172a" stroke="#cbd5e1" stroke-width="2"/>
+      <g clip-path="url(#mViewportClip)">
+        <rect x="142" y="166" width="186" height="156" fill="url(#mSkyGrad)"/>
+        <circle cx="270" cy="208" r="22" fill="url(#mSunGrad)" opacity="0.95"/>
+        <path d="M 180 322 L 236 244 L 290 322 Z" fill="#4338ca"/>
+        <path d="M 132 322 L 188 226 L 246 322 Z" fill="#0d9488"/>
+        <path d="M 242 322 L 284 262 L 334 322 Z" fill="#047857"/>
+      </g>
+
+      <rect x="142" y="348" width="186" height="8" rx="4" fill="#94a3b8"/>
+      <rect x="142" y="366" width="140" height="8" rx="4" fill="#cbd5e1"/>
+      <rect x="142" y="384" width="90" height="8" rx="4" fill="#e2e8f0"/>
+    </g>
+
+    <rect x="330" y="276" width="34" height="34" rx="7" fill="url(#mPixelGrad1)"/>
+    <rect x="372" y="248" width="30" height="30" rx="6" fill="url(#mPixelGrad2)"/>
+    <rect x="348" y="222" width="24" height="24" rx="5" fill="url(#mPixelGrad3)"/>
+    <rect x="378" y="294" width="22" height="22" rx="5" fill="#38bdf8"/>
+    <rect x="410" y="266" width="18" height="18" rx="4" fill="#34d399"/>
+    <rect x="408" y="226" width="14" height="14" rx="3" fill="#facc15"/>
+    <rect x="334" y="322" width="18" height="18" rx="4" fill="#2dd4bf" opacity="0.85"/>
+
+    <circle cx="360" cy="380" r="32" fill="#042024" stroke="#2dd4bf" stroke-width="3"/>
+    <path d="M 346 374 A 14 14 0 0 1 374 372" fill="none" stroke="#2dd4bf" stroke-width="3.5" stroke-linecap="round"/>
+    <polygon points="378,367 378,377 368,374" fill="#2dd4bf"/>
+    <path d="M 374 386 A 14 14 0 0 1 346 388" fill="none" stroke="#38bdf8" stroke-width="3.5" stroke-linecap="round"/>
+    <polygon points="342,393 342,383 352,386" fill="#38bdf8"/>
+  </g>
+</svg>
