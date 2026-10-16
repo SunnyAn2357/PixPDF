@@ -1113,8 +1113,12 @@
     <div class="col-thumb" id="colThumb">
       <div class="thumb-toolbar">
         <label id="lblSelectAll"><input type="checkbox" id="chkSelectAll"> 전체 선택</label>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <button class="btn-add-thumb" onclick="triggerInsertFileDialog(-1)" title="파일(PDF 또는 이미지) 삽입">+ 삽입</button>
+        <div style="display:flex; align-items:center; gap:6px; position:relative;">
+          <button class="btn-add-thumb" id="btnInsertDropdown" onclick="toggleInsertDropdown(event)" title="페이지 또는 파일 삽입">+ 삽입 ▾</button>
+          <div class="menu-dropdown insert-dropdown" id="menuInsertDropdown" style="top:32px; right:0; left:auto; width:130px; z-index:210;">
+            <button class="menu-item" onclick="insertBlankPageAction(event)" style="padding:10px 14px; font-size:13px;">📄 빈페이지</button>
+            <button class="menu-item" onclick="triggerInsertFileAction(event)" style="padding:10px 14px; font-size:13px;">📁 파일</button>
+          </div>
           <span id="thumbCount">0 항목</span>
         </div>
       </div>
@@ -1174,8 +1178,8 @@
           <div class="control-group">
             <label>용지 규격</label>
             <select id="selPageSize" onchange="onSettingChange('pageSize', this.value)">
-              <option value="original">원본 크기</option>
-              <option value="a4" selected>A4 (210×297mm)</option>
+              <option value="original" selected>원본 크기</option>
+              <option value="a4">A4 (210×297mm)</option>
               <option value="a3">A3 (297×420mm)</option>
               <option value="a5">A5 (148×210mm)</option>
               <option value="b3">B3 (353×500mm)</option>
@@ -1298,11 +1302,17 @@
                 <button type="button" class="btn-edit-tool" title="내용물 축소" onclick="adjustPreviewScale(-0.1)">축소</button>
                 <button type="button" class="btn-edit-tool" title="크기 100% 초기화" onclick="resetPreviewScale()">리셋</button>
               </div>
-              <!-- 2행: 넓히기 / 좁히기 / 리셋 -->
+              <!-- 2행: 뚱뚱 / 홀쭉 / 1:1 -->
               <div class="edit-btn-row">
-                <button type="button" class="btn-edit-tool" title="가로 넓히기 (뚱뚱하게)" onclick="adjustScaleX(0.1)">넓히기</button>
-                <button type="button" class="btn-edit-tool" title="가로 좁히기 (홀쭉하게)" onclick="adjustScaleX(-0.1)">좁히기</button>
-                <button type="button" class="btn-edit-tool" title="가로비율 100% 초기화" onclick="resetScaleX()">리셋</button>
+                <button type="button" class="btn-edit-tool" title="가로 넓히기 (뚱뚱하게)" onclick="adjustScaleX(0.1)">뚱뚱</button>
+                <button type="button" class="btn-edit-tool" title="가로 좁히기 (홀쭉하게)" onclick="adjustScaleX(-0.1)">홀쭉</button>
+                <button type="button" class="btn-edit-tool" title="가로비율 100% 초기화" onclick="resetScaleX()">1:1</button>
+              </div>
+              <!-- 3행: 대두 / 소두 / 1:1 (사다리꼴 변형) -->
+              <div class="edit-btn-row">
+                <button type="button" class="btn-edit-tool" title="상단 확대 사다리꼴 (대두)" onclick="adjustTrapezoid(0.1)">대두</button>
+                <button type="button" class="btn-edit-tool" title="하단 확대 사다리꼴 (소두)" onclick="adjustTrapezoid(-0.1)">소두</button>
+                <button type="button" class="btn-edit-tool" title="사다리꼴 변형 1:1 초기화" onclick="resetTrapezoid()">1:1</button>
               </div>
               <!-- 3행: 밝게 / 어둡게 / 리셋 -->
               <div class="edit-btn-row">
@@ -1410,8 +1420,8 @@
           <div class="control-group">
             <label>기본 용지 규격</label>
             <select id="selGlobalImgPageSize">
-              <option value="a4" selected>A4 (210×297mm)</option>
-              <option value="original">원본 크기</option>
+              <option value="original" selected>원본 크기</option>
+              <option value="a4">A4 (210×297mm)</option>
               <option value="a3">A3 (297×420mm)</option>
               <option value="a5">A5 (148×210mm)</option>
               <option value="b3">B3 (353×500mm)</option>
@@ -1611,6 +1621,7 @@
         rotTarget: { page: true, image: true },
         contentScale: 1.0,
         scaleX: 1.0,
+        trapezoid: 0,
         brightness: 100,
         contrast: 100,
         offsetX: 0,
@@ -1633,17 +1644,18 @@
     let pendingInsertIndex = -1;
 
     const imgState = {
-      items: [], // [{ file, imgObj, name, width, height, settings: { pageSize, quality, rot, rotTarget, contentScale, scaleX, brightness, contrast, offsetX, offsetY, orient, margin, customW, customH } }]
+      items: [], // [{ file, imgObj, name, width, height, settings: { pageSize, quality, rot, rotTarget, contentScale, scaleX, trapezoid, brightness, contrast, offsetX, offsetY, orient, margin, customW, customH } }]
       checkList: [], // 이미지 다중 선택 체크박스 (기본 전체 선택 true)
       currentIndex: 0,
       zoom: 1.0,
       globalSettings: {
-        pageSize: 'a4',
+        pageSize: 'original',
         quality: 'ultra',
         rot: 0,
         rotTarget: { page: true, image: true },
         contentScale: 1.0,
         scaleX: 1.0,
+        trapezoid: 0,
         brightness: 100,
         contrast: 100,
         offsetX: 0,
@@ -1679,6 +1691,36 @@
       const isPageRot90 = (Math.abs(pageStep90) % 2 === 1);
       const isImgRot90 = (Math.abs(imgStep90) % 2 === 1);
       return { rot, rotPage, rotImg, isPageRot90, isImgRot90, target };
+    }
+
+    // [핵심] 사다리꼴 변형(대두: 상단 확대, 소두: 하단 확대) 스트라이프 슬라이싱 렌더링
+    function drawImageWithTrapezoid(ctx, imgSource, dx, dy, dw, dh, trapezoid) {
+      const trap = trapezoid || 0;
+      if (trap === 0) {
+        ctx.drawImage(imgSource, dx, dy, dw, dh);
+        return;
+      }
+      const slices = 60;
+      const srcW = imgSource.naturalWidth || imgSource.width || dw;
+      const srcH = imgSource.naturalHeight || imgSource.height || dh;
+      const sliceSrcH = srcH / slices;
+      const sliceDstH = dh / slices;
+
+      for (let i = 0; i < slices; i++) {
+        const t = i / (slices - 1); // 0 (상단) ~ 1 (하단)
+        // trap > 0 (대두): 상단 폭 확대, 하단 폭 축소
+        // trap < 0 (소두): 상단 폭 축소, 하단 폭 확대
+        const widthMult = Math.max(0.05, 1 + trap * (1 - 2 * t));
+        const curW = dw * widthMult;
+        const curX = dx + (dw - curW) / 2;
+        const curY = dy + i * sliceDstH;
+
+        ctx.drawImage(
+          imgSource,
+          0, i * sliceSrcH, srcW, sliceSrcH,
+          curX, curY, curW, sliceDstH + 0.5
+        );
+      }
     }
 
     // [핵심] 바탕 용지(Paper) 규격/방향/여백 위에 내용물(Image)의 위치/회전/스케일/필터를 합성하여 캔버스에 렌더링
@@ -1778,7 +1820,7 @@
 
       const origDrawW = isImgRot90 ? (baseDrawH * cScale) : (baseDrawW * cScale * scaleX);
       const origDrawH = isImgRot90 ? (baseDrawW * cScale * scaleX) : (baseDrawH * cScale);
-      ctx.drawImage(item.imgObj, -origDrawW / 2, -origDrawH / 2, origDrawW, origDrawH);
+      drawImageWithTrapezoid(ctx, item.imgObj, -origDrawW / 2, -origDrawH / 2, origDrawW, origDrawH, cfg.trapezoid);
       ctx.restore();
 
       return paper;
@@ -1867,7 +1909,7 @@
       const cfg = isPdfMode ? getEffectivePdfSettings(cur) : getEffectiveImgSettings(cur);
 
       // 1. 용지 규격 (fit or pageSize)
-      const pageSizeVal = cfg.pageSize || cfg.fit || (isPdfMode ? 'original' : 'a4');
+      const pageSizeVal = cfg.pageSize || cfg.fit || 'original';
       const selPageSize = document.getElementById('selPageSize');
       if (selPageSize) selPageSize.value = pageSizeVal;
 
@@ -2197,11 +2239,125 @@
 
     btnHamburger.addEventListener('click', (e) => {
       e.stopPropagation();
+      closeInsertDropdown();
       menuDropdown.classList.toggle('show');
     });
 
+    // [+ 삽입] 드롭다운 메뉴 제어
+    function toggleInsertDropdown(e) {
+      if (e) e.stopPropagation();
+      closeMenuDropdown();
+      const menu = document.getElementById('menuInsertDropdown');
+      if (menu) menu.classList.toggle('show');
+    }
+
+    function closeInsertDropdown() {
+      const menu = document.getElementById('menuInsertDropdown');
+      if (menu && menu.classList.contains('show')) {
+        menu.classList.remove('show');
+      }
+    }
+
+    function triggerInsertFileAction(e) {
+      if (e) e.stopPropagation();
+      closeInsertDropdown();
+      const isPdf = appMode === 'pdf2img';
+      const total = isPdf ? pdfState.pages.length : imgState.items.length;
+      const curIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
+      const insertAt = (total > 0 && curIdx >= 0 && curIdx < total) ? curIdx + 1 : -1;
+      triggerInsertFileDialog(insertAt);
+    }
+
+    async function insertBlankPageAction(e) {
+      if (e) e.stopPropagation();
+      closeInsertDropdown();
+
+      const isPdf = appMode === 'pdf2img';
+      const total = isPdf ? pdfState.pages.length : imgState.items.length;
+      const curIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
+      const insertAt = (total > 0 && curIdx >= 0 && curIdx < total) ? curIdx + 1 : total;
+
+      const cfg = isPdf ? getEffectivePdfSettings(curIdx >= 0 ? curIdx : 0) : getEffectiveImgSettings(curIdx >= 0 ? curIdx : 0);
+      const sizeKey = cfg.pageSize || cfg.fit || 'original';
+      const orientOpt = cfg.orient || 'auto';
+      const isLandscape = orientOpt === 'l';
+
+      // 참조 크기 (original일 경우 현재 선택된 이미지 크기, 없으면 1200x1600)
+      let refW = 1200, refH = 1600;
+      if (total > 0 && curIdx >= 0) {
+        if (isPdf && pdfState.pages[curIdx]) {
+          refW = pdfState.pages[curIdx].width || 1200;
+          refH = pdfState.pages[curIdx].height || 1600;
+        } else if (!isPdf && imgState.items[curIdx]) {
+          refW = imgState.items[curIdx].width || 1200;
+          refH = imgState.items[curIdx].height || 1600;
+        }
+      }
+
+      const paper = resolvePaperGeometry(sizeKey, isLandscape, refW, refH, cfg.customW, cfg.customH);
+      const canvasW = Math.max(200, Math.min(2400, Math.round(paper.widthPx || 1200)));
+      const canvasH = Math.max(200, Math.min(2400, Math.round(paper.heightPx || (canvasW / (paper.ratio || 1)))));
+
+      // 순백색 캔버스 생성
+      const blankCanvas = document.createElement('canvas');
+      blankCanvas.width = canvasW;
+      blankCanvas.height = canvasH;
+      const bctx = blankCanvas.getContext('2d');
+      bctx.fillStyle = '#ffffff';
+      bctx.fillRect(0, 0, canvasW, canvasH);
+
+      const dataUrl = blankCanvas.toDataURL('image/png');
+      const imgObj = new Image();
+      imgObj.src = dataUrl;
+      await new Promise(r => { imgObj.onload = r; });
+
+      const newItemSettings = {
+        pageSize: sizeKey,
+        quality: 'ultra',
+        rot: 0,
+        rotTarget: { page: true, image: true },
+        contentScale: 1.0,
+        scaleX: 1.0,
+        trapezoid: 0,
+        brightness: 100,
+        contrast: 100,
+        offsetX: 0,
+        offsetY: 0,
+        orient: orientOpt,
+        margin: cfg.margin || 0,
+        format: cfg.format || 'png',
+        transparentBg: false,
+        customW: cfg.customW,
+        customH: cfg.customH
+      };
+
+      const newPageItem = {
+        type: 'image',
+        name: `빈페이지_${insertAt + 1}.png`,
+        imgObj: imgObj,
+        width: canvasW,
+        height: canvasH,
+        settings: newItemSettings
+      };
+
+      if (isPdf) {
+        pdfState.pages.splice(insertAt, 0, newPageItem);
+        pdfState.checkList.splice(insertAt, 0, true);
+        pdfState.currentIndex = insertAt;
+      } else {
+        imgState.items.splice(insertAt, 0, newPageItem);
+        imgState.checkList.splice(insertAt, 0, true);
+        imgState.currentIndex = insertAt;
+      }
+
+      await refreshWorkspaceDisplay();
+      await loadMainViewer(insertAt);
+      document.getElementById('statusText').textContent = `#${insertAt + 1} 위치에 빈 페이지가 삽입되었습니다.`;
+    }
+
     window.addEventListener('click', () => {
       closeMenuDropdown();
+      closeInsertDropdown();
     });
 
     function triggerOpenFileDialog() {
@@ -3920,6 +4076,25 @@
       updateMiniPreview();
     }
 
+    function adjustTrapezoid(delta) {
+      const isPdf = appMode === 'pdf2img';
+      const curIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
+      const cfg = isPdf ? getEffectivePdfSettings(curIdx) : getEffectiveImgSettings(curIdx);
+      const cur = cfg.trapezoid !== undefined ? cfg.trapezoid : 0;
+      cfg.trapezoid = Math.max(-0.6, Math.min(0.6, Math.round((cur + delta) * 10) / 10));
+      updateViewerEdits();
+      updateMiniPreview();
+    }
+
+    function resetTrapezoid() {
+      const isPdf = appMode === 'pdf2img';
+      const curIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
+      const cfg = isPdf ? getEffectivePdfSettings(curIdx) : getEffectiveImgSettings(curIdx);
+      cfg.trapezoid = 0;
+      updateViewerEdits();
+      updateMiniPreview();
+    }
+
     function adjustBrightness(delta) {
       const isPdf = appMode === 'pdf2img';
       const curIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
@@ -4057,10 +4232,14 @@
         const rotLabelStr = rotTargetsText.length > 0 ? ` [${rotTargetsText.join('+')} ${rot}°]` : ` [0°]`;
         let editDetails = `${Math.round(cScale * 100)}%`;
         if (scaleX !== 1.0) editDetails += ` · 가로${Math.round(scaleX * 100)}%`;
+        if (cfg.trapezoid) {
+          const trapVal = Math.round(cfg.trapezoid * 10);
+          editDetails += trapVal > 0 ? ` · 대두+${trapVal}` : ` · 소두${Math.abs(trapVal)}`;
+        }
         if (brightness !== 100) editDetails += ` · 밝기${brightness}%`;
         if (contrast !== 100) editDetails += ` · 명암${contrast}%`;
         info.textContent = `${paper.name}${rotLabelStr} · ${editDetails}`;
-        info.title = `${paper.name}${rotLabelStr} · 크기 ${Math.round(cScale * 100)}% (가로 ${Math.round(scaleX * 100)}%, 밝기 ${brightness}%, 대비 ${contrast}%, 이동 ${offsetX}%,${offsetY}%)`;
+        info.title = `${paper.name}${rotLabelStr} · 크기 ${Math.round(cScale * 100)}% (가로 ${Math.round(scaleX * 100)}%, 사다리꼴 ${cfg.trapezoid || 0}, 밝기 ${brightness}%, 대비 ${contrast}%, 이동 ${offsetX}%,${offsetY}%)`;
 
         // 고해상도 Canvas 렌더링
         const dpr = 2; // 선명한 캔버스
@@ -4100,7 +4279,7 @@
         if (brightness !== 100 || contrast !== 100) {
           mctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
         }
-        mctx.drawImage(srcCanvas, posX, posY, finalDrawW, finalDrawH);
+        drawImageWithTrapezoid(mctx, srcCanvas, posX, posY, finalDrawW, finalDrawH, cfg.trapezoid);
         mctx.restore();
 
       } else {
@@ -4151,10 +4330,14 @@
         const rotLabelStr = rotTargetsText.length > 0 ? ` [${rotTargetsText.join('+')} ${rot}°]` : ` [0°]`;
         let editDetails = `${Math.round(cScale * 100)}%`;
         if (scaleX !== 1.0) editDetails += ` · 가로${Math.round(scaleX * 100)}%`;
+        if (cfg.trapezoid) {
+          const trapVal = Math.round(cfg.trapezoid * 10);
+          editDetails += trapVal > 0 ? ` · 대두+${trapVal}` : ` · 소두${Math.abs(trapVal)}`;
+        }
         if (brightness !== 100) editDetails += ` · 밝기${brightness}%`;
         if (contrast !== 100) editDetails += ` · 명암${contrast}%`;
         info.textContent = `${paper.name}${rotLabelStr} · ${editDetails}`;
-        info.title = `${paper.name}${rotLabelStr} (여백 ${marginPx}px) · 내용물 ${Math.round(cScale * 100)}% (가로 ${Math.round(scaleX * 100)}%, 밝기 ${brightness}%, 대비 ${contrast}%, 이동 ${offsetX}%,${offsetY}%)`;
+        info.title = `${paper.name}${rotLabelStr} (여백 ${marginPx}px) · 내용물 ${Math.round(cScale * 100)}% (가로 ${Math.round(scaleX * 100)}%, 사다리꼴 ${cfg.trapezoid || 0}, 밝기 ${brightness}%, 대비 ${contrast}%, 이동 ${offsetX}%,${offsetY}%)`;
 
         const dpr = 2;
         miniCanvas.width = sheetW * dpr;
@@ -4356,7 +4539,7 @@
           if (brightness !== 100 || contrast !== 100) {
             fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
           }
-          fctx.drawImage(tempCanvas, posX, posY, drawW, drawH);
+          drawImageWithTrapezoid(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.trapezoid);
           fctx.restore();
           tempCanvas.width = 0; tempCanvas.height = 0;
 
@@ -4528,7 +4711,7 @@
           if (brightness !== 100 || contrast !== 100) {
             fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
           }
-          fctx.drawImage(tempCanvas, posX, posY, drawW, drawH);
+          drawImageWithTrapezoid(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.trapezoid);
           fctx.restore();
           tempCanvas.width = 0; tempCanvas.height = 0;
 
@@ -4674,7 +4857,7 @@
           if (brightness !== 100 || contrast !== 100) {
             fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
           }
-          fctx.drawImage(tempCanvas, posX, posY, finalDrawW, finalDrawH);
+          drawImageWithTrapezoid(fctx, tempCanvas, posX, posY, finalDrawW, finalDrawH, cfg.trapezoid);
           fctx.restore();
           tempCanvas.width = 0; tempCanvas.height = 0;
 
@@ -4810,7 +4993,7 @@
           if (brightness !== 100 || contrast !== 100) {
             fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
           }
-          fctx.drawImage(tempCanvas, posX, posY, drawW, drawH);
+          drawImageWithTrapezoid(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.trapezoid);
           fctx.restore();
           tempCanvas.width = 0; tempCanvas.height = 0;
 
