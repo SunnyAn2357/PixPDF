@@ -1197,28 +1197,12 @@
   <!-- 상단 헤더 (단일 1행) -->
   <header>
     <div class="header-left">
-      <!-- PixPDF 메뉴 버튼 (아이콘 클릭 시 드롭다운 메뉴 오픈) -->
+      <!-- PixPDF 삼선 햄버거 메뉴 버튼 -->
       <button class="btn-hamburger" id="btnHamburger" title="메뉴 열기">
-        <svg width="24" height="24" viewBox="0 0 512 512" style="border-radius:5px; pointer-events:none; display:block;">
-          <defs>
-            <linearGradient id="hdrBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#042024"/><stop offset="50%" stop-color="#0d3b40"/><stop offset="100%" stop-color="#0f766e"/>
-            </linearGradient>
-            <linearGradient id="hdrDocGrad" x1="0%" y1="0%" x2="10%" y2="100%">
-              <stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#e2e8f0"/>
-            </linearGradient>
-            <linearGradient id="hdrPdfGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#f43f5e"/><stop offset="100%" stop-color="#e11d48"/>
-            </linearGradient>
-          </defs>
-          <rect width="512" height="512" rx="112" fill="url(#hdrBgGrad)"/>
-          <path d="M120 112 C120 90, 138 72, 160 72 L320 72 L400 152 L400 400 C400 422, 382 440, 360 440 L160 440 C138 440, 120 422, 120 400 Z" fill="url(#hdrDocGrad)"/>
-          <path d="M320 72 L320 132 C320 144, 328 152, 340 152 L400 152 Z" fill="#94a3b8"/>
-          <rect x="144" y="220" width="128" height="52" rx="10" fill="url(#hdrPdfGrad)"/>
-          <text x="208" y="258" font-family="system-ui, sans-serif" font-size="34" font-weight="900" fill="#ffffff" text-anchor="middle">PDF</text>
-          <circle cx="330" cy="246" r="22" fill="#0d9488"/>
-          <path d="M160 380 L230 290 L300 380 Z" fill="#0f766e"/>
-          <path d="M260 380 L320 310 L380 380 Z" fill="#14b8a6"/>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none; display:block;">
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
         </svg>
       </button>
       
@@ -1533,32 +1517,66 @@
         <button class="modal-close-btn" onclick="closeGlobalSettingsModal()">✕</button>
       </div>
       <div class="modal-body">
-        <!-- PDF 모드 기본 설정 -->
-        <div id="modalSecPdf" style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <!-- 1. 용지 규격 -->
           <div class="control-group">
-            <label>기본 용지 규격</label>
-            <select id="selGlobalPdfFit">
-              <option value="original">원본 크기</option>
+            <label>용지 규격</label>
+            <select id="selGlobalPageSize" onchange="onGlobalPageSizeChange(this.value)">
+              <option value="original" selected>원본 크기</option>
+              <option value="a4">A4 (210×297mm)</option>
               <option value="a3">A3 (297×420mm)</option>
-              <option value="a4" selected>A4 (210×297mm)</option>
               <option value="a5">A5 (148×210mm)</option>
               <option value="b3">B3 (353×500mm)</option>
               <option value="b4">B4 (250×353mm)</option>
               <option value="b5">B5 (176×250mm)</option>
+              <option value="custom">사용자 정의 (픽셀)</option>
             </select>
           </div>
+
+          <div class="control-group" id="groupGlobalCustomPx" style="display: none;">
+            <label>사용자 정의 크기 (px)</label>
+            <div class="custom-px-row">
+              <input type="number" id="txtGlobalCustomWidth" value="1920" min="100" max="10000" placeholder="너비">
+              <span>×</span>
+              <input type="number" id="txtGlobalCustomHeight" value="1080" min="100" max="10000" placeholder="높이">
+            </div>
+          </div>
+
+          <!-- 2. 용지 방향 -->
           <div class="control-group">
-            <label>기본 해상도 / 화질</label>
-            <select id="selGlobalPdfScale">
+            <label>용지 방향</label>
+            <select id="selGlobalOrientation">
+              <option value="auto" selected>자동 (비율 기준)</option>
+              <option value="p">세로 (Portrait)</option>
+              <option value="l">가로 (Landscape)</option>
+            </select>
+          </div>
+
+          <!-- 3. 여백 설정 -->
+          <div class="control-group">
+            <label>여백 설정</label>
+            <select id="selGlobalMargin">
+              <option value="0" selected>0px (여백 없음)</option>
+              <option value="10">10px (기본)</option>
+              <option value="20">20px (넓음)</option>
+            </select>
+          </div>
+
+          <!-- 4. 해상도 / 화질 -->
+          <div class="control-group">
+            <label>해상도 / 화질</label>
+            <select id="selGlobalScale">
               <option value="1.5">×1.5 (화면용 / 용량 절약)</option>
               <option value="2.0">×2.0 (고해상도 A4 권장)</option>
               <option value="3.0" selected>×3.0 (초고해상도 인쇄용)</option>
-              <option value="4.0">×4.0 (최상급 원본 극대화)</option>
+              <option value="4.0">×4.0 (최상급 원본 극대화 / 600DPI급)</option>
             </select>
           </div>
+
+          <!-- 5. 출력 포맷 (이미지 저장 시) -->
           <div class="control-group">
-            <label>기본 출력 포맷</label>
-            <select id="selGlobalPdfFormat">
+            <label>출력 포맷 (이미지 저장 시)</label>
+            <select id="selGlobalFormat" onchange="onGlobalFormatChange(this.value)">
               <option value="png" selected>PNG (무손실 / 투명 배경 지원)</option>
               <option value="jpeg">JPG (사진 압축 / 고효율)</option>
               <option value="webp">WebP (최신 웹 규격)</option>
@@ -1567,49 +1585,20 @@
               <option value="tiff">TIFF (인쇄 / 출판 규격)</option>
             </select>
           </div>
-        </div>
 
-        <!-- 이미지 모드 기본 설정 -->
-        <div id="modalSecImg" style="display:none; flex-direction:column; gap:10px;">
-          <div class="control-group">
-            <label>기본 용지 규격</label>
-            <select id="selGlobalImgPageSize">
-              <option value="original" selected>원본 크기</option>
-              <option value="a4">A4 (210×297mm)</option>
-              <option value="a3">A3 (297×420mm)</option>
-              <option value="a5">A5 (148×210mm)</option>
-              <option value="b3">B3 (353×500mm)</option>
-              <option value="b4">B4 (250×353mm)</option>
-              <option value="b5">B5 (176×250mm)</option>
-            </select>
-          </div>
-          <div class="control-group">
-            <label>기본 품질</label>
-            <select id="selGlobalImgQuality">
-              <option value="ultra" selected>최상급 (무손실 / 100% 원본 픽셀 보존)</option>
-              <option value="high">고화질 (JPEG 98% / 고효율)</option>
-              <option value="normal">일반 (JPEG 90% / 용량 절약)</option>
-            </select>
-          </div>
-          <div class="control-group">
-            <label>기본 방향</label>
-            <select id="selGlobalImgOrient">
-              <option value="auto" selected>자동 (비율 기준)</option>
-              <option value="p">세로 (Portrait)</option>
-              <option value="l">가로 (Landscape)</option>
-            </select>
-          </div>
-          <div class="control-group">
-            <label>기본 여백</label>
-            <select id="selGlobalImgMargin">
-              <option value="0" selected>0px (여백 없음)</option>
-              <option value="10">10px (기본)</option>
-              <option value="20">20px (넓음)</option>
-            </select>
+          <!-- 5-1. 배경 투명화 옵션 (PNG 선택 시 노출) -->
+          <div class="control-group" id="grpGlobalTransparentBg" style="display: none;">
+            <label style="display: flex; align-items: center; justify-content: space-between; background: #f8fafc; border: 1px solid var(--border-light); border-radius: 6px; padding: 7px 11px; cursor: pointer; user-select: none;">
+              <span style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--text-main); font-size: 13px;">
+                <input type="checkbox" id="chkGlobalTransparentBg" checked style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary);">
+                배경 투명화
+              </span>
+              <span style="font-size: 11px; color: var(--text-muted); font-weight: 500;">여백 및 모서리 투명</span>
+            </label>
           </div>
         </div>
 
-        <div style="border-top:1px dashed var(--border); padding-top:10px; margin-top:4px;">
+        <div style="border-top:1px dashed var(--border); padding-top:10px; margin-top:8px;">
           <label style="display:flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; cursor:pointer;">
             <input type="checkbox" id="chkApplyToAllPages" checked style="accent-color:var(--primary); width:15px; height:15px;">
             <span>현재 열린 모든 페이지에 일괄 적용하기</span>
@@ -1672,7 +1661,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.3.5 (페이지/이미지 회전 완전 분리 및 실시간 동기화 무결성 확보)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.3.6 (기본 페이지 설정 항목 일체화 및 상단 햄버거 삼선 UI 개편)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -2502,19 +2491,45 @@
       onSettingChange('rot_updated', rot);
     }
 
+    function onGlobalPageSizeChange(val) {
+      const grp = document.getElementById('groupGlobalCustomPx');
+      if (grp) grp.style.display = val === 'custom' ? 'flex' : 'none';
+    }
+
+    function onGlobalFormatChange(val) {
+      const grp = document.getElementById('grpGlobalTransparentBg');
+      if (grp) grp.style.display = val === 'png' ? 'flex' : 'none';
+    }
+
     // 삼선 햄버거 메뉴 ➡️ [기본 페이지 설정] 모달 제어 함수
+    // 오른쪽 제어창의 5개 설정 항목과 100% 동일한 순서·명칭·옵션으로 연동
     function openGlobalSettingsModal() {
       menuDropdown.classList.remove('show');
-      const secPdf = document.getElementById('modalSecPdf');
-      const secImg = document.getElementById('modalSecImg');
-      if (secPdf) secPdf.style.display = 'flex';
-      if (secImg) secImg.style.display = 'none';
 
-      document.getElementById('selGlobalPdfFit').value = docState.globalSettings.fit || docState.globalSettings.pageSize || 'original';
+      const g = docState.globalSettings;
 
-      // 해상도 셀렉트박스 매칭: '3'과 '3.0'의 문자열 불일치로 인한 공란 버그 원천 차단
-      const scaleVal = parseFloat(docState.globalSettings.scale) || 3.0;
-      const selScale = document.getElementById('selGlobalPdfScale');
+      // 1. 용지 규격
+      const selSize = document.getElementById('selGlobalPageSize');
+      const pageSizeVal = g.pageSize || g.fit || 'original';
+      if (selSize) selSize.value = pageSizeVal;
+      onGlobalPageSizeChange(pageSizeVal);
+
+      const txtW = document.getElementById('txtGlobalCustomWidth');
+      const txtH = document.getElementById('txtGlobalCustomHeight');
+      if (txtW) txtW.value = g.customW || 1920;
+      if (txtH) txtH.value = g.customH || 1080;
+
+      // 2. 용지 방향
+      const selOrient = document.getElementById('selGlobalOrientation');
+      if (selOrient) selOrient.value = g.orient || 'auto';
+
+      // 3. 여백 설정
+      const selMargin = document.getElementById('selGlobalMargin');
+      if (selMargin) selMargin.value = String(g.margin !== undefined ? g.margin : 0);
+
+      // 4. 해상도 / 화질
+      const scaleVal = parseFloat(g.scale) || 3.0;
+      const selScale = document.getElementById('selGlobalScale');
       if (selScale) {
         let matched = false;
         for (let i = 0; i < selScale.options.length; i++) {
@@ -2527,11 +2542,16 @@
         if (!matched) selScale.value = "3.0";
       }
 
-      const selFmt = document.getElementById('selGlobalPdfFormat');
-      if (selFmt) selFmt.value = docState.globalSettings.format || 'png';
+      // 5. 출력 포맷 (이미지 저장 시)
+      const fmtVal = g.format || 'png';
+      const selFmt = document.getElementById('selGlobalFormat');
+      if (selFmt) selFmt.value = fmtVal;
+      onGlobalFormatChange(fmtVal);
+
+      const chkTrans = document.getElementById('chkGlobalTransparentBg');
+      if (chkTrans) chkTrans.checked = g.transparentBg !== false;
 
       document.getElementById('modalGlobalSettings').classList.add('show');
-      // 뒤로가기로 닫을 수 있도록 history push
       try { history.pushState({ appLayer: 'globalSettings' }, ''); } catch (e) {}
     }
 
@@ -2554,29 +2574,59 @@
       }
     }
 
+    // 기본 페이지 설정 적용: 일괄 적용 체크 시 열린 모든 페이지에 5대 설정 전면 반영
     async function applyGlobalSettingsModal() {
       const applyAll = document.getElementById('chkApplyToAllPages').checked;
 
-      const fitVal = document.getElementById('selGlobalPdfFit').value;
-      const scaleVal = parseFloat(document.getElementById('selGlobalPdfScale').value) || 3.0;
-      const formatVal = document.getElementById('selGlobalPdfFormat').value;
+      const pageSizeVal = document.getElementById('selGlobalPageSize').value;
+      const customWVal = parseInt(document.getElementById('txtGlobalCustomWidth').value, 10) || 1920;
+      const customHVal = parseInt(document.getElementById('txtGlobalCustomHeight').value, 10) || 1080;
+      const orientVal = document.getElementById('selGlobalOrientation').value;
+      const marginVal = parseInt(document.getElementById('selGlobalMargin').value, 10) || 0;
+      const scaleVal = parseFloat(document.getElementById('selGlobalScale').value) || 3.0;
+      const qualityVal = scaleVal >= 3.0 ? 'ultra' : (scaleVal >= 2.0 ? 'high' : 'standard');
+      const formatVal = document.getElementById('selGlobalFormat').value;
+      const chkTrans = document.getElementById('chkGlobalTransparentBg');
+      const transparentVal = chkTrans ? chkTrans.checked : true;
 
-      docState.globalSettings.fit = fitVal;
-      docState.globalSettings.pageSize = fitVal;
+      // docState.globalSettings에 최신 기본값 저장
+      docState.globalSettings.pageSize = pageSizeVal;
+      docState.globalSettings.fit = pageSizeVal;
+      docState.globalSettings.customW = customWVal;
+      docState.globalSettings.customH = customHVal;
+      docState.globalSettings.orient = orientVal;
+      docState.globalSettings.margin = marginVal;
       docState.globalSettings.scale = scaleVal;
+      docState.globalSettings.quality = qualityVal;
       docState.globalSettings.format = formatVal;
+      docState.globalSettings.transparentBg = transparentVal;
 
       if (applyAll && docState.items.length > 0) {
         for (let i = 0; i < docState.items.length; i++) {
-          if (docState.items[i].settings) {
-            docState.items[i].settings.fit = fitVal;
-            docState.items[i].settings.pageSize = fitVal;
-            docState.items[i].settings.scale = scaleVal;
-            docState.items[i].settings.format = formatVal;
+          if (!docState.items[i].settings) {
+            docState.items[i].settings = { ...docState.globalSettings, rotTarget: { ...docState.globalSettings.rotTarget } };
+          } else {
+            const s = docState.items[i].settings;
+            s.pageSize = pageSizeVal;
+            s.fit = pageSizeVal;
+            s.customW = customWVal;
+            s.customH = customHVal;
+            s.orient = orientVal;
+            s.margin = marginVal;
+            s.scale = scaleVal;
+            s.quality = qualityVal;
+            s.format = formatVal;
+            s.transparentBg = transparentVal;
           }
         }
         await renderThumbnailList();
         loadMainViewer(docState.currentIndex);
+      } else {
+        syncControlsForCurrentPage();
+        const cur = docState.currentIndex;
+        await renderMainViewerCanvas(cur);
+        updateThumbnailCanvas(cur);
+        updateMiniPreview();
       }
 
       closeGlobalSettingsModal();
