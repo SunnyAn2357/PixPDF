@@ -3852,13 +3852,9 @@
         cfg.trapExp = { top: 0, bot: 0 };
       }
 
-      // 원본 이미지/PDF 가로 크기 기준
+      // 원본 이미지/PDF 가로 크기 기준 1% 고정 스텝 (최소 1px)
       const baseW = item.width || item.imgObj?.naturalWidth || item.imgObj?.width || 1000;
-      const curTopW = baseW + (cfg.trapExp.top || 0);
-      const curBotW = baseW + (cfg.trapExp.bot || 0);
-
-      // 밑변과 윗변 중 더 짧은 길이의 1% 픽셀 계산 (최소 1px)
-      const stepPx = Math.max(1, Math.round(Math.min(curTopW, curBotW) * 0.01));
+      const stepPx = Math.max(1, Math.round(baseW * 0.01));
 
       if (mode === 'top' || mode > 0) {
         // 대두: 윗변 길이 확대 (밑변은 기존 크기 그대로 유지)
