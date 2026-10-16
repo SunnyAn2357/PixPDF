@@ -381,7 +381,7 @@
       line-height: 0;
       transition: transform 0.15s ease;
       display: none;
-      overflow: hidden;
+      overflow: visible;
       position: relative;
       cursor: grab;
       user-select: none;
@@ -558,13 +558,33 @@
     }
     .mini-info-text {
       font-size: 10px;
+      line-height: 1.35;
       font-weight: 600;
       color: var(--text-muted);
-      margin-top: 4px;
+      margin-top: 5px;
+      text-align: center;
+      max-width: 165px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5px;
+    }
+    .mini-info-line1 {
+      color: var(--text-main);
+      font-weight: 700;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 155px;
+    }
+    .mini-info-line2 {
+      color: #0f766e;
+      font-size: 9px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      background: rgba(15, 118, 110, 0.08);
+      padding: 1px 4px;
+      border-radius: 4px;
     }
 
     /* 우측 이미지 편집 메뉴 */
@@ -816,6 +836,97 @@
       accent-color: var(--primary);
       margin: 0;
       cursor: pointer;
+    }
+
+    /* 4모서리 투시 변환(Corner Pinning) 오버레이 & 핀 핸들 스타일 */
+    .perspective-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 50;
+    }
+    .perspective-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: visible;
+    }
+    .perspective-svg polygon {
+      fill: rgba(15, 118, 110, 0.08);
+      stroke: #0f766e;
+      stroke-width: 2;
+      stroke-dasharray: 6, 4;
+    }
+    .corner-pin {
+      position: absolute;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #0f766e;
+      color: #ffffff;
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9.5px;
+      font-weight: 800;
+      cursor: grab;
+      pointer-events: auto;
+      transform: translate(-50%, -50%);
+      user-select: none;
+      transition: transform 0.1s ease, background 0.15s ease, box-shadow 0.15s ease;
+      touch-action: none;
+    }
+    .corner-pin:hover, .corner-pin.active {
+      background: #047857;
+      transform: translate(-50%, -50%) scale(1.22);
+      box-shadow: 0 4px 12px rgba(4, 120, 87, 0.55);
+      border-color: #a7f3d0;
+    }
+    .corner-pin:active {
+      cursor: grabbing;
+      background: #065f46;
+    }
+    /* 모서리 선택 칩 (우측 패널) */
+    .corner-select-row {
+      display: flex;
+      gap: 2px;
+      margin-top: 2px;
+    }
+    .btn-corner-chip {
+      flex: 1;
+      padding: 2px 0;
+      font-size: 9px;
+      font-weight: 700;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.12s ease;
+      text-align: center;
+    }
+    .btn-corner-chip:hover {
+      background: #e2e8f0;
+      color: var(--text-main);
+    }
+    .btn-corner-chip.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+    .btn-edit-tool.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px var(--primary);
     }
 
     /* PDF 페이지 피커(가져오기) 전용 모달 스타일 */
@@ -1084,8 +1195,30 @@
   <!-- 상단 헤더 (단일 1행) -->
   <header>
     <div class="header-left">
-      <!-- 햄버거 메뉴 버튼 -->
-      <button class="btn-hamburger" id="btnHamburger" title="메뉴 열기">☰</button>
+      <!-- PixPDF 메뉴 버튼 (아이콘 클릭 시 드롭다운 메뉴 오픈) -->
+      <button class="btn-hamburger" id="btnHamburger" title="메뉴 열기">
+        <svg width="24" height="24" viewBox="0 0 512 512" style="border-radius:5px; pointer-events:none; display:block;">
+          <defs>
+            <linearGradient id="hdrBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#042024"/><stop offset="50%" stop-color="#0d3b40"/><stop offset="100%" stop-color="#0f766e"/>
+            </linearGradient>
+            <linearGradient id="hdrDocGrad" x1="0%" y1="0%" x2="10%" y2="100%">
+              <stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#e2e8f0"/>
+            </linearGradient>
+            <linearGradient id="hdrPdfGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#f43f5e"/><stop offset="100%" stop-color="#e11d48"/>
+            </linearGradient>
+          </defs>
+          <rect width="512" height="512" rx="112" fill="url(#hdrBgGrad)"/>
+          <path d="M120 112 C120 90, 138 72, 160 72 L320 72 L400 152 L400 400 C400 422, 382 440, 360 440 L160 440 C138 440, 120 422, 120 400 Z" fill="url(#hdrDocGrad)"/>
+          <path d="M320 72 L320 132 C320 144, 328 152, 340 152 L400 152 Z" fill="#94a3b8"/>
+          <rect x="144" y="220" width="128" height="52" rx="10" fill="url(#hdrPdfGrad)"/>
+          <text x="208" y="258" font-family="system-ui, sans-serif" font-size="34" font-weight="900" fill="#ffffff" text-anchor="middle">PDF</text>
+          <circle cx="330" cy="246" r="22" fill="#0d9488"/>
+          <path d="M160 380 L230 290 L300 380 Z" fill="#0f766e"/>
+          <path d="M260 380 L320 310 L380 380 Z" fill="#14b8a6"/>
+        </svg>
+      </button>
       
       <!-- 햄버거 드롭다운 메뉴 -->
       <div class="menu-dropdown" id="menuDropdown">
@@ -1096,14 +1229,12 @@
         <button class="menu-item danger" onclick="triggerCloseDocument()">✕ 문서 닫기</button>
       </div>
 
-      <h1>PixPDF</h1>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <h1>PixPDF</h1>
+      </div>
     </div>
 
-    <!-- 모드 탭 -->
-    <div class="tab-group">
-      <button id="tabPdf2Img" class="tab-btn active" onclick="setAppMode('pdf2img')">PDF Converter</button>
-      <button id="tabImg2Pdf" class="tab-btn" onclick="setAppMode('img2pdf')">Img Converter</button>
-    </div>
+    <button class="btn-tool" style="font-weight:700; background:var(--primary); color:#fff; border-color:var(--primary); padding:7px 14px; font-size:13px; border-radius:6px; cursor:pointer;" onclick="triggerOpenFileDialog()" title="문서 또는 이미지 파일 열기">📁 파일 열기</button>
   </header>
 
   <!-- 메인 3단 워크스페이스 -->
@@ -1113,8 +1244,12 @@
     <div class="col-thumb" id="colThumb">
       <div class="thumb-toolbar">
         <label id="lblSelectAll"><input type="checkbox" id="chkSelectAll"> 전체 선택</label>
-        <div style="display:flex; align-items:center; gap:6px;">
-          <button class="btn-add-thumb" onclick="triggerInsertFileDialog(-1)" title="파일(PDF 또는 이미지) 삽입">+ 삽입</button>
+        <div style="display:flex; align-items:center; gap:6px; position:relative;">
+          <button class="btn-add-thumb" id="btnInsertDropdown" onclick="toggleInsertDropdown(event)" title="페이지 또는 파일 삽입">+ 삽입 ▾</button>
+          <div class="menu-dropdown insert-dropdown" id="menuInsertDropdown" style="top:32px; right:0; left:auto; width:130px; z-index:210;">
+            <button class="menu-item" onclick="insertBlankPageAction(event)" style="padding:10px 14px; font-size:13px;">📄 빈페이지</button>
+            <button class="menu-item" onclick="triggerInsertFileAction(event)" style="padding:10px 14px; font-size:13px;">📁 파일</button>
+          </div>
           <span id="thumbCount">0 항목</span>
         </div>
       </div>
@@ -1145,13 +1280,22 @@
       <div class="viewer-viewport" id="viewerViewport">
         <div class="viewer-canvas-wrap" id="viewerWrap">
           <canvas id="mainViewerCanvas"></canvas>
+          <div id="perspectiveOverlay" class="perspective-overlay" style="display: none;">
+            <svg id="perspectiveSvg" class="perspective-svg">
+              <polygon id="perspectivePolygon" points="" />
+            </svg>
+            <div id="pinTL" class="corner-pin" data-corner="tl" title="좌상단 모서리 (드래그)"><span class="pin-label">TL</span></div>
+            <div id="pinTR" class="corner-pin" data-corner="tr" title="우상단 모서리 (드래그)"><span class="pin-label">TR</span></div>
+            <div id="pinBR" class="corner-pin" data-corner="br" title="우하단 모서리 (드래그)"><span class="pin-label">BR</span></div>
+            <div id="pinBL" class="corner-pin" data-corner="bl" title="좌하단 모서리 (드래그)"><span class="pin-label">BL</span></div>
+          </div>
         </div>
         <div id="viewerEmptyMsg" class="viewer-empty">
           <div class="viewer-empty-icon">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
           </div>
-          <h3>문서를 불러오거나 끌어다 놓으세요</h3>
-          <p>상단 메뉴의 <b>[☰ ➡️ 파일 열기]</b>를 누르거나,<br>화면 어디든 파일을 <b>드래그 앤 드롭</b>해 보세요.</p>
+          <h3>문서 또는 이미지를 불러오세요</h3>
+          <p>상단의 <b>[📁 파일 열기]</b>를 누르거나,<br>PDF 문서 및 이미지 파일들을 자유롭게 <b>드래그 앤 드롭</b>해 보세요.</p>
         </div>
       </div>
     </div>
@@ -1174,8 +1318,8 @@
           <div class="control-group">
             <label>용지 규격</label>
             <select id="selPageSize" onchange="onSettingChange('pageSize', this.value)">
-              <option value="original">원본 크기</option>
-              <option value="a4" selected>A4 (210×297mm)</option>
+              <option value="original" selected>원본 크기</option>
+              <option value="a4">A4 (210×297mm)</option>
               <option value="a3">A3 (297×420mm)</option>
               <option value="a5">A5 (148×210mm)</option>
               <option value="b3">B3 (353×500mm)</option>
@@ -1298,11 +1442,29 @@
                 <button type="button" class="btn-edit-tool" title="내용물 축소" onclick="adjustPreviewScale(-0.1)">축소</button>
                 <button type="button" class="btn-edit-tool" title="크기 100% 초기화" onclick="resetPreviewScale()">리셋</button>
               </div>
-              <!-- 2행: 넓히기 / 좁히기 / 리셋 -->
+              <!-- 2행: 뚱뚱 / 홀쭉 / 1:1 -->
               <div class="edit-btn-row">
-                <button type="button" class="btn-edit-tool" title="가로 넓히기 (뚱뚱하게)" onclick="adjustScaleX(0.1)">넓히기</button>
-                <button type="button" class="btn-edit-tool" title="가로 좁히기 (홀쭉하게)" onclick="adjustScaleX(-0.1)">좁히기</button>
-                <button type="button" class="btn-edit-tool" title="가로비율 100% 초기화" onclick="resetScaleX()">리셋</button>
+                <button type="button" class="btn-edit-tool" title="가로 넓히기 (뚱뚱하게)" onclick="adjustScaleX(0.1)">뚱뚱</button>
+                <button type="button" class="btn-edit-tool" title="가로 좁히기 (홀쭉하게)" onclick="adjustScaleX(-0.1)">홀쭉</button>
+                <button type="button" class="btn-edit-tool" title="가로비율 100% 초기화" onclick="resetScaleX()">1:1</button>
+              </div>
+              <!-- 3행: 대두 / 소두 / 1:1 (사다리꼴 변형) -->
+              <div class="edit-btn-row">
+                <button type="button" class="btn-edit-tool" title="밑변 고정 + 윗변 1% 확대 (대두)" onclick="adjustTrapezoid(0.01)">대두</button>
+                <button type="button" class="btn-edit-tool" title="윗변 고정 + 밑변 1% 확대 (소두)" onclick="adjustTrapezoid(-0.01)">소두</button>
+                <button type="button" class="btn-edit-tool" title="사다리꼴 변형 1:1 초기화" onclick="resetTrapezoid()">1:1</button>
+              </div>
+              <!-- 4행: 투시 변환 (네 모서리 개별 조절 & 리셋) -->
+              <div class="edit-btn-row">
+                <button type="button" class="btn-edit-tool" id="btnTogglePerspective" style="flex:2;" title="화면에 4개 모서리 조절 핀을 띄워 자유롭게 투시 왜곡을 조절합니다" onclick="togglePerspectiveMode()">📐 투시변환</button>
+                <button type="button" class="btn-edit-tool" title="네 모서리 위치 초기화" onclick="resetCorners()">리셋</button>
+              </div>
+              <!-- 4행 서브: 모서리 선택 칩 (D-Pad 연동) -->
+              <div class="corner-select-row" id="rowCornerChips" style="display:none;">
+                <button type="button" class="btn-corner-chip" id="chipCornerTL" onclick="selectCorner('tl')" title="좌상단 모서리 선택">좌상</button>
+                <button type="button" class="btn-corner-chip" id="chipCornerTR" onclick="selectCorner('tr')" title="우상단 모서리 선택">우상</button>
+                <button type="button" class="btn-corner-chip" id="chipCornerBL" onclick="selectCorner('bl')" title="좌하단 모서리 선택">좌하</button>
+                <button type="button" class="btn-corner-chip" id="chipCornerBR" onclick="selectCorner('br')" title="우하단 모서리 선택">우하</button>
               </div>
               <!-- 3행: 밝게 / 어둡게 / 리셋 -->
               <div class="edit-btn-row">
@@ -1410,8 +1572,8 @@
           <div class="control-group">
             <label>기본 용지 규격</label>
             <select id="selGlobalImgPageSize">
-              <option value="a4" selected>A4 (210×297mm)</option>
-              <option value="original">원본 크기</option>
+              <option value="original" selected>원본 크기</option>
+              <option value="a4">A4 (210×297mm)</option>
               <option value="a3">A3 (297×420mm)</option>
               <option value="a5">A5 (148×210mm)</option>
               <option value="b3">B3 (353×500mm)</option>
@@ -1504,7 +1666,7 @@
   <div id="printContainer"></div>
 
   <script>
-    console.log("PixPDF v1.9.9 초기화 (종료 컨펌 모달 제거, 모바일/데스크톱 더블 탭 뒤로가기 종료 토스트 적용)");
+    console.log("PixPDF v2.2.0 초기화 (사각 투시 변환 4-Corner Pinning 왜곡 보정 지원)");
 
     // PWA Service Worker 등록 및 새 버전 자동 감지/새로고침 (Auto-Update)
     if ('serviceWorker' in navigator) {
@@ -1596,54 +1758,23 @@
       };
     }
 
-    // [핵심] 두 모드의 독립적인 상태 보존 객체
-    const pdfState = {
-      doc: null,
-      fileName: 'document',
-      pages: [], // [{ type: 'pdf'|'image', doc, pageNum, name, width, height, imgObj, file, settings: { fit, scale, rot, rotTarget, contentScale, format, customW, customH } }]
+    // [핵심] 단일 통합 작업 공간 상태 관리 (PDF와 이미지 구분 없이 섞어서 편집)
+    const docState = {
+      items: [], // [{ type: 'pdf'|'image', doc, pageNum, name, width, height, imgObj, file, settings: { fit, pageSize, quality, scale, rot, rotTarget, contentScale, scaleX, trapezoid, brightness, contrast, offsetX, offsetY, orient, margin, format, transparentBg, customW, customH } }]
       checkList: [],
       currentIndex: 0,
       zoom: 1.0,
+      fileName: 'PixPDF_Document',
       globalSettings: {
         fit: 'original',
+        pageSize: 'original',
+        quality: 'ultra',
         scale: 3.0,
         rot: 0,
         rotTarget: { page: true, image: true },
         contentScale: 1.0,
         scaleX: 1.0,
-        brightness: 100,
-        contrast: 100,
-        offsetX: 0,
-        offsetY: 0,
-        format: 'png',
-        transparentBg: true,
-        orient: 'auto',
-        customW: 1920,
-        customH: 1080
-      }
-    };
-
-    const pickerState = {
-      doc: null,
-      file: null,
-      total: 0,
-      selected: [],
-      targetInsertIndex: -1
-    };
-    let pendingInsertIndex = -1;
-
-    const imgState = {
-      items: [], // [{ file, imgObj, name, width, height, settings: { pageSize, quality, rot, rotTarget, contentScale, scaleX, brightness, contrast, offsetX, offsetY, orient, margin, customW, customH } }]
-      checkList: [], // 이미지 다중 선택 체크박스 (기본 전체 선택 true)
-      currentIndex: 0,
-      zoom: 1.0,
-      globalSettings: {
-        pageSize: 'a4',
-        quality: 'ultra',
-        rot: 0,
-        rotTarget: { page: true, image: true },
-        contentScale: 1.0,
-        scaleX: 1.0,
+        trapezoid: 0,
         brightness: 100,
         contrast: 100,
         offsetX: 0,
@@ -1657,7 +1788,47 @@
       }
     };
 
-    let appMode = 'pdf2img'; // 'pdf2img' | 'img2pdf'
+    // 하위 호환성 및 기존 함수 연동을 위한 양방향 Proxy
+    const pdfState = {
+      get doc() { return docState.items[docState.currentIndex]?.doc || null; },
+      set doc(d) {},
+      get fileName() { return docState.fileName; },
+      set fileName(v) { docState.fileName = v; },
+      get pages() { return docState.items; },
+      set pages(v) { docState.items = v; },
+      get checkList() { return docState.checkList; },
+      set checkList(v) { docState.checkList = v; },
+      get currentIndex() { return docState.currentIndex; },
+      set currentIndex(v) { docState.currentIndex = v; },
+      get zoom() { return docState.zoom; },
+      set zoom(v) { docState.zoom = v; },
+      get globalSettings() { return docState.globalSettings; }
+    };
+
+    const pickerState = {
+      doc: null,
+      file: null,
+      total: 0,
+      selected: [],
+      targetInsertIndex: -1
+    };
+    let pendingInsertIndex = -1;
+
+    const imgState = {
+      get items() { return docState.items; },
+      set items(v) { docState.items = v; },
+      get checkList() { return docState.checkList; },
+      set checkList(v) { docState.checkList = v; },
+      get currentIndex() { return docState.currentIndex; },
+      set currentIndex(v) { docState.currentIndex = v; },
+      get zoom() { return docState.zoom; },
+      set zoom(v) { docState.zoom = v; },
+      get fileName() { return docState.fileName; },
+      set fileName(v) { docState.fileName = v; },
+      get globalSettings() { return docState.globalSettings; }
+    };
+
+    let appMode = 'unified'; // 단일 통합 모드
     let isAborted = false;
     let zipBlobs = [];
     let draggedCardIndex = null;
@@ -1681,7 +1852,150 @@
       return { rot, rotPage, rotImg, isPageRot90, isImgRot90, target };
     }
 
-    // [핵심] 바탕 용지(Paper) 규격/방향/여백 위에 내용물(Image)의 위치/회전/스케일/필터를 합성하여 캔버스에 렌더링
+    // [핵심] 사다리꼴 변형 (대두: 밑변 고정 + 윗변만 확대 / 소두: 윗변 고정 + 밑변만 확대)
+    function drawImageWithTrapezoid(ctx, imgSource, dx, dy, dw, dh, trapezoid) {
+      const trap = trapezoid || 0;
+      if (trap === 0) {
+        ctx.drawImage(imgSource, dx, dy, dw, dh);
+        return;
+      }
+      const slices = 60;
+      const srcW = imgSource.naturalWidth || imgSource.width || dw;
+      const srcH = imgSource.naturalHeight || imgSource.height || dh;
+      const sliceSrcH = srcH / slices;
+      const sliceDstH = dh / slices;
+
+      for (let i = 0; i < slices; i++) {
+        const t = i / (slices - 1); // 0 (상단) ~ 1 (하단)
+        // trap > 0 (대두): 밑변(t=1)은 1.0 고정, 윗변(t=0)은 1 + trap 확대
+        // trap < 0 (소두): 윗변(t=0)은 1.0 고정, 밑변(t=1)은 1 + |trap| 확대
+        const widthMult = trap > 0
+          ? (1 + trap * (1 - t))
+          : (1 + Math.abs(trap) * t);
+        const curW = dw * widthMult;
+        const curX = dx + (dw - curW) / 2;
+        const curY = dy + i * sliceDstH;
+
+        ctx.drawImage(
+          imgSource,
+          0, i * sliceSrcH, srcW, sliceSrcH,
+          curX, curY, curW, sliceDstH + 0.5
+        );
+      }
+    }
+
+    // [핵심] 사각 투시 변환(Perspective Warp / 4-Corner Pinning) 12x12 메쉬 아핀 매핑 렌더링
+    function drawPerspectiveQuad(ctx, imgSource, dx, dy, dw, dh, corners, trapezoid) {
+      const trap = trapezoid || 0;
+      const c = corners || { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+      const isZeroCorners = (!c.tl || (c.tl.x === 0 && c.tl.y === 0 && c.tr.x === 0 && c.tr.y === 0 && c.br.x === 0 && c.br.y === 0 && c.bl.x === 0 && c.bl.y === 0));
+
+      if (isZeroCorners && trap === 0) {
+        ctx.drawImage(imgSource, dx, dy, dw, dh);
+        return;
+      }
+      if (isZeroCorners && trap !== 0) {
+        drawImageWithTrapezoid(ctx, imgSource, dx, dy, dw, dh, trap);
+        return;
+      }
+
+      // 사다리꼴 오프셋 계산 (대두: 밑변 고정 + 윗변만 확대 / 소두: 윗변 고정 + 밑변만 확대)
+      const trapTopOffset = trap > 0 ? (dw * trap) / 2 : 0;
+      const trapBotOffset = trap < 0 ? (dw * Math.abs(trap)) / 2 : 0;
+
+      const srcW = imgSource.naturalWidth || imgSource.width || dw;
+      const srcH = imgSource.naturalHeight || imgSource.height || dh;
+      const scalePxX = dw / srcW;
+      const scalePxY = dh / srcH;
+
+      // 4개 코너 목적지 좌표 (dx, dy 기준 + 원본 픽셀 단위 1:1 오프셋 매핑)
+      const pTL = {
+        x: dx - trapTopOffset + ((c.tl?.x || 0) * scalePxX),
+        y: dy + ((c.tl?.y || 0) * scalePxY)
+      };
+      const pTR = {
+        x: dx + dw + trapTopOffset + ((c.tr?.x || 0) * scalePxX),
+        y: dy + ((c.tr?.y || 0) * scalePxY)
+      };
+      const pBR = {
+        x: dx + dw + trapBotOffset + ((c.br?.x || 0) * scalePxX),
+        y: dy + dh + ((c.br?.y || 0) * scalePxY)
+      };
+      const pBL = {
+        x: dx - trapBotOffset + ((c.bl?.x || 0) * scalePxX),
+        y: dy + dh + ((c.bl?.y || 0) * scalePxY)
+      };
+
+      const gridX = 12;
+      const gridY = 12;
+
+      function getDestPoint(u, v) {
+        const invU = 1 - u;
+        const invV = 1 - v;
+        return {
+          x: invU * invV * pTL.x + u * invV * pTR.x + u * v * pBR.x + invU * v * pBL.x,
+          y: invU * invV * pTL.y + u * invV * pTR.y + u * v * pBR.y + invU * v * pBL.y
+        };
+      }
+
+      function renderTriangle(s0, s1, s2, d0, d1, d2) {
+        const denom = (s0.x - s2.x) * (s1.y - s2.y) - (s1.x - s2.x) * (s0.y - s2.y);
+        if (Math.abs(denom) < 1e-8) return;
+
+        const a = ((d0.x - d2.x) * (s1.y - s2.y) - (d1.x - d2.x) * (s0.y - s2.y)) / denom;
+        const b = ((d0.y - d2.y) * (s1.y - s2.y) - (d1.y - d2.y) * (s0.y - s2.y)) / denom;
+        const cMat = ((s0.x - s2.x) * (d1.x - d2.x) - (s1.x - s2.x) * (d0.x - d2.x)) / denom;
+        const dMat = ((s0.x - s2.x) * (d1.y - d2.y) - (s1.x - s2.x) * (d0.y - d2.y)) / denom;
+        const e = d0.x - a * s0.x - cMat * s0.y;
+        const f = d0.y - b * s0.x - dMat * s0.y;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(d0.x, d0.y);
+        ctx.lineTo(d1.x, d1.y);
+        ctx.lineTo(d2.x, d2.y);
+        ctx.closePath();
+        ctx.clip();
+        ctx.transform(a, b, cMat, dMat, e, f);
+        ctx.drawImage(imgSource, 0, 0, srcW, srcH);
+        ctx.restore();
+      }
+
+      for (let gy = 0; gy < gridY; gy++) {
+        const v0 = gy / gridY;
+        const v1 = (gy + 1) / gridY;
+        const sy0 = v0 * srcH;
+        const sy1 = v1 * srcH;
+
+        for (let gx = 0; gx < gridX; gx++) {
+          const u0 = gx / gridX;
+          const u1 = (gx + 1) / gridX;
+          const sx0 = u0 * srcW;
+          const sx1 = u1 * srcW;
+
+          const dTL = getDestPoint(u0, v0);
+          const dTR = getDestPoint(u1, v0);
+          const dBR = getDestPoint(u1, v1);
+          const dBL = getDestPoint(u0, v1);
+
+          renderTriangle(
+            { x: sx0, y: sy0 },
+            { x: sx1, y: sy0 },
+            { x: sx0, y: sy1 },
+            dTL, dTR, dBL
+          );
+
+          renderTriangle(
+            { x: sx1, y: sy0 },
+            { x: sx1, y: sy1 },
+            { x: sx0, y: sy1 },
+            dTR, dBR, dBL
+          );
+        }
+      }
+    }
+
+    // [핵심] 바탕 용지(Paper) 규격/방향/여백 위에 내용물(Image)의 위치/회전/스케일/필터/투시변환을 합성하여 캔버스에 렌더링
     function drawPaperWithImage(canvas, item, cfg, options = {}) {
       if (!canvas || !item || !item.imgObj) return null;
       const ctx = canvas.getContext('2d');
@@ -1778,7 +2092,7 @@
 
       const origDrawW = isImgRot90 ? (baseDrawH * cScale) : (baseDrawW * cScale * scaleX);
       const origDrawH = isImgRot90 ? (baseDrawW * cScale * scaleX) : (baseDrawH * cScale);
-      ctx.drawImage(item.imgObj, -origDrawW / 2, -origDrawH / 2, origDrawW, origDrawH);
+      drawPerspectiveQuad(ctx, item.imgObj, -origDrawW / 2, -origDrawH / 2, origDrawW, origDrawH, cfg.corners, cfg.trapezoid);
       ctx.restore();
 
       return paper;
@@ -1817,57 +2131,52 @@
       return vp;
     }
 
-    // 현재 페이지 설정값 조회 (항상 해당 페이지의 고유 설정값 반환)
-    function getEffectivePdfSettings(pageIndex) {
-      const page = pdfState.pages[pageIndex];
-      if (!page) {
+    // [통합] 현재 페이지 설정값 조회 (항상 해당 페이지의 고유 설정값 반환)
+    function getEffectiveItemSettings(pageIndex) {
+      const item = docState.items[pageIndex];
+      if (!item) {
         return {
-          ...pdfState.globalSettings,
-          rotTarget: { ...pdfState.globalSettings.rotTarget }
+          ...docState.globalSettings,
+          rotTarget: { ...docState.globalSettings.rotTarget }
         };
       }
-      if (!page.settings) {
-        page.settings = {
-          ...pdfState.globalSettings,
-          rotTarget: { ...pdfState.globalSettings.rotTarget }
-        };
-      }
-      if (page.settings.orient === undefined) page.settings.orient = pdfState.globalSettings.orient || 'auto';
-      if (page.settings.scaleX === undefined) page.settings.scaleX = 1.0;
-      if (page.settings.brightness === undefined) page.settings.brightness = 100;
-      if (page.settings.contrast === undefined) page.settings.contrast = 100;
-      if (page.settings.offsetX === undefined) page.settings.offsetX = 0;
-      if (page.settings.offsetY === undefined) page.settings.offsetY = 0;
-      if (page.settings.transparentBg === undefined) page.settings.transparentBg = (pdfState.globalSettings.transparentBg !== undefined ? pdfState.globalSettings.transparentBg : true);
-      return page.settings;
-    }
-
-    function getEffectiveImgSettings(index) {
-      const item = imgState.items[index];
-      if (!item) return { ...imgState.globalSettings, rotTarget: { ...imgState.globalSettings.rotTarget } };
       if (!item.settings) {
         item.settings = {
-          ...imgState.globalSettings,
-          rotTarget: { ...imgState.globalSettings.rotTarget }
+          ...docState.globalSettings,
+          rotTarget: { ...docState.globalSettings.rotTarget }
         };
       }
+      if (item.settings.pageSize === undefined) item.settings.pageSize = item.settings.fit || docState.globalSettings.pageSize || 'original';
+      if (item.settings.fit === undefined) item.settings.fit = item.settings.pageSize;
+      if (item.settings.orient === undefined) item.settings.orient = docState.globalSettings.orient || 'auto';
       if (item.settings.scaleX === undefined) item.settings.scaleX = 1.0;
+      if (item.settings.trapezoid === undefined) item.settings.trapezoid = 0;
       if (item.settings.brightness === undefined) item.settings.brightness = 100;
       if (item.settings.contrast === undefined) item.settings.contrast = 100;
       if (item.settings.offsetX === undefined) item.settings.offsetX = 0;
       if (item.settings.offsetY === undefined) item.settings.offsetY = 0;
-      if (item.settings.transparentBg === undefined) item.settings.transparentBg = (imgState.globalSettings.transparentBg !== undefined ? imgState.globalSettings.transparentBg : true);
+      if (item.settings.transparentBg === undefined) item.settings.transparentBg = (docState.globalSettings.transparentBg !== undefined ? docState.globalSettings.transparentBg : true);
+      if (!item.settings.corners) {
+        item.settings.corners = {
+          tl: { x: 0, y: 0 },
+          tr: { x: 0, y: 0 },
+          br: { x: 0, y: 0 },
+          bl: { x: 0, y: 0 }
+        };
+      }
       return item.settings;
     }
+    const getEffectivePdfSettings = getEffectiveItemSettings;
+    const getEffectiveImgSettings = getEffectiveItemSettings;
 
-    // 오른쪽 컨트롤 패널을 현재 선택된 페이지의 설정값으로 100% 실시간 동기화 (통합 컨트롤 패널 지원)
+    // 오른쪽 컨트롤 패널을 현재 선택된 페이지의 설정값으로 100% 실시간 동기화
     function syncControlsForCurrentPage() {
-      const isPdfMode = appMode === 'pdf2img';
-      const cur = isPdfMode ? pdfState.currentIndex : imgState.currentIndex;
-      const cfg = isPdfMode ? getEffectivePdfSettings(cur) : getEffectiveImgSettings(cur);
+      const cur = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(cur);
+      const curItem = docState.items[cur];
 
       // 1. 용지 규격 (fit or pageSize)
-      const pageSizeVal = cfg.pageSize || cfg.fit || (isPdfMode ? 'original' : 'a4');
+      const pageSizeVal = cfg.pageSize || cfg.fit || 'original';
       const selPageSize = document.getElementById('selPageSize');
       if (selPageSize) selPageSize.value = pageSizeVal;
 
@@ -1887,7 +2196,7 @@
       const selMargin = document.getElementById('selMargin');
       const lblMargin = document.getElementById('lblMargin');
       if (selMargin) {
-        if (isPdfMode && pdfState.pages[cur] && pdfState.pages[cur].type === 'pdf') {
+        if (curItem && curItem.type === 'pdf') {
           selMargin.disabled = true;
           selMargin.value = '0';
           if (lblMargin) lblMargin.title = 'PDF 원본 페이지는 문서 고유 여백이 유지됩니다.';
@@ -1933,9 +2242,8 @@
 
     // PNG 포맷 선택 시에만 [배경 투명화] 체크박스 동적 노출/숨김 (가운데 툴바 및 우측/모바일 패널 동시 지원)
     function syncTransparentBgVisibility() {
-      const isPdfMode = appMode === 'pdf2img';
-      const cur = isPdfMode ? pdfState.currentIndex : imgState.currentIndex;
-      const cfg = isPdfMode ? getEffectivePdfSettings(cur) : getEffectiveImgSettings(cur);
+      const cur = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(cur);
       const isPng = (cfg.format || 'png') === 'png';
       const isTrans = cfg.transparentBg !== false;
 
@@ -1954,9 +2262,8 @@
 
     // [배경 투명화] 체크박스 변경 핸들러 (데스크톱 툴바와 모바일 패널 양방향 동기화)
     async function onTransparentBgChange(checked) {
-      const isPdfMode = appMode === 'pdf2img';
-      const cur = isPdfMode ? pdfState.currentIndex : imgState.currentIndex;
-      const cfg = isPdfMode ? getEffectivePdfSettings(cur) : getEffectiveImgSettings(cur);
+      const cur = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(cur);
       cfg.transparentBg = Boolean(checked);
 
       const chk = document.getElementById('chkTransparentBg');
@@ -1976,27 +2283,18 @@
       const pageChecked = Boolean(chkPage && chkPage.checked);
       const imgChecked = Boolean(chkImg && chkImg.checked);
 
-      if (appMode === 'pdf2img') {
-        const cur = pdfState.currentIndex;
-        const cfg = getEffectivePdfSettings(cur);
-        cfg.rotTarget = { page: pageChecked, image: imgChecked };
-        await renderMainViewerCanvas(cur);
-        updateThumbnailCanvas(cur);
-      } else {
-        const cur = imgState.currentIndex;
-        const cfg = getEffectiveImgSettings(cur);
-        cfg.rotTarget = { page: pageChecked, image: imgChecked };
-        await renderMainViewerCanvas(cur);
-        updateThumbnailCanvas(cur);
-      }
+      const cur = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(cur);
+      cfg.rotTarget = { page: pageChecked, image: imgChecked };
+      await renderMainViewerCanvas(cur);
+      updateThumbnailCanvas(cur);
       updateMiniPreview();
     }
 
     // 오른쪽 설정 변경 리스너: 현재 보고 있는 페이지에 즉시 저장 및 좌/중/우 3개 창 동시 실시간 반영!
     async function onSettingChange(key, value) {
-      const isPdfMode = appMode === 'pdf2img';
-      const cur = isPdfMode ? pdfState.currentIndex : imgState.currentIndex;
-      const cfg = isPdfMode ? getEffectivePdfSettings(cur) : getEffectiveImgSettings(cur);
+      const cur = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(cur);
 
       if (key === 'pageSize' || key === 'fit') {
         cfg.pageSize = value;
@@ -2031,32 +2329,20 @@
 
     // 개별 페이지 썸네일 캔버스 고해상도 실시간 갱신 (용지 규격 + 여백 + 회전 + 맞춤 비율 즉각 반영)
     async function updateThumbnailCanvas(index) {
-      if (appMode === 'pdf2img' && pdfState.pages[index]) {
-        const p = pdfState.pages[index];
-        const canvas = document.getElementById(`thumb-canvas-pdf-${index}`);
-        if (!canvas) return;
-        const cfg = getEffectivePdfSettings(index);
-        const { rotImg } = getResolvedRotations(cfg);
+      const item = docState.items[index];
+      if (!item) return;
+      const canvas = document.getElementById(`thumb-canvas-${index}`);
+      if (!canvas) return;
+      const cfg = getEffectiveItemSettings(index);
+      const { rotImg } = getResolvedRotations(cfg);
 
-        if (p.type === 'pdf') {
-          const b = cfg.brightness !== undefined ? cfg.brightness : 100;
-          const c = cfg.contrast !== undefined ? cfg.contrast : 100;
-          canvas.style.filter = (b !== 100 || c !== 100) ? `brightness(${b}%) contrast(${c}%)` : 'none';
-          const page = await p.doc.getPage(p.pageNum);
-          await renderPdfPageToCanvas(page, 0.65, rotImg, canvas);
-        } else {
-          canvas.style.filter = 'none';
-          canvas.style.transform = 'none';
-          drawPaperWithImage(canvas, p, cfg, { isThumbnail: true });
-          const wrap = canvas.closest('.thumb-canvas-wrap');
-          const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
-          if (wrap) wrap.classList.toggle('checkerboard-bg', isTransparent);
-        }
-      } else if (appMode === 'img2pdf' && imgState.items[index]) {
-        const canvas = document.getElementById(`thumb-canvas-img-${index}`);
-        if (!canvas) return;
-        const item = imgState.items[index];
-        const cfg = getEffectiveImgSettings(index);
+      if (item.type === 'pdf') {
+        const b = cfg.brightness !== undefined ? cfg.brightness : 100;
+        const c = cfg.contrast !== undefined ? cfg.contrast : 100;
+        canvas.style.filter = (b !== 100 || c !== 100) ? `brightness(${b}%) contrast(${c}%)` : 'none';
+        const page = await item.doc.getPage(item.pageNum);
+        await renderPdfPageToCanvas(page, 0.65, rotImg, canvas);
+      } else {
         canvas.style.filter = 'none';
         canvas.style.transform = 'none';
         drawPaperWithImage(canvas, item, cfg, { isThumbnail: true });
@@ -2088,16 +2374,17 @@
     // 삼선 햄버거 메뉴 ➡️ [기본 페이지 설정] 모달 제어 함수
     function openGlobalSettingsModal() {
       menuDropdown.classList.remove('show');
-      const isPdf = appMode === 'pdf2img';
-      document.getElementById('modalSecPdf').style.display = isPdf ? 'flex' : 'none';
-      document.getElementById('modalSecImg').style.display = isPdf ? 'none' : 'flex';
+      const secPdf = document.getElementById('modalSecPdf');
+      const secImg = document.getElementById('modalSecImg');
+      if (secPdf) secPdf.style.display = 'flex';
+      if (secImg) secImg.style.display = 'none';
 
-      if (isPdf) {
-        document.getElementById('selGlobalPdfFit').value = pdfState.globalSettings.fit || 'original';
+      document.getElementById('selGlobalPdfFit').value = docState.globalSettings.fit || docState.globalSettings.pageSize || 'original';
 
-        // 해상도 셀렉트박스 매칭: '3'과 '3.0'의 문자열 불일치로 인한 공란 버그 원천 차단
-        const scaleVal = parseFloat(pdfState.globalSettings.scale) || 3.0;
-        const selScale = document.getElementById('selGlobalPdfScale');
+      // 해상도 셀렉트박스 매칭: '3'과 '3.0'의 문자열 불일치로 인한 공란 버그 원천 차단
+      const scaleVal = parseFloat(docState.globalSettings.scale) || 3.0;
+      const selScale = document.getElementById('selGlobalPdfScale');
+      if (selScale) {
         let matched = false;
         for (let i = 0; i < selScale.options.length; i++) {
           if (Math.abs(parseFloat(selScale.options[i].value) - scaleVal) < 0.05) {
@@ -2107,14 +2394,10 @@
           }
         }
         if (!matched) selScale.value = "3.0";
-
-        document.getElementById('selGlobalPdfFormat').value = pdfState.globalSettings.format || 'png';
-      } else {
-        document.getElementById('selGlobalImgPageSize').value = imgState.globalSettings.pageSize || 'a4';
-        document.getElementById('selGlobalImgQuality').value = imgState.globalSettings.quality || 'ultra';
-        document.getElementById('selGlobalImgOrient').value = imgState.globalSettings.orient || 'auto';
-        document.getElementById('selGlobalImgMargin').value = String(imgState.globalSettings.margin !== undefined ? imgState.globalSettings.margin : 0);
       }
+
+      const selFmt = document.getElementById('selGlobalPdfFormat');
+      if (selFmt) selFmt.value = docState.globalSettings.format || 'png';
 
       document.getElementById('modalGlobalSettings').classList.add('show');
       // 뒤로가기로 닫을 수 있도록 history push
@@ -2141,43 +2424,28 @@
     }
 
     async function applyGlobalSettingsModal() {
-      const isPdf = appMode === 'pdf2img';
       const applyAll = document.getElementById('chkApplyToAllPages').checked;
 
-      if (isPdf) {
-        pdfState.globalSettings.fit = document.getElementById('selGlobalPdfFit').value;
-        pdfState.globalSettings.scale = parseFloat(document.getElementById('selGlobalPdfScale').value) || 3.0;
-        pdfState.globalSettings.format = document.getElementById('selGlobalPdfFormat').value;
+      const fitVal = document.getElementById('selGlobalPdfFit').value;
+      const scaleVal = parseFloat(document.getElementById('selGlobalPdfScale').value) || 3.0;
+      const formatVal = document.getElementById('selGlobalPdfFormat').value;
 
-        if (applyAll && pdfState.pages.length > 0) {
-          for (let i = 0; i < pdfState.pages.length; i++) {
-            if (pdfState.pages[i].settings) {
-              pdfState.pages[i].settings.fit = pdfState.globalSettings.fit;
-              pdfState.pages[i].settings.scale = pdfState.globalSettings.scale;
-              pdfState.pages[i].settings.format = pdfState.globalSettings.format;
-            }
-          }
-          await renderPdfThumbnailList();
-          loadMainViewer(pdfState.currentIndex);
-        }
-      } else {
-        imgState.globalSettings.pageSize = document.getElementById('selGlobalImgPageSize').value;
-        imgState.globalSettings.quality = document.getElementById('selGlobalImgQuality').value;
-        imgState.globalSettings.orient = document.getElementById('selGlobalImgOrient').value;
-        imgState.globalSettings.margin = parseInt(document.getElementById('selGlobalImgMargin').value, 10) || 0;
+      docState.globalSettings.fit = fitVal;
+      docState.globalSettings.pageSize = fitVal;
+      docState.globalSettings.scale = scaleVal;
+      docState.globalSettings.format = formatVal;
 
-        if (applyAll && imgState.items.length > 0) {
-          for (let i = 0; i < imgState.items.length; i++) {
-            if (imgState.items[i].settings) {
-              imgState.items[i].settings.pageSize = imgState.globalSettings.pageSize;
-              imgState.items[i].settings.quality = imgState.globalSettings.quality;
-              imgState.items[i].settings.orient = imgState.globalSettings.orient;
-              imgState.items[i].settings.margin = imgState.globalSettings.margin;
-            }
+      if (applyAll && docState.items.length > 0) {
+        for (let i = 0; i < docState.items.length; i++) {
+          if (docState.items[i].settings) {
+            docState.items[i].settings.fit = fitVal;
+            docState.items[i].settings.pageSize = fitVal;
+            docState.items[i].settings.scale = scaleVal;
+            docState.items[i].settings.format = formatVal;
           }
-          renderImageThumbnailList();
-          loadMainViewer(imgState.currentIndex);
         }
+        await renderThumbnailList();
+        loadMainViewer(docState.currentIndex);
       }
 
       closeGlobalSettingsModal();
@@ -2197,16 +2465,118 @@
 
     btnHamburger.addEventListener('click', (e) => {
       e.stopPropagation();
+      closeInsertDropdown();
       menuDropdown.classList.toggle('show');
     });
 
+    // [+ 삽입] 드롭다운 메뉴 제어
+    function toggleInsertDropdown(e) {
+      if (e) e.stopPropagation();
+      closeMenuDropdown();
+      const menu = document.getElementById('menuInsertDropdown');
+      if (menu) menu.classList.toggle('show');
+    }
+
+    function closeInsertDropdown() {
+      const menu = document.getElementById('menuInsertDropdown');
+      if (menu && menu.classList.contains('show')) {
+        menu.classList.remove('show');
+      }
+    }
+
+    function triggerInsertFileAction(e) {
+      if (e) e.stopPropagation();
+      closeInsertDropdown();
+      const total = docState.items.length;
+      const curIdx = docState.currentIndex;
+      const insertAt = (total > 0 && curIdx >= 0 && curIdx < total) ? curIdx + 1 : -1;
+      triggerInsertFileDialog(insertAt);
+    }
+
+    async function insertBlankPageAction(e) {
+      if (e) e.stopPropagation();
+      closeInsertDropdown();
+
+      const total = docState.items.length;
+      const curIdx = docState.currentIndex;
+      const insertAt = (total > 0 && curIdx >= 0 && curIdx < total) ? curIdx + 1 : total;
+
+      const cfg = getEffectiveItemSettings(curIdx >= 0 ? curIdx : 0);
+      const sizeKey = cfg.pageSize || cfg.fit || 'original';
+      const orientOpt = cfg.orient || 'auto';
+      const isLandscape = orientOpt === 'l';
+
+      // 참조 크기 (original일 경우 현재 선택된 이미지 크기, 없으면 1200x1600)
+      let refW = 1200, refH = 1600;
+      if (total > 0 && curIdx >= 0 && docState.items[curIdx]) {
+        refW = docState.items[curIdx].width || 1200;
+        refH = docState.items[curIdx].height || 1600;
+      }
+
+      const paper = resolvePaperGeometry(sizeKey, isLandscape, refW, refH, cfg.customW, cfg.customH);
+      const canvasW = Math.max(200, Math.min(2400, Math.round(paper.widthPx || 1200)));
+      const canvasH = Math.max(200, Math.min(2400, Math.round(paper.heightPx || (canvasW / (paper.ratio || 1)))));
+
+      // 순백색 캔버스 생성
+      const blankCanvas = document.createElement('canvas');
+      blankCanvas.width = canvasW;
+      blankCanvas.height = canvasH;
+      const bctx = blankCanvas.getContext('2d');
+      bctx.fillStyle = '#ffffff';
+      bctx.fillRect(0, 0, canvasW, canvasH);
+
+      const dataUrl = blankCanvas.toDataURL('image/png');
+      const imgObj = new Image();
+      imgObj.src = dataUrl;
+      await new Promise(r => { imgObj.onload = r; });
+
+      const newItemSettings = {
+        pageSize: sizeKey,
+        fit: sizeKey,
+        quality: 'ultra',
+        rot: 0,
+        rotTarget: { page: true, image: true },
+        contentScale: 1.0,
+        scaleX: 1.0,
+        trapezoid: 0,
+        brightness: 100,
+        contrast: 100,
+        offsetX: 0,
+        offsetY: 0,
+        orient: orientOpt,
+        margin: cfg.margin || 0,
+        format: cfg.format || 'png',
+        transparentBg: false,
+        customW: cfg.customW,
+        customH: cfg.customH
+      };
+
+      const newPageItem = {
+        type: 'image',
+        name: `빈페이지_${insertAt + 1}.png`,
+        imgObj: imgObj,
+        width: canvasW,
+        height: canvasH,
+        settings: newItemSettings
+      };
+
+      docState.items.splice(insertAt, 0, newPageItem);
+      docState.checkList.splice(insertAt, 0, true);
+      docState.currentIndex = insertAt;
+
+      await refreshWorkspaceDisplay();
+      await loadMainViewer(insertAt);
+      document.getElementById('statusText').textContent = `#${insertAt + 1} 위치에 빈 페이지가 삽입되었습니다.`;
+    }
+
     window.addEventListener('click', () => {
       closeMenuDropdown();
+      closeInsertDropdown();
     });
 
     function triggerOpenFileDialog() {
       const fileInput = document.getElementById('fileInput');
-      fileInput.accept = appMode === 'pdf2img' ? 'application/pdf,image/*' : 'image/*';
+      fileInput.accept = 'application/pdf,image/*';
       fileInput.multiple = true;
       fileInput.click();
       closeMenuDropdown();
@@ -2217,21 +2587,11 @@
 
       // 선택된 페이지/이미지 인덱스 추출 (유효한 아이템만 엄격 필터링)
       const selectedIndices = [];
-      if (appMode === 'pdf2img') {
-        if (pdfState.pages.length === 0) {
-          alert('인쇄할 PDF 문서가 없습니다.');
-          return;
-        }
-        pdfState.checkList.forEach((chk, i) => { if (chk && pdfState.pages[i]) selectedIndices.push(i); });
-      } else {
-        if (imgState.items.length === 0) {
-          alert('인쇄할 이미지가 없습니다.');
-          return;
-        }
-        imgState.checkList.forEach((chk, i) => {
-          if (chk && imgState.items[i]) selectedIndices.push(i);
-        });
+      if (docState.items.length === 0) {
+        alert('인쇄할 문서 또는 이미지가 없습니다.');
+        return;
       }
+      docState.checkList.forEach((chk, i) => { if (chk && docState.items[i]) selectedIndices.push(i); });
 
       if (selectedIndices.length === 0) {
         alert('인쇄할 페이지(항목)를 1개 이상 선택해 주세요.');
@@ -2251,146 +2611,31 @@
       document.getElementById('statusText').textContent = `인쇄 데이터 준비 중 (${selectedIndices.length}페이지)...`;
 
       try {
-        if (appMode === 'pdf2img') {
-          for (let step = 0; step < selectedIndices.length; step++) {
-            const pageIndex = selectedIndices[step];
-            const p = pdfState.pages[pageIndex];
-            if (!p) continue;
-            const cfg = getEffectivePdfSettings(pageIndex);
-            const cScale = cfg.contentScale || 1.0;
-            const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
+        for (let step = 0; step < selectedIndices.length; step++) {
+          const pageIndex = selectedIndices[step];
+          const p = docState.items[pageIndex];
+          if (!p) continue;
+          const cfg = getEffectiveItemSettings(pageIndex);
+          const cScale = cfg.contentScale || 1.0;
+          const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
 
-            const tempCanvas = document.createElement('canvas');
-            let origW = 0, origH = 0;
-            let baseScaleW = 0, baseScaleH = 0;
+          const tempCanvas = document.createElement('canvas');
+          let origW = 0, origH = 0;
+          let baseScaleW = 0, baseScaleH = 0;
 
-            if (p.type === 'pdf') {
-              const page = await p.doc.getPage(p.pageNum);
-              const vp = await renderPdfPageToCanvas(page, 3.0, rotImg, tempCanvas);
+          if (p.type === 'pdf') {
+            const page = await p.doc.getPage(p.pageNum);
+            const vp = await renderPdfPageToCanvas(page, 3.0, rotImg, tempCanvas);
 
-              const origVp = page.getViewport({ scale: 1.0, rotation: 0 });
-              origW = origVp.width;
-              origH = origVp.height;
-              baseScaleW = vp.width;
-              baseScaleH = vp.height;
-            } else {
-              const rotRad = (rotImg * Math.PI) / 180;
-              const srcRotW = isImgRot90 ? p.height : p.width;
-              const srcRotH = isImgRot90 ? p.width : p.height;
-              tempCanvas.width = srcRotW;
-              tempCanvas.height = srcRotH;
-              const tctx = tempCanvas.getContext('2d');
-              tctx.fillStyle = '#ffffff';
-              tctx.fillRect(0, 0, srcRotW, srcRotH);
-              tctx.translate(srcRotW / 2, srcRotH / 2);
-              tctx.rotate(rotRad);
-              tctx.drawImage(p.imgObj, -p.width / 2, -p.height / 2);
-
-              origW = p.width;
-              origH = p.height;
-              baseScaleW = srcRotW;
-              baseScaleH = srcRotH;
-            }
-
-            const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
-            const refW = baseScaleW * imgF, refH = baseScaleH * imgF;
-            const isOrigLandscape = origW > origH;
-            const orientOpt = cfg.orient || 'auto';
-            const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
-            const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
-            const paper = resolvePaperGeometry(cfg.fit, isLandscape, refW, refH, cfg.customW, cfg.customH);
-
-            let paperW, paperH;
-            if (cfg.fit === 'original') {
-              paperW = isPageRot90 ? (origH * (p.type === 'pdf' ? 3.0 : imgF)) : (origW * (p.type === 'pdf' ? 3.0 : imgF));
-              paperH = isPageRot90 ? (origW * (p.type === 'pdf' ? 3.0 : imgF)) : (origH * (p.type === 'pdf' ? 3.0 : imgF));
-            } else if (cfg.fit === 'custom') {
-              paperW = paper.widthPx;
-              paperH = paper.heightPx;
-            } else {
-              // 300DPI 기준 용지 비율 유지 (vp 크기에 맞춰 축척)
-              if (paper.isLandscape) {
-                paperW = Math.max(refW, Math.round(refH * paper.ratio));
-                paperH = Math.round(paperW / paper.ratio);
-              } else {
-                paperH = Math.max(refH, Math.round(refW / paper.ratio));
-                paperW = Math.round(paperH * paper.ratio);
-              }
-            }
-
-            let finalCanvas = document.createElement('canvas');
-            let fctx = finalCanvas.getContext('2d');
-            finalCanvas.width = paperW;
-            finalCanvas.height = paperH;
-            fctx.fillStyle = '#ffffff';
-            fctx.fillRect(0, 0, paperW, paperH);
-
-            const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
-            const brightness = cfg.brightness !== undefined ? cfg.brightness : 100;
-            const contrast = cfg.contrast !== undefined ? cfg.contrast : 100;
-            const offsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
-            const offsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
-
-            const baseScale = Math.min(paperW / baseScaleW, paperH / baseScaleH);
-            const drawW = baseScaleW * baseScale * cScale * scaleX;
-            const drawH = baseScaleH * baseScale * cScale;
-            const shiftX = paperW * (offsetX / 100);
-            const shiftY = paperH * (offsetY / 100);
-            const posX = (paperW - drawW) / 2 + shiftX;
-            const posY = (paperH - drawH) / 2 + shiftY;
-
-            fctx.save();
-            fctx.beginPath();
-            fctx.rect(0, 0, paperW, paperH);
-            fctx.clip();
-            if (brightness !== 100 || contrast !== 100) {
-              fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
-            }
-            fctx.drawImage(tempCanvas, posX, posY, drawW, drawH);
-            fctx.restore();
-            tempCanvas.width = 0; tempCanvas.height = 0;
-
-            const pageItem = document.createElement('div');
-            pageItem.className = 'print-page-item';
-            {
-              // 페이지별 고정 mm 용지 크기 지정 (vh 단위 오차로 인한 빈 페이지/축소 방지)
-              const pgLong = 297;
-              const cw = finalCanvas.width, ch = finalCanvas.height;
-              const pgW = cw >= ch ? pgLong : Math.round(pgLong * cw / ch * 100) / 100;
-              const pgH = cw >= ch ? Math.round(pgLong * ch / cw * 100) / 100 : pgLong;
-              const pgName = 'pg' + printPageSeq++;
-              printStyleEl.textContent += '@page ' + pgName + ' { size: ' + pgW + 'mm ' + pgH + 'mm; margin: 0; }\n';
-              pageItem.style.page = pgName;
-              pageItem.style.width = pgW + 'mm';
-              pageItem.style.height = pgH + 'mm';
-              pageItem.style.overflow = 'hidden';
-              finalCanvas.style.width = '100%';
-              finalCanvas.style.height = '100%';
-              finalCanvas.style.maxWidth = 'none';
-              finalCanvas.style.maxHeight = 'none';
-            }
-            finalCanvas.className = 'print-page-canvas';
-            pageItem.appendChild(finalCanvas);
-            printContainer.appendChild(pageItem);
-          }
-        } else {
-          // [Img to PDF] 모드 인쇄
-          for (let step = 0; step < selectedIndices.length; step++) {
-            const idx = selectedIndices[step];
-            const item = imgState.items[idx];
-            if (!item || !item.imgObj) continue; // undefined 방어
-            const cfg = getEffectiveImgSettings(idx);
-            const cScale = cfg.contentScale || 1.0;
-            const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
-            const w = item.width || item.imgObj.width;
-            const h = item.height || item.imgObj.height;
-
-            // 회전 적용 임시 캔버스
+            const origVp = page.getViewport({ scale: 1.0, rotation: 0 });
+            origW = origVp.width;
+            origH = origVp.height;
+            baseScaleW = vp.width;
+            baseScaleH = vp.height;
+          } else {
             const rotRad = (rotImg * Math.PI) / 180;
-            const srcRotW = isImgRot90 ? h : w;
-            const srcRotH = isImgRot90 ? w : h;
-
-            const tempCanvas = document.createElement('canvas');
+            const srcRotW = isImgRot90 ? p.height : p.width;
+            const srcRotH = isImgRot90 ? p.width : p.height;
             tempCanvas.width = srcRotW;
             tempCanvas.height = srcRotH;
             const tctx = tempCanvas.getContext('2d');
@@ -2398,74 +2643,93 @@
             tctx.fillRect(0, 0, srcRotW, srcRotH);
             tctx.translate(srcRotW / 2, srcRotH / 2);
             tctx.rotate(rotRad);
-            tctx.drawImage(item.imgObj, -w / 2, -h / 2);
+            tctx.drawImage(p.imgObj, -p.width / 2, -p.height / 2);
 
-            const isOrigLandscape = w > h;
-            const baseLandscape = cfg.orient === 'l' || (cfg.orient === 'auto' && isOrigLandscape);
-            const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
-            const paper = resolvePaperGeometry(cfg.pageSize, isLandscape, srcRotW + cfg.margin * 2, srcRotH + cfg.margin * 2, cfg.customW, cfg.customH);
-
-            const paperW = paper.widthPx;
-            const paperH = paper.heightPx;
-            const targetMargin = (cfg.pageSize === 'original' || cfg.pageSize === 'custom') ? cfg.margin : Math.round(cfg.margin * 3.5);
-
-            const finalCanvas = document.createElement('canvas');
-            finalCanvas.width = paperW;
-            finalCanvas.height = paperH;
-            const fctx = finalCanvas.getContext('2d');
-            fctx.fillStyle = '#ffffff';
-            fctx.fillRect(0, 0, paperW, paperH);
-
-            const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
-            const brightness = cfg.brightness !== undefined ? cfg.brightness : 100;
-            const contrast = cfg.contrast !== undefined ? cfg.contrast : 100;
-            const offsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
-            const offsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
-
-            const innerW = paperW - (targetMargin * 2);
-            const innerH = paperH - (targetMargin * 2);
-            const fitScale = Math.min(innerW / srcRotW, innerH / srcRotH);
-            const drawW = srcRotW * fitScale * cScale * scaleX;
-            const drawH = srcRotH * fitScale * cScale;
-            const shiftX = paperW * (offsetX / 100);
-            const shiftY = paperH * (offsetY / 100);
-            const posX = (paperW - drawW) / 2 + shiftX;
-            const posY = (paperH - drawH) / 2 + shiftY;
-
-            fctx.save();
-            fctx.beginPath();
-            fctx.rect(0, 0, paperW, paperH);
-            fctx.clip();
-            if (brightness !== 100 || contrast !== 100) {
-              fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
-            }
-            fctx.drawImage(tempCanvas, posX, posY, drawW, drawH);
-            fctx.restore();
-            tempCanvas.width = 0; tempCanvas.height = 0;
-
-            const pageItem = document.createElement('div');
-            pageItem.className = 'print-page-item';
-            {
-              // 페이지별 고정 mm 용지 크기 지정 (vh 단위 오차로 인한 빈 페이지/축소 방지)
-              const pgLong = 297;
-              const cw = finalCanvas.width, ch = finalCanvas.height;
-              const pgW = cw >= ch ? pgLong : Math.round(pgLong * cw / ch * 100) / 100;
-              const pgH = cw >= ch ? Math.round(pgLong * ch / cw * 100) / 100 : pgLong;
-              const pgName = 'pg' + printPageSeq++;
-              printStyleEl.textContent += '@page ' + pgName + ' { size: ' + pgW + 'mm ' + pgH + 'mm; margin: 0; }\n';
-              pageItem.style.page = pgName;
-              pageItem.style.width = pgW + 'mm';
-              pageItem.style.height = pgH + 'mm';
-              pageItem.style.overflow = 'hidden';
-              finalCanvas.style.width = '100%';
-              finalCanvas.style.height = '100%';
-              finalCanvas.style.maxWidth = 'none';
-              finalCanvas.style.maxHeight = 'none';
-            }
-            finalCanvas.className = 'print-page-canvas';
-            pageItem.appendChild(finalCanvas);
-            printContainer.appendChild(pageItem);
+            origW = p.width;
+            origH = p.height;
+            baseScaleW = srcRotW;
+            baseScaleH = srcRotH;
           }
+
+          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
+          const refW = baseScaleW * imgF, refH = baseScaleH * imgF;
+          const isOrigLandscape = origW > origH;
+          const orientOpt = cfg.orient || 'auto';
+          const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
+          const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
+          const paper = resolvePaperGeometry(cfg.fit || cfg.pageSize || 'original', isLandscape, refW, refH, cfg.customW, cfg.customH);
+
+          let paperW, paperH;
+          if (cfg.fit === 'original' || cfg.pageSize === 'original') {
+            paperW = isPageRot90 ? (origH * (p.type === 'pdf' ? 3.0 : imgF)) : (origW * (p.type === 'pdf' ? 3.0 : imgF));
+            paperH = isPageRot90 ? (origW * (p.type === 'pdf' ? 3.0 : imgF)) : (origH * (p.type === 'pdf' ? 3.0 : imgF));
+          } else if (cfg.fit === 'custom' || cfg.pageSize === 'custom') {
+            paperW = paper.widthPx;
+            paperH = paper.heightPx;
+          } else {
+            if (paper.isLandscape) {
+              paperW = Math.max(refW, Math.round(refH * paper.ratio));
+              paperH = Math.round(paperW / paper.ratio);
+            } else {
+              paperH = Math.max(refH, Math.round(refW / paper.ratio));
+              paperW = Math.round(paperH * paper.ratio);
+            }
+          }
+
+          let finalCanvas = document.createElement('canvas');
+          let fctx = finalCanvas.getContext('2d');
+          finalCanvas.width = paperW;
+          finalCanvas.height = paperH;
+          fctx.fillStyle = '#ffffff';
+          fctx.fillRect(0, 0, paperW, paperH);
+
+          const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
+          const brightness = cfg.brightness !== undefined ? cfg.brightness : 100;
+          const contrast = cfg.contrast !== undefined ? cfg.contrast : 100;
+          const offsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
+          const offsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
+
+          const baseScale = Math.min(paperW / baseScaleW, paperH / baseScaleH);
+          const drawW = baseScaleW * baseScale * cScale * scaleX;
+          const drawH = baseScaleH * baseScale * cScale;
+          const shiftX = paperW * (offsetX / 100);
+          const shiftY = paperH * (offsetY / 100);
+          const posX = (paperW - drawW) / 2 + shiftX;
+          const posY = (paperH - drawH) / 2 + shiftY;
+
+          fctx.save();
+          fctx.beginPath();
+          fctx.rect(0, 0, paperW, paperH);
+          fctx.clip();
+          if (brightness !== 100 || contrast !== 100) {
+            fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
+          }
+          drawPerspectiveQuad(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.corners, cfg.trapezoid);
+          fctx.restore();
+          tempCanvas.width = 0; tempCanvas.height = 0;
+
+          const pageItem = document.createElement('div');
+          pageItem.className = 'print-page-item';
+          {
+            // 페이지별 고정 mm 용지 크기 지정 (vh 단위 오차로 인한 빈 페이지/축소 방지)
+            const pgLong = 297;
+            const cw = finalCanvas.width, ch = finalCanvas.height;
+            const pgW = cw >= ch ? pgLong : Math.round(pgLong * cw / ch * 100) / 100;
+            const pgH = cw >= ch ? Math.round(pgLong * ch / cw * 100) / 100 : pgLong;
+            const pgName = 'pg' + printPageSeq++;
+            printStyleEl.textContent += '@page ' + pgName + ' { size: ' + pgW + 'mm ' + pgH + 'mm; margin: 0; }\n';
+            pageItem.style.page = pgName;
+            pageItem.style.width = pgW + 'mm';
+            pageItem.style.height = pgH + 'mm';
+            pageItem.style.overflow = 'hidden';
+            finalCanvas.style.width = '100%';
+            finalCanvas.style.height = '100%';
+            finalCanvas.style.maxWidth = 'none';
+            finalCanvas.style.maxHeight = 'none';
+          }
+          finalCanvas.className = 'print-page-canvas';
+          pageItem.appendChild(finalCanvas);
+          printContainer.appendChild(pageItem);
         }
 
         document.getElementById('statusText').textContent = '인쇄 대화상자 호출 중...';
@@ -2487,43 +2751,30 @@
         document.getElementById('statusText').textContent = '인쇄 오류 발생';
       }
     }
+
     function triggerConvertAction() {
       closeMenuDropdown();
       if (window.innerWidth <= 768) {
         toggleMobileControl(true);
       } else {
-        if (appMode === 'pdf2img') {
-          executeActionSave('img');
-        } else {
-          executeActionSave('pdf');
-        }
+        executeActionSave('pdf');
       }
     }
 
-    // 문서 닫기 (현재 활성화된 모드의 모든 이미지 또는 PDF 닫기)
+    // 문서 닫기 (현재 열린 모든 이미지 및 PDF 닫기)
     function triggerCloseDocument() {
       closeMenuDropdown();
-      if (appMode === 'pdf2img') {
-        pdfState.pages = [];
-        pdfState.doc = null;
-        pdfState.checkList = [];
-        pdfState.currentIndex = 0;
-      } else {
-        imgState.items = [];
-        imgState.checkList = [];
-        imgState.currentIndex = 0;
-      }
+      docState.items = [];
+      docState.checkList = [];
+      docState.currentIndex = 0;
+      docState.doc = null;
       refreshWorkspaceDisplay();
       document.getElementById('statusText').textContent = '문서를 닫았습니다.';
     }
 
     // 활성 작업 존재 여부 확인 (이탈/새로고침 방어용)
     function hasActiveWork() {
-      if (appMode === 'pdf2img') {
-        return Array.isArray(pdfState.pages) && pdfState.pages.length > 0;
-      } else {
-        return Array.isArray(imgState.items) && imgState.items.length > 0;
-      }
+      return Array.isArray(docState.items) && docState.items.length > 0;
     }
 
     // 히스토리 앵커 초기화 (뒤로가기 가로채기 기준점)
@@ -2687,22 +2938,18 @@
       }
     };
 
-    // [핵심] 모드 전환: 데이터를 지우지 않고 화면 뷰만 전환!
+    // 단일 통합 모드 호환용 함수
     function setAppMode(mode) {
       appMode = mode;
-      document.getElementById('tabPdf2Img').classList.toggle('active', mode === 'pdf2img');
-      document.getElementById('tabImg2Pdf').classList.toggle('active', mode === 'img2pdf');
-
-      const btnAction = document.getElementById('btnAction');
-      if (btnAction) btnAction.textContent = mode === 'pdf2img' ? '선택 페이지 변환' : 'PDF 변환';
-      document.getElementById('lblSelectAll').style.display = 'flex';
-
-      // 이전 데이터 상태를 그대로 복원하여 렌더링!
+      const tab1 = document.getElementById('tabPdf2Img');
+      if (tab1) tab1.classList.toggle('active', mode === 'pdf2img');
+      const tab2 = document.getElementById('tabImg2Pdf');
+      if (tab2) tab2.classList.toggle('active', mode === 'img2pdf');
       refreshWorkspaceDisplay();
       syncControlsForCurrentPage();
     }
 
-    // 현재 활성화된 모드에 맞게 화면 갱신 (모드 전환 시 이전 잔상 완전 소거 & 해당 모드의 마지막 선택 상태 즉시 복원)
+    // 현재 활성화된 워크스페이스 화면 갱신 (단일 통합 모드)
     async function refreshWorkspaceDisplay() {
       const viewerWrap = document.getElementById('viewerWrap');
       const emptyMsg = document.getElementById('viewerEmptyMsg');
@@ -2716,86 +2963,44 @@
       const btnSavePdf = document.getElementById('btnSavePdf');
       const btnSaveImg = document.getElementById('btnSaveImg');
 
-      if (appMode === 'pdf2img') {
-        if (pdfState.pages.length > 0) {
-          emptyMsg.style.display = 'none';
-          viewerWrap.style.display = 'block';
-          if (ms) ms.style.display = 'block';
-          if (me) me.style.display = 'none';
-          await renderPdfThumbnailList();
-          await loadMainViewer(pdfState.currentIndex || 0);
-          updateThumbCounts();
-          document.getElementById('statusText').textContent = `${pdfState.pages.length}페이지 문서 대기 중`;
-        } else {
-          const emptyGuidePdf = `
-            <div class="thumb-empty-guide" style="padding: 32px 14px; text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center;">
-              <div style="width: 46px; height: 46px; border-radius: 12px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b; margin-bottom: 10px;">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-              </div>
-              <div style="font-size: 14px; font-weight: 700; color: var(--text-sub); margin-bottom: 4px;">PDF 문서를 불러오세요</div>
-              <p style="font-size: 11.5px; line-height: 1.5; color: var(--text-muted); margin-bottom: 14px;">페이지 분할 및 이미지 변환을 시작합니다.</p>
-              <button class="btn-tool" style="background: var(--primary); color: #fff; border-color: var(--primary); padding: 8px 18px; font-size: 13px; font-weight: 700; border-radius: 6px; cursor: pointer;" onclick="triggerOpenFileDialog()">📁 파일 열기</button>
-            </div>
-          `;
-          document.getElementById('thumbList').innerHTML = emptyGuidePdf;
-          document.getElementById('thumbCount').textContent = '0 항목';
-          document.getElementById('viewerPageIndicator').textContent = '- / -';
-          const mpi = document.getElementById('mobilePageIndicator');
-          if (mpi) mpi.textContent = '- / -';
-          viewerWrap.style.display = 'none';
-          emptyMsg.style.display = 'flex';
-          if (mvc) { mvc.width = 0; mvc.height = 0; }
-          if (mc) { mc.width = 0; mc.height = 0; }
-          if (ms) { ms.style.display = 'none'; ms.style.width = '0px'; ms.style.height = '0px'; }
-          if (me) me.style.display = 'flex';
-          if (mi) { mi.textContent = '선택 항목 기준 윤곽'; }
-          if (btnAction) btnAction.disabled = true;
-          if (btnSavePdf) btnSavePdf.disabled = true;
-          if (btnSaveImg) btnSaveImg.disabled = true;
-          updateThumbCounts();
-          document.getElementById('statusText').textContent = '준비 완료';
-          syncControlsForCurrentPage();
-        }
+      if (docState.items.length > 0) {
+        emptyMsg.style.display = 'none';
+        viewerWrap.style.display = 'block';
+        if (ms) ms.style.display = 'block';
+        if (me) me.style.display = 'none';
+        await renderThumbnailList();
+        await loadMainViewer(docState.currentIndex || 0);
+        updateThumbCounts();
+        document.getElementById('statusText').textContent = `${docState.items.length}개 항목 대기 중`;
       } else {
-        if (imgState.items.length > 0) {
-          emptyMsg.style.display = 'none';
-          viewerWrap.style.display = 'block';
-          if (ms) ms.style.display = 'block';
-          if (me) me.style.display = 'none';
-          renderImageThumbnailList();
-          await loadMainViewer(imgState.currentIndex || 0);
-          updateThumbCounts();
-          document.getElementById('statusText').textContent = `${imgState.items.length}개 이미지 대기 중`;
-        } else {
-          const emptyGuideImg = `
-            <div class="thumb-empty-guide" style="padding: 32px 14px; text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center;">
-              <div style="width: 46px; height: 46px; border-radius: 12px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b; margin-bottom: 10px;">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-              </div>
-              <div style="font-size: 14px; font-weight: 700; color: var(--text-sub); margin-bottom: 4px;">이미지를 불러오세요</div>
-              <p style="font-size: 11.5px; line-height: 1.5; color: var(--text-muted); margin-bottom: 14px;">다중 이미지를 PDF로 병합하거나 편집합니다.</p>
-              <button class="btn-tool" style="background: var(--primary); color: #fff; border-color: var(--primary); padding: 8px 18px; font-size: 13px; font-weight: 700; border-radius: 6px; cursor: pointer;" onclick="triggerOpenFileDialog()">📁 파일 열기</button>
+        const emptyGuide = `
+          <div class="thumb-empty-guide" style="padding: 32px 14px; text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div style="width: 46px; height: 46px; border-radius: 12px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b; margin-bottom: 10px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
             </div>
-          `;
-          document.getElementById('thumbList').innerHTML = emptyGuideImg;
-          document.getElementById('thumbCount').textContent = '0 항목';
-          document.getElementById('viewerPageIndicator').textContent = '- / -';
-          const mpi = document.getElementById('mobilePageIndicator');
-          if (mpi) mpi.textContent = '- / -';
-          viewerWrap.style.display = 'none';
-          emptyMsg.style.display = 'flex';
-          if (mvc) { mvc.width = 0; mvc.height = 0; }
-          if (mc) { mc.width = 0; mc.height = 0; }
-          if (ms) { ms.style.display = 'none'; ms.style.width = '0px'; ms.style.height = '0px'; }
-          if (me) me.style.display = 'flex';
-          if (mi) { mi.textContent = '선택 항목 기준 윤곽'; }
-          if (btnAction) btnAction.disabled = true;
-          if (btnSavePdf) btnSavePdf.disabled = true;
-          if (btnSaveImg) btnSaveImg.disabled = true;
-          updateThumbCounts();
-          document.getElementById('statusText').textContent = '준비 완료';
-          syncControlsForCurrentPage();
-        }
+            <div style="font-size: 14px; font-weight: 700; color: var(--text-sub); margin-bottom: 4px;">문서 또는 이미지를 불러오세요</div>
+            <p style="font-size: 11.5px; line-height: 1.5; color: var(--text-muted); margin-bottom: 14px;">PDF와 이미지를 자유롭게 섞어서 편집, 재구성, 저장합니다.</p>
+            <button class="btn-tool" style="background: var(--primary); color: #fff; border-color: var(--primary); padding: 8px 18px; font-size: 13px; font-weight: 700; border-radius: 6px; cursor: pointer;" onclick="triggerOpenFileDialog()">📁 파일 열기</button>
+          </div>
+        `;
+        document.getElementById('thumbList').innerHTML = emptyGuide;
+        document.getElementById('thumbCount').textContent = '0 항목';
+        document.getElementById('viewerPageIndicator').textContent = '- / -';
+        const mpi = document.getElementById('mobilePageIndicator');
+        if (mpi) mpi.textContent = '- / -';
+        viewerWrap.style.display = 'none';
+        emptyMsg.style.display = 'flex';
+        if (mvc) { mvc.width = 0; mvc.height = 0; }
+        if (mc) { mc.width = 0; mc.height = 0; }
+        if (ms) { ms.style.display = 'none'; ms.style.width = '0px'; ms.style.height = '0px'; }
+        if (me) me.style.display = 'flex';
+        if (mi) { mi.textContent = '선택 항목 기준 윤곽'; }
+        if (btnAction) btnAction.disabled = true;
+        if (btnSavePdf) btnSavePdf.disabled = true;
+        if (btnSaveImg) btnSaveImg.disabled = true;
+        updateThumbCounts();
+        document.getElementById('statusText').textContent = '준비 완료';
+        syncControlsForCurrentPage();
       }
     }
 
@@ -2821,7 +3026,7 @@
       pendingInsertIndex = targetIndex;
       const input = document.getElementById('insertFileInput');
       if (input) {
-        input.accept = appMode === 'pdf2img' ? 'application/pdf,image/*' : 'image/*';
+        input.accept = 'application/pdf,image/*';
         input.multiple = true;
         input.value = '';
         input.click();
@@ -2854,191 +3059,113 @@
       }
     });
 
-    // 통합 파일 처리기 (PDF ↔ 이미지 상호 삽입 및 피커 연동)
+    // 통합 파일 처리기 (PDF & 이미지 구분 없이 섞어서 자유자재로 불러오기 및 삽입)
     async function processFiles(files, customInsertIndex = -1, targetArea = 'center-area') {
       initHistoryAnchor();
-      const pdfFile = files.find(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+      if (!files || files.length === 0) return;
+
+      const pdfFiles = files.filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
       const imgFiles = files.filter(f => f.type.startsWith('image/') || /\.(png|jpe?g|webp|bmp)$/i.test(f.name));
 
-      // [엄격한 파일 드롭 & 모드 라우팅 규칙]
-      // 1) PDF와 이미지가 섞여서 동시에 드롭된 경우 전체 무시 (작업 취소)
-      if (pdfFile && imgFiles.length > 0) {
-        return;
-      }
+      if (pdfFiles.length === 0 && imgFiles.length === 0) return;
 
-      // 2) 이미지 편집창에는 절대 PDF 진입 불가
-      if (appMode === 'img2pdf' && pdfFile) {
-        return;
-      }
+      const isFirstLoad = (docState.items.length === 0);
+      let insertAt = customInsertIndex >= 0 ? customInsertIndex : (isFirstLoad ? 0 : docState.currentIndex + 1);
 
-      // 3) 앱 초기 상태(PDF 목록 비어있음)에서 이미지만 들어온 경우 자동으로 이미지 편집창으로 전환
-      if (!pdfFile && imgFiles.length > 0 && appMode === 'pdf2img' && pdfState.pages.length === 0) {
-        setAppMode('img2pdf');
-        customInsertIndex = -1;
-      }
+      // 1. PDF 파일 처리
+      for (const pdfFile of pdfFiles) {
+        document.getElementById('statusText').textContent = `${pdfFile.name} 로드 중...`;
+        try {
+          const arrayBuf = await pdfFile.arrayBuffer();
+          const loadedDoc = await pdfjsLib.getDocument({ data: arrayBuf }).promise;
+          const totalPages = loadedDoc.numPages;
 
-      // 1. PDF 모드일 때 파일 처리
-      if (appMode === 'pdf2img') {
-        if (pdfFile) {
-          document.getElementById('statusText').textContent = 'PDF 문서를 로드하는 중...';
-          try {
-            const arrayBuf = await pdfFile.arrayBuffer();
-            const loadedDoc = await pdfjsLib.getDocument({ data: arrayBuf }).promise;
-            const total = loadedDoc.numPages;
-
-            if (pdfState.pages.length === 0) {
-              // [최초의 PDF 문서 로드]: 전체 페이지를 기본 순서대로 등록
-              pdfState.doc = loadedDoc;
-              pdfState.fileName = pdfFile.name.replace(/\.[^/.]+$/, "");
-              pdfState.pages = Array.from({ length: total }, (_, i) => ({
-                type: 'pdf',
-                doc: loadedDoc,
-                pageNum: i + 1,
-                name: `${pdfFile.name} (p.${i + 1})`,
-                settings: {
-                  ...pdfState.globalSettings,
-                  rotTarget: { ...pdfState.globalSettings.rotTarget }
-                }
-              }));
-              pdfState.checkList = new Array(total).fill(true);
-              pdfState.currentIndex = 0;
-              document.getElementById('chkSelectAll').checked = true;
-              document.getElementById('statusText').textContent = `${total}페이지 문서 대기 중`;
-
-              await refreshWorkspaceDisplay();
-              await loadMainViewer(0);
-            } else {
-              // [이미 문서가 열려 있는 상태에서 추가 PDF를 삽입하는 경우]
-              if (total === 1) {
-                // 단일 1페이지 문서는 피커 팝업 없이 즉시 삽입!
-                const newPage = {
-                  type: 'pdf',
-                  doc: loadedDoc,
-                  pageNum: 1,
-                  name: `${pdfFile.name} (p.1)`,
-                  settings: {
-                    ...pdfState.globalSettings,
-                    rotTarget: { ...pdfState.globalSettings.rotTarget }
-                  }
-                };
-                const insertAt = customInsertIndex >= 0 ? customInsertIndex : (pdfState.currentIndex + 1);
-                pdfState.pages.splice(insertAt, 0, newPage);
-                pdfState.checkList.splice(insertAt, 0, true);
-                pdfState.currentIndex = insertAt;
-                await refreshWorkspaceDisplay();
-                await loadMainViewer(insertAt);
-                document.getElementById('statusText').textContent = '1페이지 PDF 삽입 완료';
-              } else {
-                // 다중 페이지 PDF 문서는 사용자가 필요한 페이지만 선택할 수 있도록 피커 모달 오픈!
-                openPdfPicker(loadedDoc, pdfFile, customInsertIndex);
+          if (isFirstLoad && pdfFiles.length === 1 && imgFiles.length === 0) {
+            // 최초 단일 PDF 로드 시: 전체 페이지를 기본 순서대로 등록
+            docState.fileName = pdfFile.name.replace(/\.[^/.]+$/, "");
+            const newPages = Array.from({ length: totalPages }, (_, i) => ({
+              type: 'pdf',
+              doc: loadedDoc,
+              pageNum: i + 1,
+              name: `${pdfFile.name} (p.${i + 1})`,
+              settings: {
+                ...docState.globalSettings,
+                rotTarget: { ...docState.globalSettings.rotTarget }
               }
-            }
-          } catch (err) {
-            console.error(err);
-            document.getElementById('statusText').textContent = 'PDF 문서를 읽을 수 없습니다.';
+            }));
+            docState.items.push(...newPages);
+            docState.checkList.push(...new Array(totalPages).fill(true));
+            docState.currentIndex = 0;
+            document.getElementById('chkSelectAll').checked = true;
+          } else if (totalPages === 1) {
+            // 1페이지 PDF는 피커 없이 즉시 삽입!
+            const newPage = {
+              type: 'pdf',
+              doc: loadedDoc,
+              pageNum: 1,
+              name: `${pdfFile.name} (p.1)`,
+              settings: {
+                ...docState.globalSettings,
+                rotTarget: { ...docState.globalSettings.rotTarget }
+              }
+            };
+            docState.items.splice(insertAt, 0, newPage);
+            docState.checkList.splice(insertAt, 0, true);
+            docState.currentIndex = insertAt;
+            insertAt++;
+          } else {
+            // 다중 페이지 PDF 문서는 사용자가 필요한 페이지를 선택할 수 있도록 피커 모달 오픈
+            openPdfPicker(loadedDoc, pdfFile, insertAt);
+            return;
           }
-          return;
+        } catch (err) {
+          console.error('PDF 로드 오류:', err);
+          document.getElementById('statusText').textContent = 'PDF 문서를 읽을 수 없습니다.';
         }
+      }
 
-        if (imgFiles.length > 0) {
-          // PDF 문서 중간 또는 끝에 이미지 파일 삽입!
-          document.getElementById('statusText').textContent = '이미지를 PDF 페이지로 삽입하는 중...';
-          const newPages = [];
-          for (const file of imgFiles) {
+      // 2. 이미지 파일 처리
+      if (imgFiles.length > 0) {
+        document.getElementById('statusText').textContent = '이미지를 불러오는 중...';
+        const newItems = [];
+        for (const file of imgFiles) {
+          try {
             const imgObj = await loadImageSafe(file);
-            newPages.push({
+            newItems.push({
               type: 'image',
-              imgObj: imgObj,
               file: file,
+              imgObj: imgObj,
               name: file.name,
               width: imgObj.width,
               height: imgObj.height,
               settings: {
-                ...pdfState.globalSettings,
-                rotTarget: { ...pdfState.globalSettings.rotTarget }
+                ...docState.globalSettings,
+                rotTarget: { ...docState.globalSettings.rotTarget }
               }
             });
+          } catch (err) {
+            console.error('이미지 로드 오류:', file.name, err);
           }
-
-          const newChecks = new Array(newPages.length).fill(true);
-          const isFirst = (pdfState.pages.length === 0);
-          let targetIdx = 0;
-
-          if (isFirst) {
-            pdfState.pages.push(...newPages);
-            pdfState.checkList.push(...newChecks);
-            targetIdx = 0;
-          } else {
-            const insertAt = customInsertIndex >= 0 ? customInsertIndex : (pdfState.currentIndex + 1);
-            pdfState.pages.splice(insertAt, 0, ...newPages);
-            pdfState.checkList.splice(insertAt, 0, ...newChecks);
-            targetIdx = insertAt;
-          }
-
-          pdfState.currentIndex = targetIdx;
-          await refreshWorkspaceDisplay();
-          await loadMainViewer(targetIdx);
-          document.getElementById('statusText').textContent = `${newPages.length}개 이미지가 삽입되었습니다.`;
-          return;
         }
-      } else {
-        // 2. 이미지 모드일 때 파일 처리
-        if (pdfFile) return; // 이미지 편집창에는 PDF를 절대 넣지 않음
 
-        if (imgFiles.length > 0) {
-          document.getElementById('statusText').textContent = '이미지를 읽어오는 중...';
-          const newItems = [];
-          for (const file of imgFiles) {
-            try {
-              const imgObj = await loadImageSafe(file);
-              newItems.push({
-                file: file,
-                imgObj: imgObj,
-                name: file.name,
-                width: imgObj.width,
-                height: imgObj.height,
-                settings: {
-                  ...imgState.globalSettings,
-                  rotTarget: { ...imgState.globalSettings.rotTarget }
-                }
-              });
-            } catch (err) {
-              console.error('이미지 로드 오류:', file.name, err);
-            }
-          }
-
-          if (newItems.length === 0) {
-            document.getElementById('statusText').textContent = '유효한 이미지를 불러오지 못했습니다.';
-            await refreshWorkspaceDisplay();
-            return;
-          }
-
-          const newChecks = new Array(newItems.length).fill(true);
-          const isFirstLoad = (imgState.items.length === 0);
-          let targetViewIdx = 0;
-
-          if (isFirstLoad) {
-            imgState.items.push(...newItems);
-            imgState.checkList.push(...newChecks);
-            targetViewIdx = 0;
+        if (newItems.length > 0) {
+          if (docState.items.length === 0) {
+            docState.fileName = imgFiles[0].name.replace(/\.[^/.]+$/, "");
+            docState.items.push(...newItems);
+            docState.checkList.push(...new Array(newItems.length).fill(true));
+            docState.currentIndex = 0;
           } else {
-            if (customInsertIndex >= 0) {
-              imgState.items.splice(customInsertIndex, 0, ...newItems);
-              imgState.checkList.splice(customInsertIndex, 0, ...newChecks);
-              targetViewIdx = customInsertIndex;
-            } else {
-              const insertPos = imgState.currentIndex + 1;
-              imgState.items.splice(insertPos, 0, ...newItems);
-              imgState.checkList.splice(insertPos, 0, ...newChecks);
-              targetViewIdx = insertPos;
-            }
+            docState.items.splice(insertAt, 0, ...newItems);
+            docState.checkList.splice(insertAt, 0, ...new Array(newItems.length).fill(true));
+            docState.currentIndex = insertAt;
           }
-
-          imgState.currentIndex = isFirstLoad ? 0 : targetViewIdx;
-          await refreshWorkspaceDisplay();
-          await loadMainViewer(imgState.currentIndex);
-          document.getElementById('statusText').textContent = `${imgState.items.length}개 이미지 준비 완료`;
         }
+      }
+
+      await refreshWorkspaceDisplay();
+      if (docState.items.length > 0) {
+        await loadMainViewer(docState.currentIndex);
+        document.getElementById('statusText').textContent = `${docState.items.length}개 항목이 준비되었습니다.`;
       }
     }
 
@@ -3065,17 +3192,18 @@
     }
 
     // 1열 PDF 썸네일 렌더링 (순서 변경, 개별 삭제, 드래그 드롭 위치 삽입 지원)
-    async function renderPdfThumbnailList() {
+    // [통합] 1열 썸네일 렌더링 (순서 변경, 개별 삭제, 드래그 드롭 위치 삽입 지원)
+    async function renderThumbnailList() {
       const container = document.getElementById('thumbList');
       container.innerHTML = '';
-      if (pdfState.pages.length === 0) {
+      if (docState.items.length === 0) {
         updateThumbCounts();
         return;
       }
 
-      pdfState.pages.forEach((pageItem, idx) => {
+      docState.items.forEach((item, idx) => {
         const card = document.createElement('div');
-        card.className = `thumb-card ${idx === pdfState.currentIndex ? 'active' : ''}`;
+        card.className = `thumb-card ${idx === docState.currentIndex ? 'active' : ''}`;
         card.id = `thumb-card-${idx}`;
         card.draggable = true;
         card.onclick = (e) => {
@@ -3126,17 +3254,15 @@
           clearThumbDropLines();
 
           if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            // [왼쪽 창에서 위치를 정해서 삽입!]
             await processFiles(Array.from(e.dataTransfer.files), insertAt, 'thumb-slot');
           } else if (draggedCardIndex !== null && draggedCardIndex !== idx) {
-            // 내부 카드 순서 이동 (아이템 및 체크 상태 동시 이동)
-            const movedItem = pdfState.pages.splice(draggedCardIndex, 1)[0];
-            const movedChk = pdfState.checkList.splice(draggedCardIndex, 1)[0];
+            const movedItem = docState.items.splice(draggedCardIndex, 1)[0];
+            const movedChk = docState.checkList.splice(draggedCardIndex, 1)[0];
             if (draggedCardIndex < insertAt) insertAt--;
-            pdfState.pages.splice(insertAt, 0, movedItem);
-            pdfState.checkList.splice(insertAt, 0, movedChk);
-            pdfState.currentIndex = insertAt;
-            await renderPdfThumbnailList();
+            docState.items.splice(insertAt, 0, movedItem);
+            docState.checkList.splice(insertAt, 0, movedChk);
+            docState.currentIndex = insertAt;
+            await renderThumbnailList();
             loadMainViewer(insertAt);
           }
           draggedCardIndex = null;
@@ -3146,7 +3272,7 @@
         header.className = 'thumb-card-header';
 
         const titleSpan = document.createElement('span');
-        const badgeType = pageItem.type === 'image' ? ' 🖼️' : '';
+        const badgeType = item.type === 'image' ? ' 🖼️' : ' 📄';
         titleSpan.textContent = `#${idx + 1}${badgeType}`;
         header.appendChild(titleSpan);
 
@@ -3162,19 +3288,19 @@
         btnUp.className = 'btn-icon-sm';
         btnUp.textContent = '▲';
         btnUp.title = '위로 이동';
-        btnUp.onclick = (e) => { e.stopPropagation(); movePdfPageOrder(idx, -1); };
+        btnUp.onclick = (e) => { e.stopPropagation(); moveItemOrder(idx, -1); };
 
         const btnDown = document.createElement('button');
         btnDown.className = 'btn-icon-sm';
         btnDown.textContent = '▼';
         btnDown.title = '아래로 이동';
-        btnDown.onclick = (e) => { e.stopPropagation(); movePdfPageOrder(idx, 1); };
+        btnDown.onclick = (e) => { e.stopPropagation(); moveItemOrder(idx, 1); };
 
         const btnDel = document.createElement('button');
         btnDel.className = 'btn-icon-sm';
         btnDel.textContent = '✕';
         btnDel.title = '삭제';
-        btnDel.onclick = (e) => { e.stopPropagation(); removePdfPageItem(idx); };
+        btnDel.onclick = (e) => { e.stopPropagation(); removeItem(idx); };
 
         btnRow.appendChild(btnUp);
         btnRow.appendChild(btnDown);
@@ -3187,9 +3313,9 @@
 
         const chk = document.createElement('input');
         chk.type = 'checkbox';
-        chk.checked = pdfState.checkList[idx] !== false;
+        chk.checked = docState.checkList[idx] !== false;
         chk.onchange = () => {
-          pdfState.checkList[idx] = chk.checked;
+          docState.checkList[idx] = chk.checked;
           updateThumbCounts();
         };
         touchWrap.appendChild(chk);
@@ -3201,32 +3327,22 @@
         const thumbCanvasWrap = document.createElement('div');
         thumbCanvasWrap.className = 'thumb-canvas-wrap';
         const thumbCanvas = document.createElement('canvas');
-        thumbCanvas.id = `thumb-canvas-pdf-${idx}`;
+        thumbCanvas.id = `thumb-canvas-${idx}`;
         thumbCanvasWrap.appendChild(thumbCanvas);
         card.appendChild(thumbCanvasWrap);
         container.appendChild(card);
 
         // 비동기 경량 썸네일 렌더링
         (async () => {
-          const cfg = getEffectivePdfSettings(idx);
-          const { rotImg, isImgRot90 } = getResolvedRotations(cfg);
-          if (pageItem.type === 'pdf') {
-            const page = await pageItem.doc.getPage(pageItem.pageNum);
+          const cfg = getEffectiveItemSettings(idx);
+          const { rotImg } = getResolvedRotations(cfg);
+          if (item.type === 'pdf') {
+            const page = await item.doc.getPage(item.pageNum);
             await renderPdfPageToCanvas(page, 0.65, rotImg, thumbCanvas);
           } else {
-            const rotRad = (rotImg * Math.PI) / 180;
-            const baseTw = 360;
-            const baseTh = Math.round((pageItem.height / pageItem.width) * baseTw);
-            const tw = isImgRot90 ? baseTh : baseTw;
-            const th = isImgRot90 ? baseTw : baseTh;
-            thumbCanvas.width = tw;
-            thumbCanvas.height = th;
-            const tctx = thumbCanvas.getContext('2d');
-            tctx.save();
-            tctx.translate(tw / 2, th / 2);
-            tctx.rotate(rotRad);
-            tctx.drawImage(pageItem.imgObj, -baseTw / 2, -baseTh / 2, baseTw, baseTh);
-            tctx.restore();
+            drawPaperWithImage(thumbCanvas, item, cfg, { isThumbnail: true });
+            const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
+            if (thumbCanvasWrap) thumbCanvasWrap.classList.toggle('checkerboard-bg', isTransparent);
           }
           updateViewerEdits(idx);
         })();
@@ -3234,34 +3350,38 @@
 
       updateThumbCounts();
     }
+    const renderPdfThumbnailList = renderThumbnailList;
+    const renderImageThumbnailList = renderThumbnailList;
 
-    async function movePdfPageOrder(index, delta) {
+    async function moveItemOrder(index, delta) {
       const target = index + delta;
-      if (target < 0 || target >= pdfState.pages.length) return;
-      const tempItem = pdfState.pages[index];
-      const tempChk = pdfState.checkList[index];
-      pdfState.pages[index] = pdfState.pages[target];
-      pdfState.checkList[index] = pdfState.checkList[target];
-      pdfState.pages[target] = tempItem;
-      pdfState.checkList[target] = tempChk;
-      pdfState.currentIndex = target;
-      await renderPdfThumbnailList();
+      if (target < 0 || target >= docState.items.length) return;
+      const movedItem = docState.items.splice(index, 1)[0];
+      const movedChk = docState.checkList.splice(index, 1)[0];
+      docState.items.splice(target, 0, movedItem);
+      docState.checkList.splice(target, 0, movedChk);
+      docState.currentIndex = target;
+      await renderThumbnailList();
       loadMainViewer(target);
     }
+    const movePdfPageOrder = moveItemOrder;
+    const moveImageOrder = moveItemOrder;
 
-    async function removePdfPageItem(index) {
-      pdfState.pages.splice(index, 1);
-      pdfState.checkList.splice(index, 1);
-      if (pdfState.currentIndex >= pdfState.pages.length) {
-        pdfState.currentIndex = Math.max(0, pdfState.pages.length - 1);
+    async function removeItem(index) {
+      docState.items.splice(index, 1);
+      docState.checkList.splice(index, 1);
+      if (docState.currentIndex >= docState.items.length) {
+        docState.currentIndex = Math.max(0, docState.items.length - 1);
       }
-      await renderPdfThumbnailList();
-      if (pdfState.pages.length > 0) {
-        loadMainViewer(pdfState.currentIndex);
+      await renderThumbnailList();
+      if (docState.items.length > 0) {
+        loadMainViewer(docState.currentIndex);
       } else {
         refreshWorkspaceDisplay();
       }
     }
+    const removePdfPageItem = removeItem;
+    const removeImageItem = removeItem;
 
     // -------------------------------------------------------------
     // [PDF 페이지 선택 모달 (Picker Modal) 제어 함수들]
@@ -3484,11 +3604,7 @@
 
     document.getElementById('chkSelectAll').addEventListener('change', (e) => {
       const checked = e.target.checked;
-      if (appMode === 'pdf2img') {
-        pdfState.checkList = pdfState.checkList.map(() => checked);
-      } else {
-        imgState.checkList = imgState.checkList.map(() => checked);
-      }
+      docState.checkList = docState.checkList.map(() => checked);
       document.querySelectorAll('#thumbList input[type="checkbox"]').forEach(c => c.checked = checked);
       updateThumbCounts();
     });
@@ -3498,34 +3614,15 @@
       const btnSaveImg = document.getElementById('btnSaveImg');
       const btnAction = document.getElementById('btnAction');
 
-      if (appMode === 'pdf2img') {
-        if (pdfState.pages.length === 0) {
-          document.getElementById('thumbCount').textContent = '0 항목';
-          document.getElementById('chkSelectAll').checked = false;
-          if (btnSavePdf) btnSavePdf.disabled = true;
-          if (btnSaveImg) btnSaveImg.disabled = true;
-          if (btnAction) btnAction.disabled = true;
-          return;
-        }
-        const selected = pdfState.checkList.filter(Boolean).length;
-        const total = pdfState.pages.length;
-        document.getElementById('thumbCount').textContent = `${selected} / ${total} 선택`;
-        document.getElementById('chkSelectAll').checked = (total > 0 && selected === total);
-        const isDisabled = selected === 0;
-        if (btnSavePdf) btnSavePdf.disabled = isDisabled;
-        if (btnSaveImg) btnSaveImg.disabled = isDisabled;
-        if (btnAction) btnAction.disabled = isDisabled;
+      if (docState.items.length === 0) {
+        document.getElementById('thumbCount').textContent = '0 항목';
+        document.getElementById('chkSelectAll').checked = false;
+        if (btnSavePdf) btnSavePdf.disabled = true;
+        if (btnSaveImg) btnSaveImg.disabled = true;
+        if (btnAction) btnAction.disabled = true;
       } else {
-        if (imgState.items.length === 0) {
-          document.getElementById('thumbCount').textContent = '0 항목';
-          document.getElementById('chkSelectAll').checked = false;
-          if (btnSavePdf) btnSavePdf.disabled = true;
-          if (btnSaveImg) btnSaveImg.disabled = true;
-          if (btnAction) btnAction.disabled = true;
-          return;
-        }
-        const selected = imgState.checkList.filter(Boolean).length;
-        const total = imgState.checkList.length;
+        const selected = docState.checkList.filter(Boolean).length;
+        const total = docState.items.length;
         document.getElementById('thumbCount').textContent = `${selected} / ${total} 선택`;
         document.getElementById('chkSelectAll').checked = (total > 0 && selected === total);
         const isDisabled = selected === 0;
@@ -3535,7 +3632,7 @@
       }
 
       // 모바일 플로팅 버튼(FAB) 상태 갱신 (데스크톱에서는 CSS display: none !important 유지)
-      const totalCount = appMode === 'pdf2img' ? pdfState.pages.length : imgState.items.length;
+      const totalCount = docState.items.length;
       const fab = document.getElementById('mobileFab');
       if (fab) {
         fab.classList.toggle('has-files', totalCount > 0);
@@ -3544,188 +3641,10 @@
       }
     }
 
-    // 1열 이미지 썸네일 렌더링 (체크박스 및 드래그 앤 드롭 위치 지정 삽입 지원)
-    function renderImageThumbnailList() {
-      const container = document.getElementById('thumbList');
-      container.innerHTML = '';
-
-      imgState.items.forEach((item, idx) => {
-        const card = document.createElement('div');
-        card.className = `thumb-card ${idx === imgState.currentIndex ? 'active' : ''}`;
-        card.id = `thumb-card-${idx}`;
-        card.draggable = true;
-        card.onclick = (e) => {
-          if (e.target.closest('input[type="checkbox"]') || e.target.closest('button')) return;
-          loadMainViewer(idx);
-          if (window.innerWidth <= 768) {
-            toggleMobileControl(true);
-          }
-        };
-
-        card.addEventListener('dragstart', (e) => {
-          draggedCardIndex = idx;
-          card.classList.add('dragging');
-          e.dataTransfer.effectAllowed = 'move';
-          e.dataTransfer.setData('text/plain', idx);
-        });
-
-        card.addEventListener('dragend', () => {
-          card.classList.remove('dragging');
-          clearThumbDropLines();
-        });
-
-        // 마우스 위치에 따른 상단/하단 진한 가이드 라인
-        card.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          const rect = card.getBoundingClientRect();
-          const relY = e.clientY - rect.top;
-          clearThumbDropLines();
-          if (relY < rect.height / 2) {
-            card.classList.add('drag-over-top');
-          } else {
-            card.classList.add('drag-over-bottom');
-          }
-        });
-
-        card.addEventListener('dragleave', (e) => {
-          e.stopPropagation();
-          card.classList.remove('drag-over-top', 'drag-over-bottom');
-        });
-
-        // 카드 사이에 드롭 (새 파일 삽입 또는 순서 이동)
-        card.addEventListener('drop', async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          const rect = card.getBoundingClientRect();
-          const isTop = (e.clientY - rect.top) < rect.height / 2;
-          let insertAt = isTop ? idx : idx + 1;
-          clearThumbDropLines();
-
-          if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            // [왼쪽 창에서 위치를 정해서 삽입!]
-            await processFiles(Array.from(e.dataTransfer.files), insertAt, 'thumb-slot');
-          } else if (draggedCardIndex !== null && draggedCardIndex !== idx) {
-            // 내부 카드 순서 이동 (아이템 및 체크 상태 동시 이동)
-            const movedItem = imgState.items.splice(draggedCardIndex, 1)[0];
-            const movedChk = imgState.checkList.splice(draggedCardIndex, 1)[0];
-            if (draggedCardIndex < insertAt) insertAt--;
-            imgState.items.splice(insertAt, 0, movedItem);
-            imgState.checkList.splice(insertAt, 0, movedChk);
-            imgState.currentIndex = insertAt;
-            renderImageThumbnailList();
-            loadMainViewer(insertAt);
-          }
-          draggedCardIndex = null;
-        });
-
-        const header = document.createElement('div');
-        header.className = 'thumb-card-header';
-        
-        const titleSpan = document.createElement('span');
-        titleSpan.textContent = `#${idx + 1}`;
-        header.appendChild(titleSpan);
-
-        const headerRight = document.createElement('div');
-        headerRight.style.display = 'flex';
-        headerRight.style.alignItems = 'center';
-        headerRight.style.gap = '8px';
-
-        const btnRow = document.createElement('div');
-        btnRow.className = 'thumb-btn-row';
-
-        const btnUp = document.createElement('button');
-        btnUp.className = 'btn-icon-sm';
-        btnUp.textContent = '▲';
-        btnUp.title = '위로 이동';
-        btnUp.onclick = (e) => { e.stopPropagation(); moveImageOrder(idx, -1); };
-
-        const btnDown = document.createElement('button');
-        btnDown.className = 'btn-icon-sm';
-        btnDown.textContent = '▼';
-        btnDown.title = '아래로 이동';
-        btnDown.onclick = (e) => { e.stopPropagation(); moveImageOrder(idx, 1); };
-
-        const btnDel = document.createElement('button');
-        btnDel.className = 'btn-icon-sm';
-        btnDel.textContent = '✕';
-        btnDel.title = '삭제';
-        btnDel.onclick = (e) => { e.stopPropagation(); removeImageItem(idx); };
-
-        btnRow.appendChild(btnUp);
-        btnRow.appendChild(btnDown);
-        btnRow.appendChild(btnDel);
-        headerRight.appendChild(btnRow);
-
-        // 이미지 선택 체크박스 (클릭 영역 1.5배 확대 래퍼 적용)
-        const touchWrap = document.createElement('label');
-        touchWrap.className = 'chk-touch-wrap';
-        touchWrap.onclick = (e) => e.stopPropagation();
-
-        const chk = document.createElement('input');
-        chk.type = 'checkbox';
-        chk.checked = imgState.checkList[idx] !== false;
-        chk.onchange = () => {
-          imgState.checkList[idx] = chk.checked;
-          updateThumbCounts();
-        };
-        touchWrap.appendChild(chk);
-        headerRight.appendChild(touchWrap);
-
-        header.appendChild(headerRight);
-        card.appendChild(header);
-
-        const cfg = getEffectiveImgSettings(idx);
-        const thumbCanvasWrap = document.createElement('div');
-        thumbCanvasWrap.className = 'thumb-canvas-wrap';
-        const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
-        if (isTransparent) thumbCanvasWrap.classList.add('checkerboard-bg');
-
-        const thumbCanvas = document.createElement('canvas');
-        thumbCanvas.id = `thumb-canvas-img-${idx}`;
-        drawPaperWithImage(thumbCanvas, item, cfg, { isThumbnail: true });
-
-        thumbCanvasWrap.appendChild(thumbCanvas);
-        card.appendChild(thumbCanvasWrap);
-
-        container.appendChild(card);
-      });
-
-      updateThumbCounts();
-    }
-
     function clearThumbDropLines() {
       document.querySelectorAll('.thumb-card').forEach(c => {
         c.classList.remove('drag-over-top', 'drag-over-bottom');
       });
-    }
-
-    function moveImageOrder(index, delta) {
-      const target = index + delta;
-      if (target < 0 || target >= imgState.items.length) return;
-      const tempItem = imgState.items[index];
-      const tempChk = imgState.checkList[index];
-      imgState.items[index] = imgState.items[target];
-      imgState.checkList[index] = imgState.checkList[target];
-      imgState.items[target] = tempItem;
-      imgState.checkList[target] = tempChk;
-      imgState.currentIndex = target;
-      renderImageThumbnailList();
-      loadMainViewer(target);
-    }
-
-    function removeImageItem(index) {
-      imgState.items.splice(index, 1);
-      imgState.checkList.splice(index, 1);
-      if (imgState.currentIndex >= imgState.items.length) {
-        imgState.currentIndex = Math.max(0, imgState.items.length - 1);
-      }
-      renderImageThumbnailList();
-      if (imgState.items.length > 0) {
-        loadMainViewer(imgState.currentIndex);
-      } else {
-        refreshWorkspaceDisplay();
-      }
     }
 
     // 2열 메인 뷰어 캔버스 렌더링 (용지 규격 + 여백 + 회전 + 맞춤 비율 정밀 반영)
@@ -3734,29 +3653,20 @@
       const canvas = document.getElementById('mainViewerCanvas');
       if (!canvas) return;
       const wrap = document.getElementById('viewerWrap');
+      const item = docState.items[index];
+      if (!item) return;
 
-      if (appMode === 'pdf2img' && pdfState.pages[index]) {
-        const p = pdfState.pages[index];
-        const cfg = getEffectivePdfSettings(index);
-        const { rotImg } = getResolvedRotations(cfg);
+      const cfg = getEffectiveItemSettings(index);
+      const { rotImg } = getResolvedRotations(cfg);
 
-        if (p.type === 'pdf') {
-          const b = cfg.brightness !== undefined ? cfg.brightness : 100;
-          const c = cfg.contrast !== undefined ? cfg.contrast : 100;
-          canvas.style.filter = (b !== 100 || c !== 100) ? `brightness(${b}%) contrast(${c}%)` : 'none';
-          const page = await p.doc.getPage(p.pageNum);
-          await renderPdfPageToCanvas(page, 1.5, rotImg, canvas);
-          if (wrap) wrap.classList.remove('checkerboard-bg');
-        } else {
-          canvas.style.filter = 'none';
-          canvas.style.transform = 'none';
-          drawPaperWithImage(canvas, p, cfg, { isThumbnail: false });
-          const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
-          if (wrap) wrap.classList.toggle('checkerboard-bg', isTransparent);
-        }
-      } else if (appMode === 'img2pdf' && imgState.items[index]) {
-        const item = imgState.items[index];
-        const cfg = getEffectiveImgSettings(index);
+      if (item.type === 'pdf') {
+        const b = cfg.brightness !== undefined ? cfg.brightness : 100;
+        const c = cfg.contrast !== undefined ? cfg.contrast : 100;
+        canvas.style.filter = (b !== 100 || c !== 100) ? `brightness(${b}%) contrast(${c}%)` : 'none';
+        const page = await item.doc.getPage(item.pageNum);
+        await renderPdfPageToCanvas(page, 1.5, rotImg, canvas);
+        if (wrap) wrap.classList.remove('checkerboard-bg');
+      } else {
         canvas.style.filter = 'none';
         canvas.style.transform = 'none';
         drawPaperWithImage(canvas, item, cfg, { isThumbnail: false });
@@ -3767,15 +3677,10 @@
 
     // 2열 메인 뷰어 로드
     async function loadMainViewer(index) {
-      const isPdf = appMode === 'pdf2img';
-      const total = isPdf ? pdfState.pages.length : imgState.items.length;
+      const total = docState.items.length;
       if (total === 0) return;
 
-      if (isPdf) {
-        pdfState.currentIndex = index;
-      } else {
-        imgState.currentIndex = index;
-      }
+      docState.currentIndex = index;
 
       const pageText = `${index + 1} / ${total}`;
       const vpi = document.getElementById('viewerPageIndicator');
@@ -3801,48 +3706,45 @@
       applyZoom();
       updateViewerEdits(index);
       updateMiniPreview();
+      if (isPerspectiveActive) updateCornerPins();
     }
 
     function navigateViewer(delta) {
-      const max = appMode === 'pdf2img' ? pdfState.pages.length : imgState.items.length;
+      const max = docState.items.length;
       if (max === 0) return;
-      const curIdx = appMode === 'pdf2img' ? pdfState.currentIndex : imgState.currentIndex;
-      let next = curIdx + delta;
+      let next = docState.currentIndex + delta;
       if (next < 0) next = 0;
       if (next >= max) next = max - 1;
       loadMainViewer(next);
     }
 
     function adjustZoom(delta) {
-      const curZoom = appMode === 'pdf2img' ? pdfState.zoom : imgState.zoom;
-      const nextZoom = Math.max(0.3, Math.min(3.0, curZoom + delta));
-      if (appMode === 'pdf2img') pdfState.zoom = nextZoom;
-      else imgState.zoom = nextZoom;
+      const nextZoom = Math.max(0.3, Math.min(3.0, docState.zoom + delta));
+      docState.zoom = nextZoom;
       applyZoom();
     }
     function resetZoom() {
-      if (appMode === 'pdf2img') pdfState.zoom = 1.0;
-      else imgState.zoom = 1.0;
+      docState.zoom = 1.0;
       applyZoom();
     }
     function applyZoom() {
-      const curZoom = appMode === 'pdf2img' ? pdfState.zoom : imgState.zoom;
       const wrap = document.getElementById('viewerWrap');
-      wrap.style.transform = `scale(${curZoom})`;
+      if (wrap) wrap.style.transform = `scale(${docState.zoom})`;
+      if (isPerspectiveActive) updateCornerPins();
     }
 
     function updateViewerEdits(targetIdx) {
-      const isPdf = appMode === 'pdf2img';
-      const curIdx = targetIdx !== undefined ? targetIdx : (isPdf ? pdfState.currentIndex : imgState.currentIndex);
-      const cfg = isPdf ? getEffectivePdfSettings(curIdx) : getEffectiveImgSettings(curIdx);
+      const curIdx = targetIdx !== undefined ? targetIdx : docState.currentIndex;
+      const item = docState.items[curIdx];
+      if (!item) return;
+      const cfg = getEffectiveItemSettings(curIdx);
       if (!cfg) return;
 
-      const activeCurIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
+      const activeCurIdx = docState.currentIndex;
       const mvc = document.getElementById('mainViewerCanvas');
-      const wrap = document.getElementById('viewerWrap');
-      const tc = isPdf ? document.getElementById(`thumb-canvas-pdf-${curIdx}`) : document.getElementById(`thumb-canvas-img-${curIdx}`);
+      const tc = document.getElementById(`thumb-canvas-${curIdx}`);
 
-      if (isPdf && pdfState.pages[curIdx] && pdfState.pages[curIdx].type === 'pdf') {
+      if (item.type === 'pdf') {
         const b = cfg.brightness !== undefined ? cfg.brightness : 100;
         const c = cfg.contrast !== undefined ? cfg.contrast : 100;
         const filterStr = (b !== 100 || c !== 100) ? `brightness(${b}%) contrast(${c}%)` : 'none';
@@ -3876,6 +3778,9 @@
           updateThumbnailCanvas(curIdx);
         }
       }
+      if (isPerspectiveActive) {
+        updateCornerPins();
+      }
     }
 
     function updateMainViewerFilters() {
@@ -3883,9 +3788,8 @@
     }
 
     function adjustPreviewScale(delta) {
-      const isPdf = appMode === 'pdf2img';
-      const curIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
-      const cfg = isPdf ? getEffectivePdfSettings(curIdx) : getEffectiveImgSettings(curIdx);
+      const curIdx = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(curIdx);
       const curScale = cfg.contentScale || 1.0;
       cfg.contentScale = Math.max(0.2, Math.min(3.0, Math.round((curScale + delta) * 100) / 100));
       updateViewerEdits();
@@ -3893,18 +3797,16 @@
     }
 
     function resetPreviewScale() {
-      const isPdf = appMode === 'pdf2img';
-      const curIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
-      const cfg = isPdf ? getEffectivePdfSettings(curIdx) : getEffectiveImgSettings(curIdx);
+      const curIdx = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(curIdx);
       cfg.contentScale = 1.0;
       updateViewerEdits();
       updateMiniPreview();
     }
 
     function adjustScaleX(delta) {
-      const isPdf = appMode === 'pdf2img';
-      const curIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
-      const cfg = isPdf ? getEffectivePdfSettings(curIdx) : getEffectiveImgSettings(curIdx);
+      const curIdx = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(curIdx);
       const cur = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
       cfg.scaleX = Math.max(0.2, Math.min(3.0, Math.round((cur + delta) * 100) / 100));
       updateViewerEdits();
@@ -3912,18 +3814,33 @@
     }
 
     function resetScaleX() {
-      const isPdf = appMode === 'pdf2img';
-      const curIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
-      const cfg = isPdf ? getEffectivePdfSettings(curIdx) : getEffectiveImgSettings(curIdx);
+      const curIdx = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(curIdx);
       cfg.scaleX = 1.0;
       updateViewerEdits();
       updateMiniPreview();
     }
 
+    function adjustTrapezoid(delta) {
+      const curIdx = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(curIdx);
+      const cur = cfg.trapezoid !== undefined ? cfg.trapezoid : 0;
+      cfg.trapezoid = Math.max(-1.0, Math.min(1.0, Math.round((cur + delta) * 100) / 100));
+      updateViewerEdits();
+      updateMiniPreview();
+    }
+
+    function resetTrapezoid() {
+      const curIdx = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(curIdx);
+      cfg.trapezoid = 0;
+      updateViewerEdits();
+      updateMiniPreview();
+    }
+
     function adjustBrightness(delta) {
-      const isPdf = appMode === 'pdf2img';
-      const curIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
-      const cfg = isPdf ? getEffectivePdfSettings(curIdx) : getEffectiveImgSettings(curIdx);
+      const curIdx = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(curIdx);
       const cur = cfg.brightness !== undefined ? cfg.brightness : 100;
       cfg.brightness = Math.max(20, Math.min(250, cur + delta));
       updateViewerEdits();
@@ -3931,18 +3848,16 @@
     }
 
     function resetBrightness() {
-      const isPdf = appMode === 'pdf2img';
-      const curIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
-      const cfg = isPdf ? getEffectivePdfSettings(curIdx) : getEffectiveImgSettings(curIdx);
+      const curIdx = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(curIdx);
       cfg.brightness = 100;
       updateViewerEdits();
       updateMiniPreview();
     }
 
     function adjustContrast(delta) {
-      const isPdf = appMode === 'pdf2img';
-      const curIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
-      const cfg = isPdf ? getEffectivePdfSettings(curIdx) : getEffectiveImgSettings(curIdx);
+      const curIdx = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(curIdx);
       const cur = cfg.contrast !== undefined ? cfg.contrast : 100;
       cfg.contrast = Math.max(20, Math.min(250, cur + delta));
       updateViewerEdits();
@@ -3950,34 +3865,275 @@
     }
 
     function resetContrast() {
-      const isPdf = appMode === 'pdf2img';
-      const curIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
-      const cfg = isPdf ? getEffectivePdfSettings(curIdx) : getEffectiveImgSettings(curIdx);
+      const curIdx = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(curIdx);
       cfg.contrast = 100;
       updateViewerEdits();
       updateMiniPreview();
     }
 
+    // [핵심] 사각 투시 변환(4-Corner Pinning) 대화형 편집 상태
+    let isPerspectiveActive = false;
+    let selectedCornerKey = null; // 'tl' | 'tr' | 'br' | 'bl'
+    let isPinDragging = false;
+    let activeDraggingPinKey = null;
+    let pinDragStartMouseX = 0;
+    let pinDragStartMouseY = 0;
+    let pinDragStartCornerVal = { x: 0, y: 0 };
+
+    // 메인 뷰어 캔버스 상의 이미지 4개 코너 절대 좌표(캔버스 픽셀 단위) 산출
+    function getCornerCanvasPoints(item, cfg, canvasW, canvasH) {
+      if (!item || !item.imgObj) return null;
+      const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
+      const rotRad = (rotImg * Math.PI) / 180;
+
+      const origW = item.width || item.imgObj.width;
+      const origH = item.height || item.imgObj.height;
+      const rotImgW = isImgRot90 ? origH : origW;
+      const rotImgH = isImgRot90 ? origW : origH;
+
+      const isOrigLandscape = (origW > origH);
+      const orientOpt = cfg.orient || 'auto';
+      const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
+      const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
+      const marginPx = cfg.margin || 0;
+      const sizeKey = cfg.pageSize || cfg.fit || 'original';
+
+      const paper = resolvePaperGeometry(sizeKey, isLandscape, rotImgW + marginPx * 2, rotImgH + marginPx * 2, cfg.customW, cfg.customH);
+      if (sizeKey === 'original' && isPageRot90 && !isImgRot90) {
+        paper.ratio = rotImgH / rotImgW;
+        paper.isLandscape = !baseLandscape;
+        paper.widthPx = rotImgH;
+        paper.heightPx = rotImgW;
+      }
+
+      const scaleFactor = canvasW / paper.widthPx;
+      const viewMargin = Math.round(marginPx * scaleFactor);
+      const innerW = Math.max(10, canvasW - (viewMargin * 2));
+      const innerH = Math.max(10, canvasH - (viewMargin * 2));
+
+      const fitScale = Math.min(innerW / rotImgW, innerH / rotImgH);
+      const baseDrawW = rotImgW * fitScale;
+      const baseDrawH = rotImgH * fitScale;
+
+      const cScale = cfg.contentScale || 1.0;
+      const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
+      const finalW = baseDrawW * cScale * scaleX;
+      const finalH = baseDrawH * cScale;
+
+      const shiftX = canvasW * ((cfg.offsetX || 0) / 100);
+      const shiftY = canvasH * ((cfg.offsetY || 0) / 100);
+      const posX = (canvasW - finalW) / 2 + shiftX;
+      const posY = (canvasH - finalH) / 2 + shiftY;
+
+      const origDrawW = isImgRot90 ? (baseDrawH * cScale) : (baseDrawW * cScale * scaleX);
+      const origDrawH = isImgRot90 ? (baseDrawW * cScale * scaleX) : (baseDrawH * cScale);
+
+      const dx = -origDrawW / 2;
+      const dy = -origDrawH / 2;
+      const dw = origDrawW;
+      const dh = origDrawH;
+
+      const trap = cfg.trapezoid || 0;
+      const trapTopOffset = trap > 0 ? (dw * trap) / 2 : 0;
+      const trapBotOffset = trap < 0 ? (dw * Math.abs(trap)) / 2 : 0;
+
+      const srcW = item.imgObj.naturalWidth || item.imgObj.width || dw;
+      const srcH = item.imgObj.naturalHeight || item.imgObj.height || dh;
+      const scalePxX = dw / srcW;
+      const scalePxY = dh / srcH;
+
+      const c = cfg.corners || { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+
+      const pLocal = {
+        tl: {
+          x: dx - trapTopOffset + ((c.tl?.x || 0) * scalePxX),
+          y: dy + ((c.tl?.y || 0) * scalePxY)
+        },
+        tr: {
+          x: dx + dw + trapTopOffset + ((c.tr?.x || 0) * scalePxX),
+          y: dy + ((c.tr?.y || 0) * scalePxY)
+        },
+        br: {
+          x: dx + dw + trapBotOffset + ((c.br?.x || 0) * scalePxX),
+          y: dy + dh + ((c.br?.y || 0) * scalePxY)
+        },
+        bl: {
+          x: dx - trapBotOffset + ((c.bl?.x || 0) * scalePxX),
+          y: dy + dh + ((c.bl?.y || 0) * scalePxY)
+        }
+      };
+
+      const cx = posX + finalW / 2;
+      const cy = posY + finalH / 2;
+      const cos = Math.cos(rotRad);
+      const sin = Math.sin(rotRad);
+
+      function toCanv(pt) {
+        return {
+          x: cx + (pt.x * cos - pt.y * sin),
+          y: cy + (pt.x * sin + pt.y * cos)
+        };
+      }
+
+      return {
+        tl: toCanv(pLocal.tl),
+        tr: toCanv(pLocal.tr),
+        br: toCanv(pLocal.br),
+        bl: toCanv(pLocal.bl),
+        dw,
+        dh,
+        cx,
+        cy,
+        rotRad
+      };
+    }
+
+    // 메인 뷰어 상의 4개 핀 핸들과 SVG 가이드 다각형 위치 실시간 동기화
+    function updateCornerPins() {
+      const overlay = document.getElementById('perspectiveOverlay');
+      if (!overlay || overlay.style.display === 'none') return;
+
+      const canvas = document.getElementById('mainViewerCanvas');
+      const curIdx = docState.currentIndex;
+      const item = docState.items[curIdx];
+      if (!canvas || !item || !item.imgObj || canvas.width === 0 || canvas.height === 0) return;
+
+      const cfg = getEffectiveItemSettings(curIdx);
+      const pts = getCornerCanvasPoints(item, cfg, canvas.width, canvas.height);
+      if (!pts) return;
+
+      const dispW = canvas.clientWidth || canvas.offsetWidth;
+      const dispH = canvas.clientHeight || canvas.offsetHeight;
+      if (!dispW || !dispH) return;
+
+      const scaleX = dispW / canvas.width;
+      const scaleY = dispH / canvas.height;
+
+      const sTL = { x: pts.tl.x * scaleX, y: pts.tl.y * scaleY };
+      const sTR = { x: pts.tr.x * scaleX, y: pts.tr.y * scaleY };
+      const sBR = { x: pts.br.x * scaleX, y: pts.br.y * scaleY };
+      const sBL = { x: pts.bl.x * scaleX, y: pts.bl.y * scaleY };
+
+      const poly = document.getElementById('perspectivePolygon');
+      if (poly) {
+        poly.setAttribute('points', `${sTL.x},${sTL.y} ${sTR.x},${sTR.y} ${sBR.x},${sBR.y} ${sBL.x},${sBL.y}`);
+      }
+
+      const pinTL = document.getElementById('pinTL');
+      const pinTR = document.getElementById('pinTR');
+      const pinBR = document.getElementById('pinBR');
+      const pinBL = document.getElementById('pinBL');
+
+      if (pinTL) { pinTL.style.left = `${sTL.x}px`; pinTL.style.top = `${sTL.y}px`; }
+      if (pinTR) { pinTR.style.left = `${sTR.x}px`; pinTR.style.top = `${sTR.y}px`; }
+      if (pinBR) { pinBR.style.left = `${sBR.x}px`; pinBR.style.top = `${sBR.y}px`; }
+      if (pinBL) { pinBL.style.left = `${sBL.x}px`; pinBL.style.top = `${sBL.y}px`; }
+
+      document.querySelectorAll('.corner-pin').forEach(pin => {
+        pin.classList.toggle('active', pin.dataset.corner === selectedCornerKey);
+      });
+    }
+
+    // 투시 변환 모드 온/오프 토글
+    function togglePerspectiveMode() {
+      isPerspectiveActive = !isPerspectiveActive;
+      const overlay = document.getElementById('perspectiveOverlay');
+      const rowChips = document.getElementById('rowCornerChips');
+      const btnToggle = document.getElementById('btnTogglePerspective');
+
+      if (overlay) overlay.style.display = isPerspectiveActive ? 'block' : 'none';
+      if (rowChips) rowChips.style.display = isPerspectiveActive ? 'flex' : 'none';
+      if (btnToggle) {
+        btnToggle.classList.toggle('active', isPerspectiveActive);
+        btnToggle.style.background = isPerspectiveActive ? '#0f766e' : '';
+        btnToggle.style.color = isPerspectiveActive ? '#ffffff' : '';
+      }
+
+      if (isPerspectiveActive) {
+        if (!selectedCornerKey) selectedCornerKey = 'tl';
+        selectCorner(selectedCornerKey);
+        updateCornerPins();
+      } else {
+        selectedCornerKey = null;
+        document.querySelectorAll('.btn-corner-chip').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.corner-pin').forEach(p => p.classList.remove('active'));
+      }
+    }
+
+    // 모서리 핀 선택 (D-Pad 및 시각 강조 연동)
+    function selectCorner(key) {
+      selectedCornerKey = key;
+      ['tl', 'tr', 'bl', 'br'].forEach(k => {
+        const chip = document.getElementById('chipCorner' + k.toUpperCase());
+        if (chip) chip.classList.toggle('active', k === key);
+        const pin = document.getElementById('pin' + k.toUpperCase());
+        if (pin) pin.classList.toggle('active', k === key);
+      });
+    }
+
+    // 모서리 핀 좌표 초기화 (0% 0%)
+    function resetCorners() {
+      const curIdx = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(curIdx);
+      cfg.corners = {
+        tl: { x: 0, y: 0 },
+        tr: { x: 0, y: 0 },
+        br: { x: 0, y: 0 },
+        bl: { x: 0, y: 0 }
+      };
+      updateViewerEdits();
+      updateMiniPreview();
+      if (isPerspectiveActive) {
+        updateCornerPins();
+      }
+    }
+
     function adjustImageOffset(dx, dy) {
-      const isPdf = appMode === 'pdf2img';
-      const curIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
-      const cfg = isPdf ? getEffectivePdfSettings(curIdx) : getEffectiveImgSettings(curIdx);
+      const curIdx = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(curIdx);
+      if (isPerspectiveActive && selectedCornerKey) {
+        if (!cfg.corners) {
+          cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+        }
+        const c = cfg.corners[selectedCornerKey];
+        // 리모콘 클릭 시 정확히 1픽셀(1px) 단위 이동
+        const stepX = dx > 0 ? 1 : (dx < 0 ? -1 : 0);
+        const stepY = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
+        c.x = Math.round((c.x || 0) + stepX);
+        c.y = Math.round((c.y || 0) + stepY);
+        updateViewerEdits();
+        updateMiniPreview();
+        updateCornerPins();
+        return;
+      }
       const curX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
       const curY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
       cfg.offsetX = Math.max(-50, Math.min(50, curX + dx));
       cfg.offsetY = Math.max(-50, Math.min(50, curY + dy));
       updateViewerEdits();
       updateMiniPreview();
+      if (isPerspectiveActive) updateCornerPins();
     }
 
     function resetImageOffset() {
-      const isPdf = appMode === 'pdf2img';
-      const curIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
-      const cfg = isPdf ? getEffectivePdfSettings(curIdx) : getEffectiveImgSettings(curIdx);
+      const curIdx = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(curIdx);
+      if (isPerspectiveActive && selectedCornerKey) {
+        if (cfg.corners && cfg.corners[selectedCornerKey]) {
+          cfg.corners[selectedCornerKey].x = 0;
+          cfg.corners[selectedCornerKey].y = 0;
+          updateViewerEdits();
+          updateMiniPreview();
+          updateCornerPins();
+        }
+        return;
+      }
       cfg.offsetX = 0;
       cfg.offsetY = 0;
       updateViewerEdits();
       updateMiniPreview();
+      if (isPerspectiveActive) updateCornerPins();
     }
 
     // [핵심] 정해진 용지 크기를 고정 유지하고 내부 내용물만 확대/축소/비율/필터/오프셋 편집
@@ -4003,229 +4159,145 @@
       const maxBoxW = 125;
       const maxBoxH = 150;
 
-      if (appMode === 'pdf2img') {
-        const curIdx = pdfState.currentIndex;
-        const cfg = getEffectivePdfSettings(curIdx);
-        const { rot, isPageRot90, isImgRot90, target } = getResolvedRotations(cfg);
-        const fitKey = cfg.fit;
-        const cScale = cfg.contentScale || 1.0;
-        const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
-        const brightness = cfg.brightness !== undefined ? cfg.brightness : 100;
-        const contrast = cfg.contrast !== undefined ? cfg.contrast : 100;
-        const offsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
-        const offsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
+      const curIdx = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(curIdx);
+      const { rot, isPageRot90, isImgRot90, target } = getResolvedRotations(cfg);
+      const fitKey = cfg.pageSize || cfg.fit || 'original';
+      const cScale = cfg.contentScale || 1.0;
+      const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
+      const brightness = cfg.brightness !== undefined ? cfg.brightness : 100;
+      const contrast = cfg.contrast !== undefined ? cfg.contrast : 100;
+      const offsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
+      const offsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
+      const marginPx = cfg.margin || 0;
 
-        const customW = cfg.customW;
-        const customH = cfg.customH;
+      const customW = cfg.customW;
+      const customH = cfg.customH;
 
-        // srcCanvas는 이미 rotImg 회전이 적용된 캔버스
-        const imgOrigW = srcCanvas.width;
-        const imgOrigH = srcCanvas.height;
+      // srcCanvas는 이미 rotImg 회전이 적용된 캔버스
+      const imgOrigW = srcCanvas.width;
+      const imgOrigH = srcCanvas.height;
 
-        // 0도 기준 원본 방향 판별
-        const isOrigLandscape = isImgRot90 ? (imgOrigH > imgOrigW) : (imgOrigW > imgOrigH);
-        const orientOpt = cfg.orient || 'auto';
-        const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
-        // 페이지 회전 여부에 따른 최종 용지 방향
-        const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
-        const paper = resolvePaperGeometry(fitKey, isLandscape, imgOrigW, imgOrigH, customW, customH);
+      // 0도 기준 원본 방향 판별
+      const isOrigLandscape = isImgRot90 ? (imgOrigH > imgOrigW) : (imgOrigW > imgOrigH);
+      const orientOpt = cfg.orient || 'auto';
+      const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
+      // 페이지 회전 여부에 따른 최종 용지 방향
+      const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
+      const paper = resolvePaperGeometry(fitKey, isLandscape, imgOrigW + marginPx * 2, imgOrigH + marginPx * 2, customW, customH);
 
-        if (fitKey === 'original' && isPageRot90 && !isImgRot90) {
-          paper.ratio = imgOrigH / imgOrigW;
-          paper.isLandscape = !baseLandscape;
-          paper.name = `원본 규격 (${paper.isLandscape ? '가로' : '세로'})`;
-        }
-
-        // 미리보기 박스(maxBoxW x maxBoxH) 안에 들어갈 시트 크기 계산
-        let sheetW, sheetH;
-        if (paper.ratio >= (maxBoxW / maxBoxH)) {
-          sheetW = maxBoxW;
-          sheetH = Math.round(maxBoxW / paper.ratio);
-        } else {
-          sheetH = maxBoxH;
-          sheetW = Math.round(maxBoxH * paper.ratio);
-        }
-
-        // 종이 용지 CSS 크기 확정 (용지는 확대/축소에도 절대 변하지 않음!)
-        miniSheet.style.width = `${sheetW}px`;
-        miniSheet.style.height = `${sheetH}px`;
-        miniSheet.style.aspectRatio = `${paper.widthPx} / ${paper.heightPx}`;
-
-        const rotTargetsText = [];
-        if (target.page) rotTargetsText.push('페이지');
-        if (target.image) rotTargetsText.push('이미지');
-        const rotLabelStr = rotTargetsText.length > 0 ? ` [${rotTargetsText.join('+')} ${rot}°]` : ` [0°]`;
-        let editDetails = `${Math.round(cScale * 100)}%`;
-        if (scaleX !== 1.0) editDetails += ` · 가로${Math.round(scaleX * 100)}%`;
-        if (brightness !== 100) editDetails += ` · 밝기${brightness}%`;
-        if (contrast !== 100) editDetails += ` · 명암${contrast}%`;
-        info.textContent = `${paper.name}${rotLabelStr} · ${editDetails}`;
-        info.title = `${paper.name}${rotLabelStr} · 크기 ${Math.round(cScale * 100)}% (가로 ${Math.round(scaleX * 100)}%, 밝기 ${brightness}%, 대비 ${contrast}%, 이동 ${offsetX}%,${offsetY}%)`;
-
-        // 고해상도 Canvas 렌더링
-        const dpr = 2; // 선명한 캔버스
-        miniCanvas.width = sheetW * dpr;
-        miniCanvas.height = sheetH * dpr;
-        mctx.setTransform(1, 0, 0, 1, 0, 0);
-        mctx.scale(dpr, dpr);
-
-        // 하얀색 용지 바탕 또는 투명 처리
-        const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
-        if (isTransparent) {
-          mctx.clearRect(0, 0, sheetW, sheetH);
-          miniSheet.classList.add('checkerboard-bg');
-        } else {
-          mctx.fillStyle = '#ffffff';
-          mctx.fillRect(0, 0, sheetW, sheetH);
-          miniSheet.classList.remove('checkerboard-bg');
-        }
-
-        // 용지 안에 들어갈 이미지 기본 크기 (fit)
-        const fitScale = Math.min(sheetW / imgOrigW, sheetH / imgOrigH);
-        const baseDrawW = imgOrigW * fitScale;
-        const baseDrawH = imgOrigH * fitScale;
-
-        // 사용자 내용물 확대/축소 배율 및 가로 비율, 오프셋 적용
-        const finalDrawW = baseDrawW * cScale * scaleX;
-        const finalDrawH = baseDrawH * cScale;
-        const shiftX = sheetW * (offsetX / 100);
-        const shiftY = sheetH * (offsetY / 100);
-        const posX = (sheetW - finalDrawW) / 2 + shiftX;
-        const posY = (sheetH - finalDrawH) / 2 + shiftY;
-
-        mctx.save();
-        mctx.beginPath();
-        mctx.rect(0, 0, sheetW, sheetH);
-        mctx.clip();
-        if (brightness !== 100 || contrast !== 100) {
-          mctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
-        }
-        mctx.drawImage(srcCanvas, posX, posY, finalDrawW, finalDrawH);
-        mctx.restore();
-
-      } else {
-        // [Img to PDF] 모드
-        const curIdx = imgState.currentIndex;
-        const cfg = getEffectiveImgSettings(curIdx);
-        const item = imgState.items[curIdx];
-        const { rot, isPageRot90, target } = getResolvedRotations(cfg);
-        const sizeModeKey = cfg.pageSize;
-        const orientOpt = cfg.orient;
-        const marginPx = cfg.margin;
-        const cScale = cfg.contentScale || 1.0;
-        const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
-        const brightness = cfg.brightness !== undefined ? cfg.brightness : 100;
-        const contrast = cfg.contrast !== undefined ? cfg.contrast : 100;
-        const offsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
-        const offsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
-
-        const customW = cfg.customW;
-        const customH = cfg.customH;
-
-        // srcCanvas는 이미 rotImg 회전이 적용된 캔버스임
-        const imgOrigW = srcCanvas.width;
-        const imgOrigH = srcCanvas.height;
-
-        const isOrigImgLandscape = item ? (item.width > item.height) : (imgOrigW > imgOrigH);
-        const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigImgLandscape);
-        const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
-        const paper = resolvePaperGeometry(sizeModeKey, isLandscape, imgOrigW + marginPx * 2, imgOrigH + marginPx * 2, customW, customH);
-
-        let sheetW, sheetH;
-        if (paper.ratio >= (maxBoxW / maxBoxH)) {
-          sheetW = maxBoxW;
-          sheetH = Math.round(maxBoxW / paper.ratio);
-        } else {
-          sheetH = maxBoxH;
-          sheetW = Math.round(maxBoxH * paper.ratio);
-        }
-
-        // 종이 용지 크기 확정 (절대 불변)
-        miniSheet.style.width = `${sheetW}px`;
-        miniSheet.style.height = `${sheetH}px`;
-        miniSheet.style.aspectRatio = `${paper.widthPx} / ${paper.heightPx}`;
-
-        const rotTargetsText = [];
-        if (target.page) rotTargetsText.push('페이지');
-        if (target.image) rotTargetsText.push('이미지');
-        const rotLabelStr = rotTargetsText.length > 0 ? ` [${rotTargetsText.join('+')} ${rot}°]` : ` [0°]`;
-        let editDetails = `${Math.round(cScale * 100)}%`;
-        if (scaleX !== 1.0) editDetails += ` · 가로${Math.round(scaleX * 100)}%`;
-        if (brightness !== 100) editDetails += ` · 밝기${brightness}%`;
-        if (contrast !== 100) editDetails += ` · 명암${contrast}%`;
-        info.textContent = `${paper.name}${rotLabelStr} · ${editDetails}`;
-        info.title = `${paper.name}${rotLabelStr} (여백 ${marginPx}px) · 내용물 ${Math.round(cScale * 100)}% (가로 ${Math.round(scaleX * 100)}%, 밝기 ${brightness}%, 대비 ${contrast}%, 이동 ${offsetX}%,${offsetY}%)`;
-
-        const dpr = 2;
-        miniCanvas.width = sheetW * dpr;
-        miniCanvas.height = sheetH * dpr;
-        mctx.setTransform(1, 0, 0, 1, 0, 0);
-        mctx.scale(dpr, dpr);
-
-        // 하얀색 용지 바탕 또는 투명 처리
-        const isTransparent = (cfg.transparentBg !== false);
-        if (isTransparent) {
-          mctx.clearRect(0, 0, sheetW, sheetH);
-          miniSheet.classList.add('checkerboard-bg');
-        } else {
-          mctx.fillStyle = '#ffffff';
-          mctx.fillRect(0, 0, sheetW, sheetH);
-          miniSheet.classList.remove('checkerboard-bg');
-        }
-
-        // 여백 비율 계산 (미리보기 크기에 맞춘 여백)
-        const scaleFactor = sheetW / paper.widthPx;
-        const viewMargin = Math.round(marginPx * scaleFactor);
-
-        const innerW = Math.max(10, sheetW - (viewMargin * 2));
-        const innerH = Math.max(10, sheetH - (viewMargin * 2));
-
-        const fitScale = Math.min(innerW / imgOrigW, innerH / imgOrigH);
-        const baseDrawW = imgOrigW * fitScale;
-        const baseDrawH = imgOrigH * fitScale;
-
-        const finalDrawW = baseDrawW * cScale * scaleX;
-        const finalDrawH = baseDrawH * cScale;
-        const shiftX = sheetW * (offsetX / 100);
-        const shiftY = sheetH * (offsetY / 100);
-        const posX = (sheetW - finalDrawW) / 2 + shiftX;
-        const posY = (sheetH - finalDrawH) / 2 + shiftY;
-
-        mctx.save();
-        mctx.beginPath();
-        mctx.rect(0, 0, sheetW, sheetH);
-        mctx.clip();
-        if (brightness !== 100 || contrast !== 100) {
-          mctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
-        }
-        mctx.drawImage(srcCanvas, posX, posY, finalDrawW, finalDrawH);
-        mctx.restore();
+      if (fitKey === 'original' && isPageRot90 && !isImgRot90) {
+        paper.ratio = imgOrigH / imgOrigW;
+        paper.isLandscape = !baseLandscape;
+        paper.name = `원본 규격 (${paper.isLandscape ? '가로' : '세로'})`;
       }
+
+      // 미리보기 박스(maxBoxW x maxBoxH) 안에 들어갈 시트 크기 계산
+      let sheetW, sheetH;
+      if (paper.ratio >= (maxBoxW / maxBoxH)) {
+        sheetW = maxBoxW;
+        sheetH = Math.round(maxBoxW / paper.ratio);
+      } else {
+        sheetH = maxBoxH;
+        sheetW = Math.round(maxBoxH * paper.ratio);
+      }
+
+      // 종이 용지 CSS 크기 확정 (용지는 확대/축소에도 절대 변하지 않음!)
+      miniSheet.style.width = `${sheetW}px`;
+      miniSheet.style.height = `${sheetH}px`;
+      miniSheet.style.aspectRatio = `${paper.widthPx} / ${paper.heightPx}`;
+
+      const rotTargetsText = [];
+      if (target.page) rotTargetsText.push('페이지');
+      if (target.image) rotTargetsText.push('이미지');
+      const rotLabelStr = rotTargetsText.length > 0 ? ` [${rotTargetsText.join('+')} ${rot}°]` : ` [0°]`;
+
+      // 1줄: 용지 규격 및 회전
+      const line1 = `${paper.name}${rotLabelStr}`;
+
+      // 2줄: 사용자가 이미지에 적용한 편집 내용 압축 요약
+      const line2Parts = [];
+      line2Parts.push(`크기${Math.round(cScale * 100)}%`);
+      if (scaleX !== 1.0) line2Parts.push(`가로${Math.round(scaleX * 100)}%`);
+      if (cfg.trapezoid) {
+        const trapVal = Math.round(cfg.trapezoid * 100);
+        line2Parts.push(trapVal > 0 ? `대두+${trapVal}%` : `소두+${Math.abs(trapVal)}%`);
+      }
+      const c = cfg.corners;
+      if (c && (c.tl?.x || c.tl?.y || c.tr?.x || c.tr?.y || c.br?.x || c.br?.y || c.bl?.x || c.bl?.y)) {
+        line2Parts.push(`투시📐`);
+      }
+      if (brightness !== 100) line2Parts.push(`밝기${brightness}%`);
+      if (contrast !== 100) line2Parts.push(`명암${contrast}%`);
+      if (offsetX !== 0 || offsetY !== 0) line2Parts.push(`위치(${offsetX},${offsetY})`);
+      const line2 = line2Parts.join(' · ');
+
+      info.innerHTML = `<div class="mini-info-line1" title="${line1}">${line1}</div><div class="mini-info-line2" title="${line2}">${line2}</div>`;
+      info.title = `${line1}\n${line2}`;
+
+      // 고해상도 Canvas 렌더링
+      const dpr = 2; // 선명한 캔버스
+      miniCanvas.width = sheetW * dpr;
+      miniCanvas.height = sheetH * dpr;
+      mctx.setTransform(1, 0, 0, 1, 0, 0);
+      mctx.scale(dpr, dpr);
+
+      // 하얀색 용지 바탕 또는 투명 처리
+      const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
+      if (isTransparent) {
+        mctx.clearRect(0, 0, sheetW, sheetH);
+        miniSheet.classList.add('checkerboard-bg');
+      } else {
+        mctx.fillStyle = '#ffffff';
+        mctx.fillRect(0, 0, sheetW, sheetH);
+        miniSheet.classList.remove('checkerboard-bg');
+      }
+
+      // 여백 비율 계산
+      const scaleFactor = sheetW / paper.widthPx;
+      const viewMargin = Math.round(marginPx * scaleFactor);
+      const innerW = Math.max(10, sheetW - (viewMargin * 2));
+      const innerH = Math.max(10, sheetH - (viewMargin * 2));
+
+      // 용지 안 여백 내에 들어갈 이미지 기본 크기 (fit)
+      const fitScale = Math.min(innerW / imgOrigW, innerH / imgOrigH);
+      const baseDrawW = imgOrigW * fitScale;
+      const baseDrawH = imgOrigH * fitScale;
+
+      // 사용자 내용물 확대/축소 배율 및 가로 비율, 오프셋 적용
+      const finalDrawW = baseDrawW * cScale * scaleX;
+      const finalDrawH = baseDrawH * cScale;
+      const shiftX = sheetW * (offsetX / 100);
+      const shiftY = sheetH * (offsetY / 100);
+      const posX = (sheetW - finalDrawW) / 2 + shiftX;
+      const posY = (sheetH - finalDrawH) / 2 + shiftY;
+
+      mctx.save();
+      mctx.beginPath();
+      mctx.rect(0, 0, sheetW, sheetH);
+      mctx.clip();
+      if (brightness !== 100 || contrast !== 100) {
+        mctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
+      }
+      drawPerspectiveQuad(mctx, srcCanvas, posX, posY, finalDrawW, finalDrawH, cfg.corners, cfg.trapezoid);
+      mctx.restore();
     }
 
     // [핵심] 통합 듀얼 저장 라우터 (PDF 저장 vs Img 저장)
     async function executeActionSave(targetType) {
-      if (appMode === 'pdf2img') {
-        if (targetType === 'img') {
-          await executePdfToImages();
-        } else {
-          await executePdfToPdf();
-        }
+      if (targetType === 'img') {
+        await executeSaveSplitImages();
       } else {
-        if (targetType === 'pdf') {
-          await executeImagesToPdf();
-        } else {
-          await executeImagesToImages();
-        }
+        await executeSaveMergedPdf();
       }
       toggleMobileControl(false);
     }
 
-    // PDF ➡️ 이미지 분할 & ZIP 자동 저장 (개별 페이지 오버라이드 및 삽입 이미지 완벽 반영)
-    async function executePdfToImages() {
-      if (pdfState.pages.length === 0) return;
+    // 선택된 항목들을 고화질 이미지로 개별/ZIP 분할 저장 (PDF/이미지 혼합 완벽 지원)
+    async function executeSaveSplitImages() {
+      if (docState.items.length === 0) return;
       const selectedIndices = [];
-      pdfState.checkList.forEach((chk, i) => { if (chk && pdfState.pages[i]) selectedIndices.push(i); });
+      docState.checkList.forEach((chk, i) => { if (chk && docState.items[i]) selectedIndices.push(i); });
       if (selectedIndices.length === 0) return;
 
       const btnSavePdf = document.getElementById('btnSavePdf');
@@ -4235,7 +4307,7 @@
       document.getElementById('btnAbort').style.display = 'inline-block';
       document.getElementById('progWrap').style.display = 'block';
       isAborted = false;
-      zipBlobs = [];
+      const exportBlobs = [];
 
       try {
         for (let idx = 0; idx < selectedIndices.length; idx++) {
@@ -4245,8 +4317,8 @@
           }
 
           const pageIndex = selectedIndices[idx];
-          const p = pdfState.pages[pageIndex];
-          const cfg = getEffectivePdfSettings(pageIndex);
+          const p = docState.items[pageIndex];
+          const cfg = getEffectiveItemSettings(pageIndex);
           const cScale = cfg.contentScale || 1.0;
           const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
 
@@ -4299,17 +4371,17 @@
           const orientOpt = cfg.orient || 'auto';
           const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
           const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
-          const paper = resolvePaperGeometry(cfg.fit, isLandscape, refW, refH, cfg.customW, cfg.customH);
+          const paper = resolvePaperGeometry(cfg.fit || cfg.pageSize || 'original', isLandscape, refW, refH, cfg.customW, cfg.customH);
 
           // 2단계: 최종 용지 캔버스 생성
           let finalCanvas = document.createElement('canvas');
           let fctx = finalCanvas.getContext('2d');
 
           let paperW, paperH;
-          if (cfg.fit === 'original') {
+          if (cfg.fit === 'original' || cfg.pageSize === 'original') {
             paperW = isPageRot90 ? (origH * (p.type === 'pdf' ? cfg.scale : imgF)) : (origW * (p.type === 'pdf' ? cfg.scale : imgF));
             paperH = isPageRot90 ? (origW * (p.type === 'pdf' ? cfg.scale : imgF)) : (origH * (p.type === 'pdf' ? cfg.scale : imgF));
-          } else if (cfg.fit === 'custom') {
+          } else if (cfg.fit === 'custom' || cfg.pageSize === 'custom') {
             paperW = paper.widthPx;
             paperH = paper.heightPx;
           } else {
@@ -4356,12 +4428,12 @@
           if (brightness !== 100 || contrast !== 100) {
             fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
           }
-          fctx.drawImage(tempCanvas, posX, posY, drawW, drawH);
+          drawPerspectiveQuad(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.corners, cfg.trapezoid);
           fctx.restore();
           tempCanvas.width = 0; tempCanvas.height = 0;
 
           let blob;
-          const fmt = cfg.format;
+          const fmt = cfg.format || 'png';
           if (fmt === 'png') {
             blob = await new Promise(r => finalCanvas.toBlob(r, 'image/png'));
           } else if (fmt === 'jpeg') {
@@ -4378,24 +4450,39 @@
 
           finalCanvas.width = 0; finalCanvas.height = 0;
 
-          const fileName = `${pdfState.fileName}_p${String(idx + 1).padStart(3, '0')}.${fmt}`;
-          zipBlobs.push({ name: fileName, blob });
+          const baseName = docState.fileName || 'document';
+          const fileName = `${baseName}_p${String(idx + 1).padStart(3, '0')}.${fmt}`;
+          exportBlobs.push({ name: fileName, blob });
         }
 
         if (!isAborted) {
-          document.getElementById('statusText').textContent = 'ZIP 파일 생성 중...';
-          const zip = new JSZip();
-          zipBlobs.forEach(item => zip.file(item.name, item.blob));
-          const zipBlob = await zip.generateAsync({ type: 'blob' });
+          if (exportBlobs.length === 1) {
+            // 단일 파일 다운로드
+            const item = exportBlobs[0];
+            const url = URL.createObjectURL(item.blob);
+            const a = document.createElement('a');
+            a.download = item.name;
+            a.href = url;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
+            document.getElementById('statusText').textContent = '완료! 이미지 1장 저장됨.';
+          } else {
+            // 다중 파일 ZIP 압축 다운로드
+            document.getElementById('statusText').textContent = 'ZIP 파일 생성 중...';
+            const zip = new JSZip();
+            exportBlobs.forEach(item => zip.file(item.name, item.blob));
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
 
-          const url = URL.createObjectURL(zipBlob);
-          const a = document.createElement('a');
-          a.download = `${pdfState.fileName}_images.zip`;
-          a.href = url;
-          a.click();
-          setTimeout(() => URL.revokeObjectURL(url), 2000);
+            const url = URL.createObjectURL(zipBlob);
+            const a = document.createElement('a');
+            const baseName = docState.fileName || 'document';
+            a.download = `${baseName}_images.zip`;
+            a.href = url;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
 
-          document.getElementById('statusText').textContent = `완료! ${zipBlobs.length}장 이미지 저장됨.`;
+            document.getElementById('statusText').textContent = `완료! ${exportBlobs.length}장 이미지 저장됨.`;
+          }
         }
       } catch (err) {
         console.error(err);
@@ -4406,11 +4493,11 @@
       }
     }
 
-    // PDF ➡️ 선택된 페이지만 새 PDF로 재구성 및 저장
-    async function executePdfToPdf() {
-      if (pdfState.pages.length === 0) return;
+    // 선택된 항목들을 순서대로 하나의 PDF 문서로 병합 저장 (PDF/이미지 혼합 완벽 지원)
+    async function executeSaveMergedPdf() {
+      if (docState.items.length === 0) return;
       const selectedIndices = [];
-      pdfState.checkList.forEach((chk, i) => { if (chk && pdfState.pages[i]) selectedIndices.push(i); });
+      docState.checkList.forEach((chk, i) => { if (chk && docState.items[i]) selectedIndices.push(i); });
       if (selectedIndices.length === 0) return;
 
       const btnSavePdf = document.getElementById('btnSavePdf');
@@ -4432,8 +4519,8 @@
           }
 
           const pageIndex = selectedIndices[idx];
-          const p = pdfState.pages[pageIndex];
-          const cfg = getEffectivePdfSettings(pageIndex);
+          const p = docState.items[pageIndex];
+          const cfg = getEffectiveItemSettings(pageIndex);
           const cScale = cfg.contentScale || 1.0;
           const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
 
@@ -4481,13 +4568,13 @@
           const orientOpt = cfg.orient || 'auto';
           const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
           const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
-          const paper = resolvePaperGeometry(cfg.fit, isLandscape, refW, refH, cfg.customW, cfg.customH);
+          const paper = resolvePaperGeometry(cfg.fit || cfg.pageSize || 'original', isLandscape, refW, refH, cfg.customW, cfg.customH);
 
           let paperW, paperH;
-          if (cfg.fit === 'original') {
+          if (cfg.fit === 'original' || cfg.pageSize === 'original') {
             paperW = isPageRot90 ? (origH * (p.type === 'pdf' ? 3.0 : imgF)) : (origW * (p.type === 'pdf' ? 3.0 : imgF));
             paperH = isPageRot90 ? (origW * (p.type === 'pdf' ? 3.0 : imgF)) : (origH * (p.type === 'pdf' ? 3.0 : imgF));
-          } else if (cfg.fit === 'custom') {
+          } else if (cfg.fit === 'custom' || cfg.pageSize === 'custom') {
             paperW = paper.widthPx;
             paperH = paper.heightPx;
           } else {
@@ -4528,7 +4615,7 @@
           if (brightness !== 100 || contrast !== 100) {
             fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
           }
-          fctx.drawImage(tempCanvas, posX, posY, drawW, drawH);
+          drawPerspectiveQuad(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.corners, cfg.trapezoid);
           fctx.restore();
           tempCanvas.width = 0; tempCanvas.height = 0;
 
@@ -4552,306 +4639,13 @@
         }
 
         if (!isAborted && newPdfDoc) {
-          newPdfDoc.save(`${pdfState.fileName}_edited.pdf`);
+          const baseName = docState.fileName || 'document';
+          newPdfDoc.save(`${baseName}_edited.pdf`);
           document.getElementById('statusText').textContent = `완료! ${selectedIndices.length}페이지 PDF 저장됨.`;
         }
       } catch (err) {
         console.error(err);
         document.getElementById('statusText').textContent = `PDF 생성 오류: ${err.message}`;
-      } finally {
-        updateThumbCounts();
-        document.getElementById('btnAbort').style.display = 'none';
-      }
-    }
-
-    // 이미지 ➡️ PDF 병합 & 자동 다운로드 (선택된 이미지만 병합, 개별 오버라이드 완벽 반영)
-    async function executeImagesToPdf() {
-      const selectedIndices = [];
-      imgState.checkList.forEach((chk, idx) => {
-        if (chk) selectedIndices.push(idx);
-      });
-      if (selectedIndices.length === 0) return;
-
-      const btnSavePdf = document.getElementById('btnSavePdf');
-      const btnSaveImg = document.getElementById('btnSaveImg');
-      if (btnSavePdf) btnSavePdf.disabled = true;
-      if (btnSaveImg) btnSaveImg.disabled = true;
-      document.getElementById('btnAbort').style.display = 'inline-block';
-      document.getElementById('progWrap').style.display = 'block';
-      isAborted = false;
-
-      const { jsPDF } = window.jspdf;
-      let doc = null;
-
-      try {
-        for (let step = 0; step < selectedIndices.length; step++) {
-          if (isAborted) {
-            document.getElementById('statusText').textContent = 'PDF 병합이 중단되었습니다.';
-            break;
-          }
-
-          const i = selectedIndices[step];
-          const cfg = getEffectiveImgSettings(i);
-          const cScale = cfg.contentScale || 1.0;
-
-          const pct = Math.round(((step + 1) / selectedIndices.length) * 100);
-          document.getElementById('progFill').style.width = `${pct}%`;
-          document.getElementById('statusText').textContent = `PDF 생성 중: [${step + 1} / ${selectedIndices.length}]...`;
-
-          await new Promise(r => setTimeout(r, 0));
-
-          const item = imgState.items[i];
-          const w = item.width;
-          const h = item.height;
-
-          // 회전 적용 임시 캔버스
-          const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
-          const rotRad = (rotImg * Math.PI) / 180;
-          const srcRotW = isImgRot90 ? h : w;
-          const srcRotH = isImgRot90 ? w : h;
-
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = srcRotW;
-          tempCanvas.height = srcRotH;
-          const tctx = tempCanvas.getContext('2d');
-          tctx.fillStyle = '#ffffff';
-          tctx.fillRect(0, 0, srcRotW, srcRotH);
-          tctx.translate(srcRotW / 2, srcRotH / 2);
-          tctx.rotate(rotRad);
-          tctx.drawImage(item.imgObj, -w / 2, -h / 2);
-
-          const isOrigLandscape = w > h;
-          const baseLandscape = cfg.orient === 'l' || (cfg.orient === 'auto' && isOrigLandscape);
-          const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
-          const orientation = isLandscape ? 'l' : 'p';
-          const paper = resolvePaperGeometry(cfg.pageSize, isLandscape, srcRotW + cfg.margin * 2, srcRotH + cfg.margin * 2, cfg.customW, cfg.customH);
-
-          const pWidth = paper.widthPx;
-          const pHeight = paper.heightPx;
-          const targetMargin = (cfg.pageSize === 'original' || cfg.pageSize === 'custom') ? cfg.margin : Math.round(cfg.margin * 3.5);
-
-          if (step === 0) {
-            doc = new jsPDF({
-              orientation: orientation,
-              unit: 'px',
-              format: [pWidth, pHeight],
-              compress: true
-            });
-          } else {
-            doc.addPage([pWidth, pHeight], orientation);
-          }
-
-          const pageW = doc.internal.pageSize.getWidth();
-          const pageH = doc.internal.pageSize.getHeight();
-
-          const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
-          const brightness = cfg.brightness !== undefined ? cfg.brightness : 100;
-          const contrast = cfg.contrast !== undefined ? cfg.contrast : 100;
-          const offsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
-          const offsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
-
-          const finalCanvas = document.createElement('canvas');
-          finalCanvas.width = pWidth;
-          finalCanvas.height = pHeight;
-          const fctx = finalCanvas.getContext('2d');
-          fctx.fillStyle = '#ffffff';
-          fctx.fillRect(0, 0, pWidth, pHeight);
-
-          const innerW = pWidth - (targetMargin * 2);
-          const innerH = pHeight - (targetMargin * 2);
-          const fitScale = Math.min(innerW / srcRotW, innerH / srcRotH);
-          const finalDrawW = srcRotW * fitScale * cScale * scaleX;
-          const finalDrawH = srcRotH * fitScale * cScale;
-          const shiftX = pWidth * (offsetX / 100);
-          const shiftY = pHeight * (offsetY / 100);
-          const posX = (pWidth - finalDrawW) / 2 + shiftX;
-          const posY = (pHeight - finalDrawH) / 2 + shiftY;
-
-          fctx.save();
-          fctx.beginPath();
-          fctx.rect(0, 0, pWidth, pHeight);
-          fctx.clip();
-          if (brightness !== 100 || contrast !== 100) {
-            fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
-          }
-          fctx.drawImage(tempCanvas, posX, posY, finalDrawW, finalDrawH);
-          fctx.restore();
-          tempCanvas.width = 0; tempCanvas.height = 0;
-
-          let imgDataUrl;
-          let imgCompressFormat = 'JPEG';
-          if (cfg.quality === 'ultra') {
-            imgDataUrl = finalCanvas.toDataURL('image/png');
-            imgCompressFormat = 'PNG';
-          } else if (cfg.quality === 'high') {
-            imgDataUrl = finalCanvas.toDataURL('image/jpeg', 0.98);
-            imgCompressFormat = 'JPEG';
-          } else {
-            imgDataUrl = finalCanvas.toDataURL('image/jpeg', 0.90);
-            imgCompressFormat = 'JPEG';
-          }
-          finalCanvas.width = 0; finalCanvas.height = 0;
-
-          doc.addImage(imgDataUrl, imgCompressFormat, 0, 0, pageW, pageH, undefined, 'FAST');
-        }
-
-        if (!isAborted && doc) {
-          const outName = imgState.items[0].name.replace(/\.[^/.]+$/, "");
-          doc.save(`${outName}_merged.pdf`);
-          document.getElementById('statusText').textContent = `완료! ${selectedIndices.length}개 이미지 PDF 저장됨.`;
-        }
-      } catch (err) {
-        console.error(err);
-        document.getElementById('statusText').textContent = `PDF 병합 실패: ${err.message}`;
-      } finally {
-        updateThumbCounts();
-        document.getElementById('btnAbort').style.display = 'none';
-      }
-    }
-
-    // 이미지 ➡️ 편집된 이미지를 단일 파일 또는 ZIP으로 저장
-    async function executeImagesToImages() {
-      const selectedIndices = [];
-      imgState.checkList.forEach((chk, idx) => {
-        if (chk) selectedIndices.push(idx);
-      });
-      if (selectedIndices.length === 0) return;
-
-      const btnSavePdf = document.getElementById('btnSavePdf');
-      const btnSaveImg = document.getElementById('btnSaveImg');
-      if (btnSavePdf) btnSavePdf.disabled = true;
-      if (btnSaveImg) btnSaveImg.disabled = true;
-      document.getElementById('btnAbort').style.display = 'inline-block';
-      document.getElementById('progWrap').style.display = 'block';
-      isAborted = false;
-      const exportBlobs = [];
-
-      try {
-        for (let step = 0; step < selectedIndices.length; step++) {
-          if (isAborted) {
-            document.getElementById('statusText').textContent = '이미지 저장이 중단되었습니다.';
-            break;
-          }
-
-          const i = selectedIndices[step];
-          const cfg = getEffectiveImgSettings(i);
-          const cScale = cfg.contentScale || 1.0;
-          const item = imgState.items[i];
-          const w = item.width;
-          const h = item.height;
-
-          const pct = Math.round(((step + 1) / selectedIndices.length) * 100);
-          document.getElementById('progFill').style.width = `${pct}%`;
-          document.getElementById('statusText').textContent = `이미지 처리 중: [${step + 1} / ${selectedIndices.length}]...`;
-
-          await new Promise(r => setTimeout(r, 0));
-
-          // 회전 적용
-          const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
-          const rotRad = (rotImg * Math.PI) / 180;
-          const srcRotW = isImgRot90 ? h : w;
-          const srcRotH = isImgRot90 ? w : h;
-
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = srcRotW;
-          tempCanvas.height = srcRotH;
-          const tctx = tempCanvas.getContext('2d');
-          const isTransparent = (cfg.transparentBg !== false);
-          if (isTransparent) {
-            tctx.clearRect(0, 0, srcRotW, srcRotH);
-          } else {
-            tctx.fillStyle = '#ffffff';
-            tctx.fillRect(0, 0, srcRotW, srcRotH);
-          }
-          tctx.translate(srcRotW / 2, srcRotH / 2);
-          tctx.rotate(rotRad);
-          tctx.drawImage(item.imgObj, -w / 2, -h / 2);
-
-          const isOrigLandscape = w > h;
-          const baseLandscape = cfg.orient === 'l' || (cfg.orient === 'auto' && isOrigLandscape);
-          const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
-          const paper = resolvePaperGeometry(cfg.pageSize, isLandscape, srcRotW + cfg.margin * 2, srcRotH + cfg.margin * 2, cfg.customW, cfg.customH);
-
-          const paperW = paper.widthPx;
-          const paperH = paper.heightPx;
-          const targetMargin = (cfg.pageSize === 'original' || cfg.pageSize === 'custom') ? cfg.margin : Math.round(cfg.margin * 3.5);
-
-          const finalCanvas = document.createElement('canvas');
-          finalCanvas.width = paperW;
-          finalCanvas.height = paperH;
-          const fctx = finalCanvas.getContext('2d');
-          if (isTransparent) {
-            fctx.clearRect(0, 0, paperW, paperH);
-          } else {
-            fctx.fillStyle = '#ffffff';
-            fctx.fillRect(0, 0, paperW, paperH);
-          }
-
-          const innerW = paperW - (targetMargin * 2);
-          const innerH = paperH - (targetMargin * 2);
-          const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
-          const brightness = cfg.brightness !== undefined ? cfg.brightness : 100;
-          const contrast = cfg.contrast !== undefined ? cfg.contrast : 100;
-          const offsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
-          const offsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
-
-          const fitScale = Math.min(innerW / srcRotW, innerH / srcRotH);
-          const drawW = srcRotW * fitScale * cScale * scaleX;
-          const drawH = srcRotH * fitScale * cScale;
-          const shiftX = paperW * (offsetX / 100);
-          const shiftY = paperH * (offsetY / 100);
-          const posX = (paperW - drawW) / 2 + shiftX;
-          const posY = (paperH - drawH) / 2 + shiftY;
-
-          fctx.save();
-          fctx.beginPath();
-          fctx.rect(0, 0, paperW, paperH);
-          fctx.clip();
-          if (brightness !== 100 || contrast !== 100) {
-            fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
-          }
-          fctx.drawImage(tempCanvas, posX, posY, drawW, drawH);
-          fctx.restore();
-          tempCanvas.width = 0; tempCanvas.height = 0;
-
-          const blob = await new Promise(r => finalCanvas.toBlob(r, 'image/png'));
-          finalCanvas.width = 0; finalCanvas.height = 0;
-
-          const baseName = item.name.replace(/\.[^/.]+$/, "");
-          const fileName = `${baseName}_edited.png`;
-          exportBlobs.push({ name: fileName, blob });
-        }
-
-        if (!isAborted) {
-          if (exportBlobs.length === 1) {
-            // 단일 파일 다운로드
-            const item = exportBlobs[0];
-            const url = URL.createObjectURL(item.blob);
-            const a = document.createElement('a');
-            a.download = item.name;
-            a.href = url;
-            a.click();
-            setTimeout(() => URL.revokeObjectURL(url), 2000);
-            document.getElementById('statusText').textContent = '완료! 이미지 1장 저장됨.';
-          } else {
-            // 다중 파일 ZIP 압축 다운로드
-            document.getElementById('statusText').textContent = 'ZIP 파일 생성 중...';
-            const zip = new JSZip();
-            exportBlobs.forEach(b => zip.file(b.name, b.blob));
-            const zipBlob = await zip.generateAsync({ type: 'blob' });
-
-            const url = URL.createObjectURL(zipBlob);
-            const a = document.createElement('a');
-            a.download = `images_edited.zip`;
-            a.href = url;
-            a.click();
-            setTimeout(() => URL.revokeObjectURL(url), 2000);
-            document.getElementById('statusText').textContent = `완료! ${exportBlobs.length}장 이미지 저장됨.`;
-          }
-        }
-      } catch (err) {
-        console.error(err);
-        document.getElementById('statusText').textContent = `이미지 저장 실패: ${err.message}`;
       } finally {
         updateThumbCounts();
         document.getElementById('btnAbort').style.display = 'none';
@@ -4895,17 +4689,41 @@
     if (viewerWrap) {
       viewerWrap.addEventListener('mousedown', (e) => {
         if (e.button !== 0) return; // 마우스 좌클릭만 처리
-        const isPdf = appMode === 'pdf2img';
-        const total = isPdf ? pdfState.pages.length : imgState.items.length;
+        const total = docState.items.length;
         if (total === 0) return;
 
+        // 1. 투시 변환 핀 핸들 드래그 우선 처리
+        const pinEl = e.target.closest('.corner-pin');
+        if (pinEl && isPerspectiveActive) {
+          e.preventDefault();
+          e.stopPropagation();
+          const cornerKey = pinEl.dataset.corner;
+          selectCorner(cornerKey);
+          isPinDragging = true;
+          activeDraggingPinKey = cornerKey;
+          pinDragStartMouseX = e.clientX;
+          pinDragStartMouseY = e.clientY;
+
+          const curIdx = docState.currentIndex;
+          const cfg = getEffectiveItemSettings(curIdx);
+          if (!cfg.corners) {
+            cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+          }
+          pinDragStartCornerVal = {
+            x: cfg.corners[cornerKey]?.x || 0,
+            y: cfg.corners[cornerKey]?.y || 0
+          };
+          return;
+        }
+
+        // 2. 일반 이미지 캔버스 패닝 (전체 이동)
         e.preventDefault();
         isPanning = true;
         panStartX = e.clientX;
         panStartY = e.clientY;
 
-        const curIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
-        const cfg = isPdf ? getEffectivePdfSettings(curIdx) : getEffectiveImgSettings(curIdx);
+        const curIdx = docState.currentIndex;
+        const cfg = getEffectiveItemSettings(curIdx);
         panStartOffsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
         panStartOffsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
 
@@ -4915,12 +4733,66 @@
       });
 
       window.addEventListener('mousemove', (e) => {
+        // 투시 핀 드래그 처리
+        if (isPinDragging && activeDraggingPinKey) {
+          e.preventDefault();
+          const canvas = document.getElementById('mainViewerCanvas');
+          const curIdx = docState.currentIndex;
+          const item = docState.items[curIdx];
+          if (!canvas || !item || !item.imgObj || canvas.width === 0 || canvas.height === 0) return;
+
+          const cfg = getEffectiveItemSettings(curIdx);
+          const pts = getCornerCanvasPoints(item, cfg, canvas.width, canvas.height);
+          if (!pts || !pts.dw || !pts.dh) return;
+
+          const dispW = canvas.clientWidth || canvas.offsetWidth;
+          const dispH = canvas.clientHeight || canvas.offsetHeight;
+          if (!dispW || !dispH) return;
+
+          const scaleX = dispW / canvas.width;
+          const scaleY = dispH / canvas.height;
+          const zoom = docState.zoom || 1.0;
+
+          // 화면 이동량 -> 캔버스 해상도 좌표
+          const deltaScreenX = (e.clientX - pinDragStartMouseX) / zoom;
+          const deltaScreenY = (e.clientY - pinDragStartMouseY) / zoom;
+          const deltaCanvX = deltaScreenX / scaleX;
+          const deltaCanvY = deltaScreenY / scaleY;
+
+          // 이미지 회전 각도 역변환 (Unrotate)
+          const cos = Math.cos(-pts.rotRad);
+          const sin = Math.sin(-pts.rotRad);
+          const deltaLocalX = deltaCanvX * cos - deltaCanvY * sin;
+          const deltaLocalY = deltaCanvX * sin + deltaCanvY * cos;
+
+          const srcW = item.imgObj?.naturalWidth || item.imgObj?.width || pts.dw;
+          const srcH = item.imgObj?.naturalHeight || item.imgObj?.height || pts.dh;
+          const scalePxX = pts.dw / srcW;
+          const scalePxY = pts.dh / srcH;
+
+          // 원본 이미지 픽셀 단위로 환산
+          const deltaOrigPxX = Math.round(deltaLocalX / scalePxX);
+          const deltaOrigPxY = Math.round(deltaLocalY / scalePxY);
+
+          if (!cfg.corners) {
+            cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+          }
+          cfg.corners[activeDraggingPinKey] = {
+            x: pinDragStartCornerVal.x + deltaOrigPxX,
+            y: pinDragStartCornerVal.y + deltaOrigPxY
+          };
+
+          updateViewerEdits(curIdx);
+          updateMiniPreview();
+          updateCornerPins();
+          return;
+        }
+
         if (!isPanning) return;
         e.preventDefault();
 
-        const isPdf = appMode === 'pdf2img';
-        const curIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
-        const cfg = isPdf ? getEffectivePdfSettings(curIdx) : getEffectiveImgSettings(curIdx);
+        const curIdx = docState.currentIndex;
+        const cfg = getEffectiveItemSettings(curIdx);
 
         const dx = e.clientX - panStartX;
         const dy = e.clientY - panStartY;
@@ -4938,9 +4810,14 @@
 
         updateViewerEdits(curIdx);
         updateMiniPreview();
+        if (isPerspectiveActive) updateCornerPins();
       });
 
       window.addEventListener('mouseup', () => {
+        if (isPinDragging) {
+          isPinDragging = false;
+          activeDraggingPinKey = null;
+        }
         if (isPanning) {
           isPanning = false;
           viewerWrap.style.cursor = 'grab';
@@ -4951,29 +4828,105 @@
 
       // 터치 스크린 지원
       viewerWrap.addEventListener('touchstart', (e) => {
-        if (e.touches.length !== 1) return;
-        const isPdf = appMode === 'pdf2img';
-        const total = isPdf ? pdfState.pages.length : imgState.items.length;
+        const total = docState.items.length;
         if (total === 0) return;
+
+        // 1. 투시 핀 터치 드래그 우선 처리
+        const pinEl = e.target.closest('.corner-pin');
+        if (pinEl && isPerspectiveActive) {
+          e.preventDefault();
+          e.stopPropagation();
+          const cornerKey = pinEl.dataset.corner;
+          selectCorner(cornerKey);
+          isPinDragging = true;
+          activeDraggingPinKey = cornerKey;
+          pinDragStartMouseX = e.touches[0].clientX;
+          pinDragStartMouseY = e.touches[0].clientY;
+
+          const curIdx = docState.currentIndex;
+          const cfg = getEffectiveItemSettings(curIdx);
+          if (!cfg.corners) {
+            cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+          }
+          pinDragStartCornerVal = {
+            x: cfg.corners[cornerKey]?.x || 0,
+            y: cfg.corners[cornerKey]?.y || 0
+          };
+          return;
+        }
+
+        if (e.touches.length !== 1) return;
 
         isPanning = true;
         panStartX = e.touches[0].clientX;
         panStartY = e.touches[0].clientY;
 
-        const curIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
-        const cfg = isPdf ? getEffectivePdfSettings(curIdx) : getEffectiveImgSettings(curIdx);
+        const curIdx = docState.currentIndex;
+        const cfg = getEffectiveItemSettings(curIdx);
         panStartOffsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
         panStartOffsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
 
         const mvc = document.getElementById('mainViewerCanvas');
         if (mvc) mvc.style.transition = 'none';
-      }, { passive: true });
+      }, { passive: false });
 
       window.addEventListener('touchmove', (e) => {
+        // 투시 핀 터치 이동
+        if (isPinDragging && activeDraggingPinKey && e.touches.length > 0) {
+          e.preventDefault();
+          const canvas = document.getElementById('mainViewerCanvas');
+          const curIdx = docState.currentIndex;
+          const item = docState.items[curIdx];
+          if (!canvas || !item || !item.imgObj || canvas.width === 0 || canvas.height === 0) return;
+
+          const cfg = getEffectiveItemSettings(curIdx);
+          const pts = getCornerCanvasPoints(item, cfg, canvas.width, canvas.height);
+          if (!pts || !pts.dw || !pts.dh) return;
+
+          const dispW = canvas.clientWidth || canvas.offsetWidth;
+          const dispH = canvas.clientHeight || canvas.offsetHeight;
+          if (!dispW || !dispH) return;
+
+          const scaleX = dispW / canvas.width;
+          const scaleY = dispH / canvas.height;
+          const zoom = docState.zoom || 1.0;
+
+          const deltaScreenX = (e.touches[0].clientX - pinDragStartMouseX) / zoom;
+          const deltaScreenY = (e.touches[0].clientY - pinDragStartMouseY) / zoom;
+          const deltaCanvX = deltaScreenX / scaleX;
+          const deltaCanvY = deltaScreenY / scaleY;
+
+          const cos = Math.cos(-pts.rotRad);
+          const sin = Math.sin(-pts.rotRad);
+          const deltaLocalX = deltaCanvX * cos - deltaCanvY * sin;
+          const deltaLocalY = deltaCanvX * sin + deltaCanvY * cos;
+
+          const srcW = item.imgObj?.naturalWidth || item.imgObj?.width || pts.dw;
+          const srcH = item.imgObj?.naturalHeight || item.imgObj?.height || pts.dh;
+          const scalePxX = pts.dw / srcW;
+          const scalePxY = pts.dh / srcH;
+
+          // 원본 이미지 픽셀 단위로 환산
+          const deltaOrigPxX = Math.round(deltaLocalX / scalePxX);
+          const deltaOrigPxY = Math.round(deltaLocalY / scalePxY);
+
+          if (!cfg.corners) {
+            cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+          }
+          cfg.corners[activeDraggingPinKey] = {
+            x: pinDragStartCornerVal.x + deltaOrigPxX,
+            y: pinDragStartCornerVal.y + deltaOrigPxY
+          };
+
+          updateViewerEdits(curIdx);
+          updateMiniPreview();
+          updateCornerPins();
+          return;
+        }
+
         if (!isPanning || e.touches.length !== 1) return;
-        const isPdf = appMode === 'pdf2img';
-        const curIdx = isPdf ? pdfState.currentIndex : imgState.currentIndex;
-        const cfg = isPdf ? getEffectivePdfSettings(curIdx) : getEffectiveImgSettings(curIdx);
+        const curIdx = docState.currentIndex;
+        const cfg = getEffectiveItemSettings(curIdx);
 
         const dx = e.touches[0].clientX - panStartX;
         const dy = e.touches[0].clientY - panStartY;
@@ -4991,9 +4944,14 @@
 
         updateViewerEdits(curIdx);
         updateMiniPreview();
-      }, { passive: true });
+        if (isPerspectiveActive) updateCornerPins();
+      }, { passive: false });
 
       window.addEventListener('touchend', () => {
+        if (isPinDragging) {
+          isPinDragging = false;
+          activeDraggingPinKey = null;
+        }
         if (isPanning) {
           isPanning = false;
           const mvc = document.getElementById('mainViewerCanvas');
@@ -5118,6 +5076,13 @@
         e.preventDefault();
         e.returnValue = '저장하지 않은 내용은 복구되지 않습니다. 정말 종료하시겠습니까?';
         return e.returnValue;
+      }
+    });
+
+    // 화면 리사이즈 시 활성화된 투시 변환 핀 위치 재계산
+    window.addEventListener('resize', () => {
+      if (isPerspectiveActive) {
+        updateCornerPins();
       }
     });
 

@@ -1,5 +1,5 @@
 // PixPDF Service Worker - 100% 로컬 및 오프라인 구동 보장
-const CACHE_NAME = 'pixpdf-cache-v1.9.9';
+const CACHE_NAME = 'pixpdf-cache-v2.2.0';
 
 const PRECACHE_ASSETS = [
   './',
@@ -62,26 +62,21 @@ self.addEventListener('fetch', (event) => {
       }
 
       return fetch(event.request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200) {
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
           return networkResponse;
         }
-        const responseClone = networkResponse.clone();
+
+        const responseToCache = networkResponse.clone();
         caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseClone);
+          cache.put(event.request, responseToCache);
         });
+
         return networkResponse;
-      }).catch(async () => {
-        if (event.request.mode === 'navigate') {
-          const fallback = await caches.match('./index.html') || await caches.match('./pixpdf.html');
-          if (fallback) return fallback;
+      }).catch(() => {
+        if (event.request.headers.get('accept').includes('text/html')) {
+          return caches.match('./index.html');
         }
       });
     })
   );
-});
-
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.action === 'skipWaiting') {
-    self.skipWaiting();
-  }
 });
