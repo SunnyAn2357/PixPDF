@@ -190,18 +190,21 @@
       position: relative;
     }
     .thumb-toolbar {
-      padding: 10px 14px;
+      padding: 8px 10px;
       border-bottom: 1px solid var(--border-light);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       color: var(--text-sub);
       background: #f8fafc;
+      white-space: nowrap;
+      gap: 6px;
     }
-    .thumb-toolbar label { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 2px 4px; }
-    .thumb-toolbar input[type="checkbox"] { width: 19px; height: 19px; accent-color: var(--primary); cursor: pointer; }
+    .thumb-toolbar label { display: flex; align-items: center; gap: 5px; cursor: pointer; padding: 2px 2px; white-space: nowrap; flex-shrink: 0; }
+    .thumb-toolbar input[type="checkbox"] { width: 17px; height: 17px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0; }
+    #thumbCount { white-space: nowrap; flex-shrink: 0; font-size: 12px; }
     .thumb-list {
       flex: 1;
       min-height: 0;
@@ -1243,14 +1246,14 @@
     <!-- 1열: 좌측 썸네일 바 -->
     <div class="col-thumb" id="colThumb">
       <div class="thumb-toolbar">
-        <label id="lblSelectAll"><input type="checkbox" id="chkSelectAll"> 전체 선택</label>
+        <label id="lblSelectAll"><input type="checkbox" id="chkSelectAll"> 전체</label>
         <div style="display:flex; align-items:center; gap:6px; position:relative;">
-          <button class="btn-add-thumb" id="btnInsertDropdown" onclick="toggleInsertDropdown(event)" title="페이지 또는 파일 삽입">+ 삽입 ▾</button>
+          <button class="btn-add-thumb" id="btnInsertDropdown" onclick="toggleInsertDropdown(event)" title="페이지 또는 파일 삽입">삽입 ▾</button>
           <div class="menu-dropdown insert-dropdown" id="menuInsertDropdown" style="top:32px; right:0; left:auto; width:130px; z-index:210;">
             <button class="menu-item" onclick="insertBlankPageAction(event)" style="padding:10px 14px; font-size:13px;">📄 빈페이지</button>
             <button class="menu-item" onclick="triggerInsertFileAction(event)" style="padding:10px 14px; font-size:13px;">📁 파일</button>
           </div>
-          <span id="thumbCount">0 항목</span>
+          <span id="thumbCount">0/0</span>
         </div>
       </div>
       <div id="thumbList" class="thumb-list"></div>
@@ -1666,7 +1669,7 @@
   <div id="printContainer"></div>
 
   <script>
-    console.log("PixPDF v2.3.0 초기화 (대두/소두 독립 확대, PDF 투시변환 지원, 페이지별 토글 및 미리보기 정렬)");
+    console.log("PixPDF v2.3.1 초기화 (썸네일 툴바 1줄 컴팩트화 및 UI 레이아웃 최적화)");
 
     // PWA Service Worker 등록 및 새 버전 자동 감지/새로고침 (Auto-Update)
     if ('serviceWorker' in navigator) {
@@ -3667,7 +3670,7 @@
       const btnAction = document.getElementById('btnAction');
 
       if (docState.items.length === 0) {
-        document.getElementById('thumbCount').textContent = '0 항목';
+        document.getElementById('thumbCount').textContent = '0/0';
         document.getElementById('chkSelectAll').checked = false;
         if (btnSavePdf) btnSavePdf.disabled = true;
         if (btnSaveImg) btnSaveImg.disabled = true;
@@ -3675,7 +3678,7 @@
       } else {
         const selected = docState.checkList.filter(Boolean).length;
         const total = docState.items.length;
-        document.getElementById('thumbCount').textContent = `${selected} / ${total} 선택`;
+        document.getElementById('thumbCount').textContent = `${selected}/${total}`;
         document.getElementById('chkSelectAll').checked = (total > 0 && selected === total);
         const isDisabled = selected === 0;
         if (btnSavePdf) btnSavePdf.disabled = isDisabled;
