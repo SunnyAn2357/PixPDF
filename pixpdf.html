@@ -381,7 +381,7 @@
       line-height: 0;
       transition: transform 0.15s ease;
       display: none;
-      overflow: hidden;
+      overflow: visible;
       position: relative;
       cursor: grab;
       user-select: none;
@@ -818,6 +818,97 @@
       cursor: pointer;
     }
 
+    /* 4모서리 투시 변환(Corner Pinning) 오버레이 & 핀 핸들 스타일 */
+    .perspective-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 50;
+    }
+    .perspective-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: visible;
+    }
+    .perspective-svg polygon {
+      fill: rgba(15, 118, 110, 0.08);
+      stroke: #0f766e;
+      stroke-width: 2;
+      stroke-dasharray: 6, 4;
+    }
+    .corner-pin {
+      position: absolute;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #0f766e;
+      color: #ffffff;
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9.5px;
+      font-weight: 800;
+      cursor: grab;
+      pointer-events: auto;
+      transform: translate(-50%, -50%);
+      user-select: none;
+      transition: transform 0.1s ease, background 0.15s ease, box-shadow 0.15s ease;
+      touch-action: none;
+    }
+    .corner-pin:hover, .corner-pin.active {
+      background: #047857;
+      transform: translate(-50%, -50%) scale(1.22);
+      box-shadow: 0 4px 12px rgba(4, 120, 87, 0.55);
+      border-color: #a7f3d0;
+    }
+    .corner-pin:active {
+      cursor: grabbing;
+      background: #065f46;
+    }
+    /* 모서리 선택 칩 (우측 패널) */
+    .corner-select-row {
+      display: flex;
+      gap: 2px;
+      margin-top: 2px;
+    }
+    .btn-corner-chip {
+      flex: 1;
+      padding: 2px 0;
+      font-size: 9px;
+      font-weight: 700;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.12s ease;
+      text-align: center;
+    }
+    .btn-corner-chip:hover {
+      background: #e2e8f0;
+      color: var(--text-main);
+    }
+    .btn-corner-chip.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+    .btn-edit-tool.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px var(--primary);
+    }
+
     /* PDF 페이지 피커(가져오기) 전용 모달 스타일 */
     .modal-dialog-picker {
       max-width: 780px !important;
@@ -1098,7 +1189,7 @@
 
       <div style="display:flex; align-items:center; gap:8px;">
         <h1>PixPDF</h1>
-        <span style="font-size:11px; font-weight:700; background:var(--primary-light); color:var(--primary); padding:2px 7px; border-radius:10px; border:1px solid #99f6e4;">v2.1.0</span>
+        <span style="font-size:11px; font-weight:700; background:var(--primary-light); color:var(--primary); padding:2px 7px; border-radius:10px; border:1px solid #99f6e4;">v2.2.0</span>
       </div>
     </div>
 
@@ -1148,6 +1239,15 @@
       <div class="viewer-viewport" id="viewerViewport">
         <div class="viewer-canvas-wrap" id="viewerWrap">
           <canvas id="mainViewerCanvas"></canvas>
+          <div id="perspectiveOverlay" class="perspective-overlay" style="display: none;">
+            <svg id="perspectiveSvg" class="perspective-svg">
+              <polygon id="perspectivePolygon" points="" />
+            </svg>
+            <div id="pinTL" class="corner-pin" data-corner="tl" title="좌상단 모서리 (드래그)"><span class="pin-label">TL</span></div>
+            <div id="pinTR" class="corner-pin" data-corner="tr" title="우상단 모서리 (드래그)"><span class="pin-label">TR</span></div>
+            <div id="pinBR" class="corner-pin" data-corner="br" title="우하단 모서리 (드래그)"><span class="pin-label">BR</span></div>
+            <div id="pinBL" class="corner-pin" data-corner="bl" title="좌하단 모서리 (드래그)"><span class="pin-label">BL</span></div>
+          </div>
         </div>
         <div id="viewerEmptyMsg" class="viewer-empty">
           <div class="viewer-empty-icon">
@@ -1312,6 +1412,18 @@
                 <button type="button" class="btn-edit-tool" title="상단 확대 사다리꼴 (대두)" onclick="adjustTrapezoid(0.1)">대두</button>
                 <button type="button" class="btn-edit-tool" title="하단 확대 사다리꼴 (소두)" onclick="adjustTrapezoid(-0.1)">소두</button>
                 <button type="button" class="btn-edit-tool" title="사다리꼴 변형 1:1 초기화" onclick="resetTrapezoid()">1:1</button>
+              </div>
+              <!-- 4행: 투시 변환 (네 모서리 개별 조절 & 리셋) -->
+              <div class="edit-btn-row">
+                <button type="button" class="btn-edit-tool" id="btnTogglePerspective" style="flex:2;" title="화면에 4개 모서리 조절 핀을 띄워 자유롭게 투시 왜곡을 조절합니다" onclick="togglePerspectiveMode()">📐 투시변환</button>
+                <button type="button" class="btn-edit-tool" title="네 모서리 위치 초기화" onclick="resetCorners()">리셋</button>
+              </div>
+              <!-- 4행 서브: 모서리 선택 칩 (D-Pad 연동) -->
+              <div class="corner-select-row" id="rowCornerChips" style="display:none;">
+                <button type="button" class="btn-corner-chip" id="chipCornerTL" onclick="selectCorner('tl')" title="좌상단 모서리 선택">좌상</button>
+                <button type="button" class="btn-corner-chip" id="chipCornerTR" onclick="selectCorner('tr')" title="우상단 모서리 선택">우상</button>
+                <button type="button" class="btn-corner-chip" id="chipCornerBL" onclick="selectCorner('bl')" title="좌하단 모서리 선택">좌하</button>
+                <button type="button" class="btn-corner-chip" id="chipCornerBR" onclick="selectCorner('br')" title="우하단 모서리 선택">우하</button>
               </div>
               <!-- 3행: 밝게 / 어둡게 / 리셋 -->
               <div class="edit-btn-row">
@@ -1513,7 +1625,7 @@
   <div id="printContainer"></div>
 
   <script>
-    console.log("PixPDF v1.9.9 초기화 (종료 컨펌 모달 제거, 모바일/데스크톱 더블 탭 뒤로가기 종료 토스트 적용)");
+    console.log("PixPDF v2.2.0 초기화 (사각 투시 변환 4-Corner Pinning 왜곡 보정 지원)");
 
     // PWA Service Worker 등록 및 새 버전 자동 감지/새로고침 (Auto-Update)
     if ('serviceWorker' in navigator) {
@@ -1729,7 +1841,118 @@
       }
     }
 
-    // [핵심] 바탕 용지(Paper) 규격/방향/여백 위에 내용물(Image)의 위치/회전/스케일/필터를 합성하여 캔버스에 렌더링
+    // [핵심] 사각 투시 변환(Perspective Warp / 4-Corner Pinning) 12x12 메쉬 아핀 매핑 렌더링
+    function drawPerspectiveQuad(ctx, imgSource, dx, dy, dw, dh, corners, trapezoid) {
+      const trap = trapezoid || 0;
+      const c = corners || { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+      const isZeroCorners = (!c.tl || (c.tl.x === 0 && c.tl.y === 0 && c.tr.x === 0 && c.tr.y === 0 && c.br.x === 0 && c.br.y === 0 && c.bl.x === 0 && c.bl.y === 0));
+
+      if (isZeroCorners && trap === 0) {
+        ctx.drawImage(imgSource, dx, dy, dw, dh);
+        return;
+      }
+      if (isZeroCorners && trap !== 0) {
+        drawImageWithTrapezoid(ctx, imgSource, dx, dy, dw, dh, trap);
+        return;
+      }
+
+      // 사다리꼴 오프셋 계산 (대두/소두)
+      const trapTopMult = 1 + trap;
+      const trapBotMult = 1 - trap;
+      const trapTopOffset = (dw * (trapTopMult - 1)) / 2;
+      const trapBotOffset = (dw * (trapBotMult - 1)) / 2;
+
+      // 4개 코너 목적지 좌표 (dx, dy 기준)
+      const pTL = {
+        x: dx - trapTopOffset + dw * ((c.tl?.x || 0) / 100),
+        y: dy + dh * ((c.tl?.y || 0) / 100)
+      };
+      const pTR = {
+        x: dx + dw + trapTopOffset + dw * ((c.tr?.x || 0) / 100),
+        y: dy + dh * ((c.tr?.y || 0) / 100)
+      };
+      const pBR = {
+        x: dx + dw + trapBotOffset + dw * ((c.br?.x || 0) / 100),
+        y: dy + dh + dh * ((c.br?.y || 0) / 100)
+      };
+      const pBL = {
+        x: dx - trapBotOffset + dw * ((c.bl?.x || 0) / 100),
+        y: dy + dh + dh * ((c.bl?.y || 0) / 100)
+      };
+
+      const srcW = imgSource.naturalWidth || imgSource.width || dw;
+      const srcH = imgSource.naturalHeight || imgSource.height || dh;
+
+      const gridX = 12;
+      const gridY = 12;
+
+      function getDestPoint(u, v) {
+        const invU = 1 - u;
+        const invV = 1 - v;
+        return {
+          x: invU * invV * pTL.x + u * invV * pTR.x + u * v * pBR.x + invU * v * pBL.x,
+          y: invU * invV * pTL.y + u * invV * pTR.y + u * v * pBR.y + invU * v * pBL.y
+        };
+      }
+
+      function renderTriangle(s0, s1, s2, d0, d1, d2) {
+        const denom = (s0.x - s2.x) * (s1.y - s2.y) - (s1.x - s2.x) * (s0.y - s2.y);
+        if (Math.abs(denom) < 1e-8) return;
+
+        const a = ((d0.x - d2.x) * (s1.y - s2.y) - (d1.x - d2.x) * (s0.y - s2.y)) / denom;
+        const b = ((d0.y - d2.y) * (s1.y - s2.y) - (d1.y - d2.y) * (s0.y - s2.y)) / denom;
+        const cMat = ((s0.x - s2.x) * (d1.x - d2.x) - (s1.x - s2.x) * (d0.x - d2.x)) / denom;
+        const dMat = ((s0.x - s2.x) * (d1.y - d2.y) - (s1.x - s2.x) * (d0.y - d2.y)) / denom;
+        const e = d0.x - a * s0.x - cMat * s0.y;
+        const f = d0.y - b * s0.x - dMat * s0.y;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(d0.x, d0.y);
+        ctx.lineTo(d1.x, d1.y);
+        ctx.lineTo(d2.x, d2.y);
+        ctx.closePath();
+        ctx.clip();
+        ctx.transform(a, b, cMat, dMat, e, f);
+        ctx.drawImage(imgSource, 0, 0, srcW, srcH);
+        ctx.restore();
+      }
+
+      for (let gy = 0; gy < gridY; gy++) {
+        const v0 = gy / gridY;
+        const v1 = (gy + 1) / gridY;
+        const sy0 = v0 * srcH;
+        const sy1 = v1 * srcH;
+
+        for (let gx = 0; gx < gridX; gx++) {
+          const u0 = gx / gridX;
+          const u1 = (gx + 1) / gridX;
+          const sx0 = u0 * srcW;
+          const sx1 = u1 * srcW;
+
+          const dTL = getDestPoint(u0, v0);
+          const dTR = getDestPoint(u1, v0);
+          const dBR = getDestPoint(u1, v1);
+          const dBL = getDestPoint(u0, v1);
+
+          renderTriangle(
+            { x: sx0, y: sy0 },
+            { x: sx1, y: sy0 },
+            { x: sx0, y: sy1 },
+            dTL, dTR, dBL
+          );
+
+          renderTriangle(
+            { x: sx1, y: sy0 },
+            { x: sx1, y: sy1 },
+            { x: sx0, y: sy1 },
+            dTR, dBR, dBL
+          );
+        }
+      }
+    }
+
+    // [핵심] 바탕 용지(Paper) 규격/방향/여백 위에 내용물(Image)의 위치/회전/스케일/필터/투시변환을 합성하여 캔버스에 렌더링
     function drawPaperWithImage(canvas, item, cfg, options = {}) {
       if (!canvas || !item || !item.imgObj) return null;
       const ctx = canvas.getContext('2d');
@@ -1826,7 +2049,7 @@
 
       const origDrawW = isImgRot90 ? (baseDrawH * cScale) : (baseDrawW * cScale * scaleX);
       const origDrawH = isImgRot90 ? (baseDrawW * cScale * scaleX) : (baseDrawH * cScale);
-      drawImageWithTrapezoid(ctx, item.imgObj, -origDrawW / 2, -origDrawH / 2, origDrawW, origDrawH, cfg.trapezoid);
+      drawPerspectiveQuad(ctx, item.imgObj, -origDrawW / 2, -origDrawH / 2, origDrawW, origDrawH, cfg.corners, cfg.trapezoid);
       ctx.restore();
 
       return paper;
@@ -1890,6 +2113,14 @@
       if (item.settings.offsetX === undefined) item.settings.offsetX = 0;
       if (item.settings.offsetY === undefined) item.settings.offsetY = 0;
       if (item.settings.transparentBg === undefined) item.settings.transparentBg = (docState.globalSettings.transparentBg !== undefined ? docState.globalSettings.transparentBg : true);
+      if (!item.settings.corners) {
+        item.settings.corners = {
+          tl: { x: 0, y: 0 },
+          tr: { x: 0, y: 0 },
+          br: { x: 0, y: 0 },
+          bl: { x: 0, y: 0 }
+        };
+      }
       return item.settings;
     }
     const getEffectivePdfSettings = getEffectiveItemSettings;
@@ -2430,7 +2661,7 @@
           if (brightness !== 100 || contrast !== 100) {
             fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
           }
-          drawImageWithTrapezoid(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.trapezoid);
+          drawPerspectiveQuad(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.corners, cfg.trapezoid);
           fctx.restore();
           tempCanvas.width = 0; tempCanvas.height = 0;
 
@@ -3432,6 +3663,7 @@
       applyZoom();
       updateViewerEdits(index);
       updateMiniPreview();
+      if (isPerspectiveActive) updateCornerPins();
     }
 
     function navigateViewer(delta) {
@@ -3455,6 +3687,7 @@
     function applyZoom() {
       const wrap = document.getElementById('viewerWrap');
       if (wrap) wrap.style.transform = `scale(${docState.zoom})`;
+      if (isPerspectiveActive) updateCornerPins();
     }
 
     function updateViewerEdits(targetIdx) {
@@ -3501,6 +3734,9 @@
           tc.style.transform = 'none';
           updateThumbnailCanvas(curIdx);
         }
+      }
+      if (isPerspectiveActive) {
+        updateCornerPins();
       }
     }
 
@@ -3593,24 +3829,262 @@
       updateMiniPreview();
     }
 
+    // [핵심] 사각 투시 변환(4-Corner Pinning) 대화형 편집 상태
+    let isPerspectiveActive = false;
+    let selectedCornerKey = null; // 'tl' | 'tr' | 'br' | 'bl'
+    let isPinDragging = false;
+    let activeDraggingPinKey = null;
+    let pinDragStartMouseX = 0;
+    let pinDragStartMouseY = 0;
+    let pinDragStartCornerVal = { x: 0, y: 0 };
+
+    // 메인 뷰어 캔버스 상의 이미지 4개 코너 절대 좌표(캔버스 픽셀 단위) 산출
+    function getCornerCanvasPoints(item, cfg, canvasW, canvasH) {
+      if (!item || !item.imgObj) return null;
+      const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
+      const rotRad = (rotImg * Math.PI) / 180;
+
+      const origW = item.width || item.imgObj.width;
+      const origH = item.height || item.imgObj.height;
+      const rotImgW = isImgRot90 ? origH : origW;
+      const rotImgH = isImgRot90 ? origW : origH;
+
+      const isOrigLandscape = (origW > origH);
+      const orientOpt = cfg.orient || 'auto';
+      const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
+      const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
+      const marginPx = cfg.margin || 0;
+      const sizeKey = cfg.pageSize || cfg.fit || 'original';
+
+      const paper = resolvePaperGeometry(sizeKey, isLandscape, rotImgW + marginPx * 2, rotImgH + marginPx * 2, cfg.customW, cfg.customH);
+      if (sizeKey === 'original' && isPageRot90 && !isImgRot90) {
+        paper.ratio = rotImgH / rotImgW;
+        paper.isLandscape = !baseLandscape;
+        paper.widthPx = rotImgH;
+        paper.heightPx = rotImgW;
+      }
+
+      const scaleFactor = canvasW / paper.widthPx;
+      const viewMargin = Math.round(marginPx * scaleFactor);
+      const innerW = Math.max(10, canvasW - (viewMargin * 2));
+      const innerH = Math.max(10, canvasH - (viewMargin * 2));
+
+      const fitScale = Math.min(innerW / rotImgW, innerH / rotImgH);
+      const baseDrawW = rotImgW * fitScale;
+      const baseDrawH = rotImgH * fitScale;
+
+      const cScale = cfg.contentScale || 1.0;
+      const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
+      const finalW = baseDrawW * cScale * scaleX;
+      const finalH = baseDrawH * cScale;
+
+      const shiftX = canvasW * ((cfg.offsetX || 0) / 100);
+      const shiftY = canvasH * ((cfg.offsetY || 0) / 100);
+      const posX = (canvasW - finalW) / 2 + shiftX;
+      const posY = (canvasH - finalH) / 2 + shiftY;
+
+      const origDrawW = isImgRot90 ? (baseDrawH * cScale) : (baseDrawW * cScale * scaleX);
+      const origDrawH = isImgRot90 ? (baseDrawW * cScale * scaleX) : (baseDrawH * cScale);
+
+      const dx = -origDrawW / 2;
+      const dy = -origDrawH / 2;
+      const dw = origDrawW;
+      const dh = origDrawH;
+
+      const trap = cfg.trapezoid || 0;
+      const trapTopMult = 1 + trap;
+      const trapBotMult = 1 - trap;
+      const trapTopOffset = (dw * (trapTopMult - 1)) / 2;
+      const trapBotOffset = (dw * (trapBotMult - 1)) / 2;
+
+      const c = cfg.corners || { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+
+      const pLocal = {
+        tl: {
+          x: dx - trapTopOffset + dw * ((c.tl?.x || 0) / 100),
+          y: dy + dh * ((c.tl?.y || 0) / 100)
+        },
+        tr: {
+          x: dx + dw + trapTopOffset + dw * ((c.tr?.x || 0) / 100),
+          y: dy + dh * ((c.tr?.y || 0) / 100)
+        },
+        br: {
+          x: dx + dw + trapBotOffset + dw * ((c.br?.x || 0) / 100),
+          y: dy + dh + dh * ((c.br?.y || 0) / 100)
+        },
+        bl: {
+          x: dx - trapBotOffset + dw * ((c.bl?.x || 0) / 100),
+          y: dy + dh + dh * ((c.bl?.y || 0) / 100)
+        }
+      };
+
+      const cx = posX + finalW / 2;
+      const cy = posY + finalH / 2;
+      const cos = Math.cos(rotRad);
+      const sin = Math.sin(rotRad);
+
+      function toCanv(pt) {
+        return {
+          x: cx + (pt.x * cos - pt.y * sin),
+          y: cy + (pt.x * sin + pt.y * cos)
+        };
+      }
+
+      return {
+        tl: toCanv(pLocal.tl),
+        tr: toCanv(pLocal.tr),
+        br: toCanv(pLocal.br),
+        bl: toCanv(pLocal.bl),
+        dw,
+        dh,
+        cx,
+        cy,
+        rotRad
+      };
+    }
+
+    // 메인 뷰어 상의 4개 핀 핸들과 SVG 가이드 다각형 위치 실시간 동기화
+    function updateCornerPins() {
+      const overlay = document.getElementById('perspectiveOverlay');
+      if (!overlay || overlay.style.display === 'none') return;
+
+      const canvas = document.getElementById('mainViewerCanvas');
+      const curIdx = docState.currentIndex;
+      const item = docState.items[curIdx];
+      if (!canvas || !item || !item.imgObj || canvas.width === 0 || canvas.height === 0) return;
+
+      const cfg = getEffectiveItemSettings(curIdx);
+      const pts = getCornerCanvasPoints(item, cfg, canvas.width, canvas.height);
+      if (!pts) return;
+
+      const dispW = canvas.clientWidth || canvas.offsetWidth;
+      const dispH = canvas.clientHeight || canvas.offsetHeight;
+      if (!dispW || !dispH) return;
+
+      const scaleX = dispW / canvas.width;
+      const scaleY = dispH / canvas.height;
+
+      const sTL = { x: pts.tl.x * scaleX, y: pts.tl.y * scaleY };
+      const sTR = { x: pts.tr.x * scaleX, y: pts.tr.y * scaleY };
+      const sBR = { x: pts.br.x * scaleX, y: pts.br.y * scaleY };
+      const sBL = { x: pts.bl.x * scaleX, y: pts.bl.y * scaleY };
+
+      const poly = document.getElementById('perspectivePolygon');
+      if (poly) {
+        poly.setAttribute('points', `${sTL.x},${sTL.y} ${sTR.x},${sTR.y} ${sBR.x},${sBR.y} ${sBL.x},${sBL.y}`);
+      }
+
+      const pinTL = document.getElementById('pinTL');
+      const pinTR = document.getElementById('pinTR');
+      const pinBR = document.getElementById('pinBR');
+      const pinBL = document.getElementById('pinBL');
+
+      if (pinTL) { pinTL.style.left = `${sTL.x}px`; pinTL.style.top = `${sTL.y}px`; }
+      if (pinTR) { pinTR.style.left = `${sTR.x}px`; pinTR.style.top = `${sTR.y}px`; }
+      if (pinBR) { pinBR.style.left = `${sBR.x}px`; pinBR.style.top = `${sBR.y}px`; }
+      if (pinBL) { pinBL.style.left = `${sBL.x}px`; pinBL.style.top = `${sBL.y}px`; }
+
+      document.querySelectorAll('.corner-pin').forEach(pin => {
+        pin.classList.toggle('active', pin.dataset.corner === selectedCornerKey);
+      });
+    }
+
+    // 투시 변환 모드 온/오프 토글
+    function togglePerspectiveMode() {
+      isPerspectiveActive = !isPerspectiveActive;
+      const overlay = document.getElementById('perspectiveOverlay');
+      const rowChips = document.getElementById('rowCornerChips');
+      const btnToggle = document.getElementById('btnTogglePerspective');
+
+      if (overlay) overlay.style.display = isPerspectiveActive ? 'block' : 'none';
+      if (rowChips) rowChips.style.display = isPerspectiveActive ? 'flex' : 'none';
+      if (btnToggle) {
+        btnToggle.classList.toggle('active', isPerspectiveActive);
+        btnToggle.style.background = isPerspectiveActive ? '#0f766e' : '';
+        btnToggle.style.color = isPerspectiveActive ? '#ffffff' : '';
+      }
+
+      if (isPerspectiveActive) {
+        if (!selectedCornerKey) selectedCornerKey = 'tl';
+        selectCorner(selectedCornerKey);
+        updateCornerPins();
+      } else {
+        selectedCornerKey = null;
+        document.querySelectorAll('.btn-corner-chip').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.corner-pin').forEach(p => p.classList.remove('active'));
+      }
+    }
+
+    // 모서리 핀 선택 (D-Pad 및 시각 강조 연동)
+    function selectCorner(key) {
+      selectedCornerKey = key;
+      ['tl', 'tr', 'bl', 'br'].forEach(k => {
+        const chip = document.getElementById('chipCorner' + k.toUpperCase());
+        if (chip) chip.classList.toggle('active', k === key);
+        const pin = document.getElementById('pin' + k.toUpperCase());
+        if (pin) pin.classList.toggle('active', k === key);
+      });
+    }
+
+    // 모서리 핀 좌표 초기화 (0% 0%)
+    function resetCorners() {
+      const curIdx = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(curIdx);
+      cfg.corners = {
+        tl: { x: 0, y: 0 },
+        tr: { x: 0, y: 0 },
+        br: { x: 0, y: 0 },
+        bl: { x: 0, y: 0 }
+      };
+      updateViewerEdits();
+      updateMiniPreview();
+      if (isPerspectiveActive) {
+        updateCornerPins();
+      }
+    }
+
     function adjustImageOffset(dx, dy) {
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
+      if (isPerspectiveActive && selectedCornerKey) {
+        if (!cfg.corners) {
+          cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+        }
+        const c = cfg.corners[selectedCornerKey];
+        c.x = Math.max(-100, Math.min(100, Math.round((c.x + dx) * 10) / 10));
+        c.y = Math.max(-100, Math.min(100, Math.round((c.y + dy) * 10) / 10));
+        updateViewerEdits();
+        updateMiniPreview();
+        updateCornerPins();
+        return;
+      }
       const curX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
       const curY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
       cfg.offsetX = Math.max(-50, Math.min(50, curX + dx));
       cfg.offsetY = Math.max(-50, Math.min(50, curY + dy));
       updateViewerEdits();
       updateMiniPreview();
+      if (isPerspectiveActive) updateCornerPins();
     }
 
     function resetImageOffset() {
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
+      if (isPerspectiveActive && selectedCornerKey) {
+        if (cfg.corners && cfg.corners[selectedCornerKey]) {
+          cfg.corners[selectedCornerKey].x = 0;
+          cfg.corners[selectedCornerKey].y = 0;
+          updateViewerEdits();
+          updateMiniPreview();
+          updateCornerPins();
+        }
+        return;
+      }
       cfg.offsetX = 0;
       cfg.offsetY = 0;
       updateViewerEdits();
       updateMiniPreview();
+      if (isPerspectiveActive) updateCornerPins();
     }
 
     // [핵심] 정해진 용지 크기를 고정 유지하고 내부 내용물만 확대/축소/비율/필터/오프셋 편집
@@ -3743,7 +4217,7 @@
       if (brightness !== 100 || contrast !== 100) {
         mctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
       }
-      drawImageWithTrapezoid(mctx, srcCanvas, posX, posY, finalDrawW, finalDrawH, cfg.trapezoid);
+      drawPerspectiveQuad(mctx, srcCanvas, posX, posY, finalDrawW, finalDrawH, cfg.corners, cfg.trapezoid);
       mctx.restore();
     }
 
@@ -3892,7 +4366,7 @@
           if (brightness !== 100 || contrast !== 100) {
             fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
           }
-          drawImageWithTrapezoid(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.trapezoid);
+          drawPerspectiveQuad(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.corners, cfg.trapezoid);
           fctx.restore();
           tempCanvas.width = 0; tempCanvas.height = 0;
 
@@ -4079,7 +4553,7 @@
           if (brightness !== 100 || contrast !== 100) {
             fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
           }
-          drawImageWithTrapezoid(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.trapezoid);
+          drawPerspectiveQuad(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.corners, cfg.trapezoid);
           fctx.restore();
           tempCanvas.width = 0; tempCanvas.height = 0;
 
@@ -4156,6 +4630,31 @@
         const total = docState.items.length;
         if (total === 0) return;
 
+        // 1. 투시 변환 핀 핸들 드래그 우선 처리
+        const pinEl = e.target.closest('.corner-pin');
+        if (pinEl && isPerspectiveActive) {
+          e.preventDefault();
+          e.stopPropagation();
+          const cornerKey = pinEl.dataset.corner;
+          selectCorner(cornerKey);
+          isPinDragging = true;
+          activeDraggingPinKey = cornerKey;
+          pinDragStartMouseX = e.clientX;
+          pinDragStartMouseY = e.clientY;
+
+          const curIdx = docState.currentIndex;
+          const cfg = getEffectiveItemSettings(curIdx);
+          if (!cfg.corners) {
+            cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+          }
+          pinDragStartCornerVal = {
+            x: cfg.corners[cornerKey]?.x || 0,
+            y: cfg.corners[cornerKey]?.y || 0
+          };
+          return;
+        }
+
+        // 2. 일반 이미지 캔버스 패닝 (전체 이동)
         e.preventDefault();
         isPanning = true;
         panStartX = e.clientX;
@@ -4172,6 +4671,56 @@
       });
 
       window.addEventListener('mousemove', (e) => {
+        // 투시 핀 드래그 처리
+        if (isPinDragging && activeDraggingPinKey) {
+          e.preventDefault();
+          const canvas = document.getElementById('mainViewerCanvas');
+          const curIdx = docState.currentIndex;
+          const item = docState.items[curIdx];
+          if (!canvas || !item || !item.imgObj || canvas.width === 0 || canvas.height === 0) return;
+
+          const cfg = getEffectiveItemSettings(curIdx);
+          const pts = getCornerCanvasPoints(item, cfg, canvas.width, canvas.height);
+          if (!pts || !pts.dw || !pts.dh) return;
+
+          const dispW = canvas.clientWidth || canvas.offsetWidth;
+          const dispH = canvas.clientHeight || canvas.offsetHeight;
+          if (!dispW || !dispH) return;
+
+          const scaleX = dispW / canvas.width;
+          const scaleY = dispH / canvas.height;
+          const zoom = docState.zoom || 1.0;
+
+          // 화면 이동량 -> 캔버스 해상도 좌표
+          const deltaScreenX = (e.clientX - pinDragStartMouseX) / zoom;
+          const deltaScreenY = (e.clientY - pinDragStartMouseY) / zoom;
+          const deltaCanvX = deltaScreenX / scaleX;
+          const deltaCanvY = deltaScreenY / scaleY;
+
+          // 이미지 회전 각도 역변환 (Unrotate)
+          const cos = Math.cos(-pts.rotRad);
+          const sin = Math.sin(-pts.rotRad);
+          const deltaLocalX = deltaCanvX * cos - deltaCanvY * sin;
+          const deltaLocalY = deltaCanvX * sin + deltaCanvY * cos;
+
+          // 이미지 너비/높이 기준 백분율 환산
+          const pctDx = (deltaLocalX / pts.dw) * 100;
+          const pctDy = (deltaLocalY / pts.dh) * 100;
+
+          if (!cfg.corners) {
+            cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+          }
+          cfg.corners[activeDraggingPinKey] = {
+            x: Math.max(-100, Math.min(100, Math.round((pinDragStartCornerVal.x + pctDx) * 10) / 10)),
+            y: Math.max(-100, Math.min(100, Math.round((pinDragStartCornerVal.y + pctDy) * 10) / 10))
+          };
+
+          updateViewerEdits(curIdx);
+          updateMiniPreview();
+          updateCornerPins();
+          return;
+        }
+
         if (!isPanning) return;
         e.preventDefault();
 
@@ -4194,9 +4743,14 @@
 
         updateViewerEdits(curIdx);
         updateMiniPreview();
+        if (isPerspectiveActive) updateCornerPins();
       });
 
       window.addEventListener('mouseup', () => {
+        if (isPinDragging) {
+          isPinDragging = false;
+          activeDraggingPinKey = null;
+        }
         if (isPanning) {
           isPanning = false;
           viewerWrap.style.cursor = 'grab';
@@ -4207,9 +4761,34 @@
 
       // 터치 스크린 지원
       viewerWrap.addEventListener('touchstart', (e) => {
-        if (e.touches.length !== 1) return;
         const total = docState.items.length;
         if (total === 0) return;
+
+        // 1. 투시 핀 터치 드래그 우선 처리
+        const pinEl = e.target.closest('.corner-pin');
+        if (pinEl && isPerspectiveActive) {
+          e.preventDefault();
+          e.stopPropagation();
+          const cornerKey = pinEl.dataset.corner;
+          selectCorner(cornerKey);
+          isPinDragging = true;
+          activeDraggingPinKey = cornerKey;
+          pinDragStartMouseX = e.touches[0].clientX;
+          pinDragStartMouseY = e.touches[0].clientY;
+
+          const curIdx = docState.currentIndex;
+          const cfg = getEffectiveItemSettings(curIdx);
+          if (!cfg.corners) {
+            cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+          }
+          pinDragStartCornerVal = {
+            x: cfg.corners[cornerKey]?.x || 0,
+            y: cfg.corners[cornerKey]?.y || 0
+          };
+          return;
+        }
+
+        if (e.touches.length !== 1) return;
 
         isPanning = true;
         panStartX = e.touches[0].clientX;
@@ -4222,9 +4801,56 @@
 
         const mvc = document.getElementById('mainViewerCanvas');
         if (mvc) mvc.style.transition = 'none';
-      }, { passive: true });
+      }, { passive: false });
 
       window.addEventListener('touchmove', (e) => {
+        // 투시 핀 터치 이동
+        if (isPinDragging && activeDraggingPinKey && e.touches.length > 0) {
+          e.preventDefault();
+          const canvas = document.getElementById('mainViewerCanvas');
+          const curIdx = docState.currentIndex;
+          const item = docState.items[curIdx];
+          if (!canvas || !item || !item.imgObj || canvas.width === 0 || canvas.height === 0) return;
+
+          const cfg = getEffectiveItemSettings(curIdx);
+          const pts = getCornerCanvasPoints(item, cfg, canvas.width, canvas.height);
+          if (!pts || !pts.dw || !pts.dh) return;
+
+          const dispW = canvas.clientWidth || canvas.offsetWidth;
+          const dispH = canvas.clientHeight || canvas.offsetHeight;
+          if (!dispW || !dispH) return;
+
+          const scaleX = dispW / canvas.width;
+          const scaleY = dispH / canvas.height;
+          const zoom = docState.zoom || 1.0;
+
+          const deltaScreenX = (e.touches[0].clientX - pinDragStartMouseX) / zoom;
+          const deltaScreenY = (e.touches[0].clientY - pinDragStartMouseY) / zoom;
+          const deltaCanvX = deltaScreenX / scaleX;
+          const deltaCanvY = deltaScreenY / scaleY;
+
+          const cos = Math.cos(-pts.rotRad);
+          const sin = Math.sin(-pts.rotRad);
+          const deltaLocalX = deltaCanvX * cos - deltaCanvY * sin;
+          const deltaLocalY = deltaCanvX * sin + deltaCanvY * cos;
+
+          const pctDx = (deltaLocalX / pts.dw) * 100;
+          const pctDy = (deltaLocalY / pts.dh) * 100;
+
+          if (!cfg.corners) {
+            cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+          }
+          cfg.corners[activeDraggingPinKey] = {
+            x: Math.max(-100, Math.min(100, Math.round((pinDragStartCornerVal.x + pctDx) * 10) / 10)),
+            y: Math.max(-100, Math.min(100, Math.round((pinDragStartCornerVal.y + pctDy) * 10) / 10))
+          };
+
+          updateViewerEdits(curIdx);
+          updateMiniPreview();
+          updateCornerPins();
+          return;
+        }
+
         if (!isPanning || e.touches.length !== 1) return;
         const curIdx = docState.currentIndex;
         const cfg = getEffectiveItemSettings(curIdx);
@@ -4245,9 +4871,14 @@
 
         updateViewerEdits(curIdx);
         updateMiniPreview();
-      }, { passive: true });
+        if (isPerspectiveActive) updateCornerPins();
+      }, { passive: false });
 
       window.addEventListener('touchend', () => {
+        if (isPinDragging) {
+          isPinDragging = false;
+          activeDraggingPinKey = null;
+        }
         if (isPanning) {
           isPanning = false;
           const mvc = document.getElementById('mainViewerCanvas');
@@ -4372,6 +5003,13 @@
         e.preventDefault();
         e.returnValue = '저장하지 않은 내용은 복구되지 않습니다. 정말 종료하시겠습니까?';
         return e.returnValue;
+      }
+    });
+
+    // 화면 리사이즈 시 활성화된 투시 변환 핀 위치 재계산
+    window.addEventListener('resize', () => {
+      if (isPerspectiveActive) {
+        updateCornerPins();
       }
     });
 
