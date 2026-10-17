@@ -173,6 +173,7 @@
       flex: 1;
       height: calc(100vh - 59px);
       overflow: hidden;
+      overflow-x: auto;
       position: relative;
     }
 
@@ -441,15 +442,21 @@
     .viewer-empty h3 { font-size: 18px; font-weight: 700; color: var(--text-sub); }
     .viewer-empty p { font-size: 13.5px; line-height: 1.6; color: var(--text-muted); }
 
-    /* 3열: 우측 컨트롤 패널 (컴팩트 압축) */
+    /* 3열: 우측 컨트롤 패널 (350px 크기 엄격 고정 - 절대 늘어나거나 줄어들지 않음) */
     .col-control {
       width: 350px;
+      min-width: 350px;
+      max-width: 350px;
+      flex: 0 0 350px;
+      box-sizing: border-box;
       background: var(--panel-bg);
       border-left: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
+      flex-grow: 0;
       overflow-y: auto;
+      overflow-x: hidden;
     }
     .control-body {
       padding: 16px;
@@ -1217,6 +1224,9 @@
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
         width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        flex: none !important;
         height: 100% !important;
         height: 100dvh !important;
         z-index: 150;
@@ -1788,7 +1798,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.3.8 (모바일 앱 종료 플로팅 토스트 UI 디자인 전면 개편 및 2초 카운트다운 타이머 적용)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.3.9 (우측 제어 패널 350px 고정 크기 잠금 - 확장 및 축소 방지)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
