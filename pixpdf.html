@@ -1816,7 +1816,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.5.1 (스마트 다이내믹 뷰포트: 평상시 큼직한 풀사이즈 용지 뷰 및 투시변환 시 자동 축소 작업공간 극대화)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.5.2 (투시변환 리셋 시 우측 미리보기 캔버스 1회 클릭 즉시 동기화 버그 완벽 수정)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -2564,7 +2564,7 @@
       if (!canvas) return;
       const cfg = getEffectiveItemSettings(index);
 
-      if (item.type === 'pdf') {
+      if (item.type === 'pdf' && !item.imgObj) {
         await ensureItemCanvas(item);
       }
       canvas.style.filter = 'none';
@@ -4040,7 +4040,7 @@
 
       const cfg = getEffectiveItemSettings(index);
 
-      if (item.type === 'pdf') {
+      if (item.type === 'pdf' && !item.imgObj) {
         await ensureItemCanvas(item);
       }
       canvas.style.filter = 'none';
@@ -4113,7 +4113,7 @@
       if (isPerspectiveActive) updateCornerPins();
     }
 
-    function updateViewerEdits(targetIdx) {
+    async function updateViewerEdits(targetIdx) {
       const curIdx = targetIdx !== undefined ? targetIdx : docState.currentIndex;
       const item = docState.items[curIdx];
       if (!item) return;
@@ -4127,12 +4127,12 @@
       if (curIdx === activeCurIdx && mvc) {
         mvc.style.filter = 'none';
         mvc.style.transform = 'none';
-        renderMainViewerCanvas(curIdx);
+        await renderMainViewerCanvas(curIdx);
       }
       if (tc) {
         tc.style.filter = 'none';
         tc.style.transform = 'none';
-        updateThumbnailCanvas(curIdx);
+        await updateThumbnailCanvas(curIdx);
       }
       if (isPerspectiveActive && curIdx === activeCurIdx) {
         updateCornerPins();
@@ -4602,7 +4602,7 @@
     }
 
     // 모서리 핀 좌표 초기화 (0% 0%)
-    function resetCorners() {
+    async function resetCorners() {
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       cfg.corners = {
@@ -4611,7 +4611,7 @@
         br: { x: 0, y: 0 },
         bl: { x: 0, y: 0 }
       };
-      updateViewerEdits();
+      await updateViewerEdits(curIdx);
       updateMiniPreview();
       if (isPerspectiveActive) {
         updateCornerPins();
