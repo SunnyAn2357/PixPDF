@@ -1582,13 +1582,7 @@
                 <button type="button" class="btn-edit-tool" id="btnTogglePerspective" style="flex:2;" title="화면에 4개 모서리 조절 핀을 띄워 자유롭게 투시 왜곡을 조절합니다" onclick="togglePerspectiveMode()">📐 투시변환</button>
                 <button type="button" class="btn-edit-tool" title="네 모서리 위치 초기화" onclick="resetCorners()">리셋</button>
               </div>
-              <!-- 4행 서브: 모서리 선택 칩 (D-Pad 연동) -->
-              <div class="corner-select-row" id="rowCornerChips" style="display:none;">
-                <button type="button" class="btn-corner-chip" id="chipCornerTL" onclick="selectCorner('tl')" title="좌상단 모서리 선택">좌상</button>
-                <button type="button" class="btn-corner-chip" id="chipCornerTR" onclick="selectCorner('tr')" title="우상단 모서리 선택">우상</button>
-                <button type="button" class="btn-corner-chip" id="chipCornerBL" onclick="selectCorner('bl')" title="좌하단 모서리 선택">좌하</button>
-                <button type="button" class="btn-corner-chip" id="chipCornerBR" onclick="selectCorner('br')" title="우하단 모서리 선택">우하</button>
-              </div>
+
               <!-- 3행: 밝게 / 어둡게 / 리셋 -->
               <div class="edit-btn-row">
                 <button type="button" class="btn-edit-tool" title="밝게 (+10%)" onclick="adjustBrightness(10)">밝게</button>
@@ -1798,7 +1792,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.3.9 (우측 제어 패널 350px 고정 크기 잠금 - 확장 및 축소 방지)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.4.0 (투시변환 모서리 선택 버튼 제거 및 이동 리모콘 완전 분리)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -4444,12 +4438,10 @@
       isPerspectiveActive = Boolean(active);
       const overlay = document.getElementById('perspectiveOverlay');
       const miniOverlay = document.getElementById('miniPerspectiveOverlay');
-      const rowChips = document.getElementById('rowCornerChips');
       const btnToggle = document.getElementById('btnTogglePerspective');
 
       if (overlay) overlay.style.display = isPerspectiveActive ? 'block' : 'none';
       if (miniOverlay) miniOverlay.style.display = isPerspectiveActive ? 'block' : 'none';
-      if (rowChips) rowChips.style.display = isPerspectiveActive ? 'flex' : 'none';
       if (btnToggle) {
         btnToggle.classList.toggle('active', isPerspectiveActive);
         btnToggle.style.background = isPerspectiveActive ? '#0f766e' : '';
@@ -4457,12 +4449,9 @@
       }
 
       if (isPerspectiveActive) {
-        if (!selectedCornerKey) selectedCornerKey = 'tl';
-        selectCorner(selectedCornerKey);
         updateCornerPins();
       } else {
         selectedCornerKey = null;
-        document.querySelectorAll('.btn-corner-chip').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.corner-pin').forEach(p => p.classList.remove('active'));
       }
     }
@@ -4481,8 +4470,6 @@
     function selectCorner(key) {
       selectedCornerKey = key;
       ['tl', 'tr', 'bl', 'br'].forEach(k => {
-        const chip = document.getElementById('chipCorner' + k.toUpperCase());
-        if (chip) chip.classList.toggle('active', k === key);
         const pin = document.getElementById('pin' + k.toUpperCase());
         if (pin) pin.classList.toggle('active', k === key);
         const miniPin = document.getElementById('miniPin' + k.toUpperCase());
@@ -4510,21 +4497,6 @@
     function adjustImageOffset(dx, dy) {
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
-      if (isPerspectiveActive && selectedCornerKey) {
-        if (!cfg.corners) {
-          cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
-        }
-        const c = cfg.corners[selectedCornerKey];
-        // 리모콘 클릭 시 정확히 1픽셀(1px) 단위 이동
-        const stepX = dx > 0 ? 1 : (dx < 0 ? -1 : 0);
-        const stepY = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
-        c.x = Math.round((c.x || 0) + stepX);
-        c.y = Math.round((c.y || 0) + stepY);
-        updateViewerEdits();
-        updateMiniPreview();
-        updateCornerPins();
-        return;
-      }
       const curX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
       const curY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
       cfg.offsetX = Math.max(-50, Math.min(50, curX + dx));
@@ -4537,16 +4509,6 @@
     function resetImageOffset() {
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
-      if (isPerspectiveActive && selectedCornerKey) {
-        if (cfg.corners && cfg.corners[selectedCornerKey]) {
-          cfg.corners[selectedCornerKey].x = 0;
-          cfg.corners[selectedCornerKey].y = 0;
-          updateViewerEdits();
-          updateMiniPreview();
-          updateCornerPins();
-        }
-        return;
-      }
       cfg.offsetX = 0;
       cfg.offsetY = 0;
       updateViewerEdits();
