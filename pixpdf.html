@@ -1013,6 +1013,21 @@
       cursor: grabbing;
       background: #065f46;
     }
+    /* 모바일/우측 핀 터치 드래그 시 손가락 위에 뜨는 정밀 확대 돋보기(Loupe) */
+    .pin-loupe {
+      position: absolute;
+      pointer-events: none;
+      z-index: 60;
+      filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.45));
+      transition: opacity 0.12s ease;
+    }
+    .pin-loupe canvas {
+      border-radius: 50%;
+      border: 3px solid #ffffff;
+      box-shadow: 0 0 0 2px var(--primary);
+      display: block;
+      background: #ffffff;
+    }
     .corner-pin:hover, .corner-pin.active {
       background: #047857;
       transform: translate(-50%, -50%) scale(1.22);
@@ -1220,6 +1235,9 @@
         border-right: none;
       }
       .mobile-fab.has-files { display: block !important; }
+      .preview-sheet-stage {
+        height: 250px !important; /* 모바일에서 시원한 조작 공간 확보 (기존 180px -> 250px) */
+      }
       .col-control {
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
@@ -1540,19 +1558,24 @@
           <div class="preview-body-split">
             <!-- 좌측: 실제 미리보기 창 -->
             <div class="preview-left-pane">
-              <div class="preview-sheet-stage">
+              <div class="preview-sheet-stage" id="previewSheetStage">
                 <div id="miniEmpty" class="mini-empty-placeholder">문서 대기 중</div>
                 <div id="miniSheet" class="preview-paper-sheet" style="display: none; position: relative;">
                   <canvas id="miniCanvas" style="width: 100%; height: 100%; display: block;"></canvas>
-                  <div id="miniPerspectiveOverlay" class="perspective-overlay" style="display: none; position: absolute; inset: 0; pointer-events: none; z-index: 10;">
-                    <svg id="miniPerspectiveSvg" class="perspective-svg" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;">
-                      <polygon id="miniPerspectivePolygon" points="" style="fill: rgba(15, 118, 110, 0.15); stroke: var(--primary); stroke-width: 1.5; stroke-dasharray: 4 2;" />
-                    </svg>
-                    <div id="miniPinTL" class="corner-pin mini-corner-pin" data-corner="tl" title="좌상단 모서리 (드래그)"><span class="pin-label">TL</span></div>
-                    <div id="miniPinTR" class="corner-pin mini-corner-pin" data-corner="tr" title="우상단 모서리 (드래그)"><span class="pin-label">TR</span></div>
-                    <div id="miniPinBR" class="corner-pin mini-corner-pin" data-corner="br" title="우하단 모서리 (드래그)"><span class="pin-label">BR</span></div>
-                    <div id="miniPinBL" class="corner-pin mini-corner-pin" data-corner="bl" title="좌하단 모서리 (드래그)"><span class="pin-label">BL</span></div>
-                  </div>
+                </div>
+                <!-- 투시변환 오버레이를 miniSheet 바깥인 previewSheetStage로 승격하여 종이 밖에서도 핀 표시 및 조작 가능! -->
+                <div id="miniPerspectiveOverlay" class="perspective-overlay" style="display: none; position: absolute; inset: 0; pointer-events: none; z-index: 20;">
+                  <svg id="miniPerspectiveSvg" class="perspective-svg" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;">
+                    <polygon id="miniPerspectivePolygon" points="" style="fill: rgba(15, 118, 110, 0.15); stroke: var(--primary); stroke-width: 1.5; stroke-dasharray: 4 2;" />
+                  </svg>
+                  <div id="miniPinTL" class="corner-pin mini-corner-pin" data-corner="tl" title="좌상단 모서리 (드래그)"><span class="pin-label">TL</span></div>
+                  <div id="miniPinTR" class="corner-pin mini-corner-pin" data-corner="tr" title="우상단 모서리 (드래그)"><span class="pin-label">TR</span></div>
+                  <div id="miniPinBR" class="corner-pin mini-corner-pin" data-corner="br" title="우하단 모서리 (드래그)"><span class="pin-label">BR</span></div>
+                  <div id="miniPinBL" class="corner-pin mini-corner-pin" data-corner="bl" title="좌하단 모서리 (드래그)"><span class="pin-label">BL</span></div>
+                </div>
+                <!-- 모바일/우측 핀 터치 드래그 시 손가락 위에 뜨는 정밀 확대 돋보기(Loupe) -->
+                <div id="miniPinLoupe" class="pin-loupe" style="display: none;">
+                  <canvas id="miniLoupeCanvas" width="90" height="90"></canvas>
                 </div>
               </div>
               <div id="miniInfo" class="mini-info-text">선택 항목 기준 윤곽</div>
@@ -1792,7 +1815,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.4.0 (투시변환 모서리 선택 버튼 제거 및 이동 리모콘 완전 분리)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.5.0 (모바일 투시 핀 회색 스테이지 확장, 경계 이탈 방지 클램프 및 터치 확대 돋보기 루페 적용)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -4398,18 +4421,35 @@
         }
       }
 
-      // 2. 우측/모바일 미니 프리뷰 핀 & 다각형 위치 동기화 (모바일에서 실시간 핸들 드래그 지원)
+      // 2. 우측/모바일 미니 프리뷰 핀 & 다각형 위치 동기화 (종이 밖 회색 스테이지 영역까지 노출 및 경계 이탈 방지 클램프)
       if (miniOverlay) {
         const miniSheet = document.getElementById('miniSheet');
-        if (miniSheet && miniSheet.offsetWidth > 0 && miniSheet.offsetHeight > 0) {
+        const stageEl = document.getElementById('previewSheetStage') || miniSheet?.parentElement;
+        if (miniSheet && stageEl && miniSheet.offsetWidth > 0 && miniSheet.offsetHeight > 0) {
           miniOverlay.style.display = 'block';
+          const stageW = stageEl.offsetWidth;
+          const stageH = stageEl.offsetHeight;
+
           const mScaleX = miniSheet.offsetWidth / canvas.width;
           const mScaleY = miniSheet.offsetHeight / canvas.height;
+          const offX = miniSheet.offsetLeft;
+          const offY = miniSheet.offsetTop;
 
-          const mTL = { x: pts.tl.x * mScaleX, y: pts.tl.y * mScaleY };
-          const mTR = { x: pts.tr.x * mScaleX, y: pts.tr.y * mScaleY };
-          const mBR = { x: pts.br.x * mScaleX, y: pts.br.y * mScaleY };
-          const mBL = { x: pts.bl.x * mScaleX, y: pts.bl.y * mScaleY };
+          // 핀 반경(11px) 여유를 두어 회색 스테이지 박스 테두리 밖으로 핀이 절대 탈출하거나 사라지지 않게 클램프(Clamp)
+          const pinPad = 11;
+          function clampToStage(pt) {
+            const rawX = offX + pt.x * mScaleX;
+            const rawY = offY + pt.y * mScaleY;
+            return {
+              x: Math.max(pinPad, Math.min(stageW - pinPad, rawX)),
+              y: Math.max(pinPad, Math.min(stageH - pinPad, rawY))
+            };
+          }
+
+          const mTL = clampToStage(pts.tl);
+          const mTR = clampToStage(pts.tr);
+          const mBR = clampToStage(pts.br);
+          const mBL = clampToStage(pts.bl);
 
           const miniPoly = document.getElementById('miniPerspectivePolygon');
           if (miniPoly) {
@@ -4456,6 +4496,78 @@
         selectedCornerKey = null;
         document.querySelectorAll('.corner-pin').forEach(p => p.classList.remove('active'));
       }
+    }
+
+    // 모바일/우측 핀 터치 드래그 시 손가락 위에 뜨는 정밀 확대 돋보기(Loupe)
+    function updateMiniPinLoupe(pinKey) {
+      if (!isDraggingMiniPin || !pinKey) return;
+      const loupe = document.getElementById('miniPinLoupe');
+      const loupeCanvas = document.getElementById('miniLoupeCanvas');
+      const miniCanvas = document.getElementById('miniCanvas');
+      const miniSheet = document.getElementById('miniSheet');
+      const stageEl = document.getElementById('previewSheetStage');
+      const pinEl = document.getElementById('miniPin' + pinKey.toUpperCase());
+      if (!loupe || !loupeCanvas || !miniCanvas || !miniSheet || !stageEl || !pinEl) return;
+
+      loupe.style.display = 'block';
+
+      const pinX = parseFloat(pinEl.style.left) || 0;
+      const pinY = parseFloat(pinEl.style.top) || 0;
+      const loupeSize = 90;
+
+      // 핀 바로 위(~60px 위쪽)에 돋보기 배치, 상단 경계 침범 시 아래쪽에 배치
+      let loupeX = pinX - loupeSize / 2;
+      let loupeY = pinY - loupeSize - 16;
+      if (loupeY < 4) {
+        loupeY = pinY + 24;
+      }
+      loupeX = Math.max(4, Math.min(stageEl.offsetWidth - loupeSize - 4, loupeX));
+
+      loupe.style.left = `${loupeX}px`;
+      loupe.style.top = `${loupeY}px`;
+
+      // 돋보기 캔버스에 2.2배 확대 영역 그리기
+      const lctx = loupeCanvas.getContext('2d');
+      lctx.clearRect(0, 0, loupeSize, loupeSize);
+
+      lctx.save();
+      lctx.beginPath();
+      lctx.arc(loupeSize / 2, loupeSize / 2, loupeSize / 2 - 1, 0, Math.PI * 2);
+      lctx.clip();
+
+      lctx.fillStyle = '#f1f5f9';
+      lctx.fillRect(0, 0, loupeSize, loupeSize);
+
+      // 종이 캔버스 내 해당 핀의 상대 좌표 매핑
+      const scaleToCanvas = miniCanvas.width / miniSheet.offsetWidth;
+      const pinSheetX = pinX - miniSheet.offsetLeft;
+      const pinSheetY = pinY - miniSheet.offsetTop;
+      const srcCenterBitmapX = pinSheetX * scaleToCanvas;
+      const srcCenterBitmapY = pinSheetY * scaleToCanvas;
+
+      const zoom = 2.2;
+      const cropW = (loupeSize / zoom) * scaleToCanvas;
+      const cropH = (loupeSize / zoom) * scaleToCanvas;
+      const cropX = srcCenterBitmapX - cropW / 2;
+      const cropY = srcCenterBitmapY - cropH / 2;
+
+      lctx.drawImage(miniCanvas, cropX, cropY, cropW, cropH, 0, 0, loupeSize, loupeSize);
+
+      // 정밀 십자선 (Crosshair)
+      lctx.strokeStyle = '#0f766e';
+      lctx.lineWidth = 1.5;
+      lctx.beginPath();
+      lctx.moveTo(loupeSize / 2, loupeSize / 2 - 14);
+      lctx.lineTo(loupeSize / 2, loupeSize / 2 + 14);
+      lctx.moveTo(loupeSize / 2 - 14, loupeSize / 2);
+      lctx.lineTo(loupeSize / 2 + 14, loupeSize / 2);
+      lctx.stroke();
+
+      lctx.beginPath();
+      lctx.arc(loupeSize / 2, loupeSize / 2, 5, 0, Math.PI * 2);
+      lctx.stroke();
+
+      lctx.restore();
     }
 
     // 투시 변환 모드 온/오프 토글 (현재 페이지에만 독립 적용)
@@ -5056,10 +5168,10 @@
     let panStartOffsetY = 0;
 
     const viewerWrap = document.getElementById('viewerWrap');
-    // 모바일/우측 미니 시트 상의 투시 핀 터치/마우스 드래그 리스너 등록
-    const miniSheetEl = document.getElementById('miniSheet');
-    if (miniSheetEl) {
-      miniSheetEl.addEventListener('mousedown', (e) => {
+    // 모바일/우측 미니 스테이지 상의 투시 핀 터치/마우스 드래그 리스너 등록
+    const miniStageEl = document.getElementById('previewSheetStage') || document.getElementById('miniSheet');
+    if (miniStageEl) {
+      miniStageEl.addEventListener('mousedown', (e) => {
         if (e.button !== 0) return;
         const pinEl = e.target.closest('.mini-corner-pin');
         if (pinEl && isPerspectiveActive) {
@@ -5082,10 +5194,11 @@
             x: cfg.corners[cornerKey]?.x || 0,
             y: cfg.corners[cornerKey]?.y || 0
           };
+          updateMiniPinLoupe(cornerKey);
         }
       });
 
-      miniSheetEl.addEventListener('touchstart', (e) => {
+      miniStageEl.addEventListener('touchstart', (e) => {
         const pinEl = e.target.closest('.mini-corner-pin');
         if (pinEl && isPerspectiveActive) {
           e.preventDefault();
@@ -5107,6 +5220,7 @@
             x: cfg.corners[cornerKey]?.x || 0,
             y: cfg.corners[cornerKey]?.y || 0
           };
+          updateMiniPinLoupe(cornerKey);
         }
       }, { passive: false });
     }
@@ -5221,6 +5335,9 @@
           updateViewerEdits(curIdx);
           updateMiniPreview();
           updateCornerPins();
+          if (isDraggingMiniPin) {
+            updateMiniPinLoupe(activeDraggingPinKey);
+          }
           return;
         }
 
@@ -5254,6 +5371,8 @@
           isPinDragging = false;
           isDraggingMiniPin = false;
           activeDraggingPinKey = null;
+          const loupe = document.getElementById('miniPinLoupe');
+          if (loupe) loupe.style.display = 'none';
         }
         if (isPanning) {
           isPanning = false;
@@ -5370,6 +5489,9 @@
           updateViewerEdits(curIdx);
           updateMiniPreview();
           updateCornerPins();
+          if (isDraggingMiniPin) {
+            updateMiniPinLoupe(activeDraggingPinKey);
+          }
           return;
         }
 
@@ -5399,7 +5521,10 @@
       window.addEventListener('touchend', () => {
         if (isPinDragging) {
           isPinDragging = false;
+          isDraggingMiniPin = false;
           activeDraggingPinKey = null;
+          const loupe = document.getElementById('miniPinLoupe');
+          if (loupe) loupe.style.display = 'none';
         }
         if (isPanning) {
           isPanning = false;
