@@ -554,6 +554,7 @@
       flex-shrink: 0;
       max-width: 100%;
       max-height: 100%;
+      transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1), height 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .preview-paper-sheet canvas {
       display: block;
@@ -1815,7 +1816,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.5.0 (모바일 투시 핀 회색 스테이지 확장, 경계 이탈 방지 클램프 및 터치 확대 돋보기 루페 적용)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.5.1 (스마트 다이내믹 뷰포트: 평상시 큼직한 풀사이즈 용지 뷰 및 투시변환 시 자동 축소 작업공간 극대화)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -4576,6 +4577,15 @@
       const cfg = getEffectiveItemSettings(curIdx);
       cfg.isPerspectiveActive = !cfg.isPerspectiveActive;
       syncPerspectiveUI(cfg.isPerspectiveActive);
+      updateMiniPreview();
+      updateCornerPins();
+
+      // 시트 크기 전환 애니메이션(220ms) 종료 후 핀 위치 최종 보정 동기화
+      setTimeout(() => {
+        if (isPerspectiveActive) {
+          updateCornerPins();
+        }
+      }, 230);
     }
 
     // 모서리 핀 선택 (D-Pad 및 시각 강조 연동)
@@ -4649,8 +4659,23 @@
       if (miniSheet) miniSheet.style.display = 'block';
       if (miniEmpty) miniEmpty.style.display = 'none';
 
-      const maxBoxW = 125;
-      const maxBoxH = 150;
+      const stageEl = document.getElementById('previewSheetStage');
+      const stageW = (stageEl && stageEl.clientWidth > 0) ? stageEl.clientWidth : 140;
+      const stageH = (stageEl && stageEl.clientHeight > 0) ? stageEl.clientHeight : 180;
+
+      // [스마트 다이내믹 뷰포트]
+      // 1) 평상시 (투시변환 OFF): 스테이지를 시원하게 채워 용지와 이미지를 크게 열람 (여백 최소화 14px)
+      // 2) 투시변환 ON: 핀을 용지 밖으로 넓게 당길 수 있도록 용지를 약 65~70% 크기로 축소하고 회색 작업 영역을 넉넉히 확보!
+      let maxBoxW, maxBoxH;
+      if (isPerspectiveActive) {
+        const marginX = Math.max(22, Math.round(stageW * 0.18));
+        const marginY = Math.max(26, Math.round(stageH * 0.18));
+        maxBoxW = Math.max(80, stageW - marginX * 2);
+        maxBoxH = Math.max(90, stageH - marginY * 2);
+      } else {
+        maxBoxW = Math.max(100, stageW - 14);
+        maxBoxH = Math.max(120, stageH - 14);
+      }
 
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
