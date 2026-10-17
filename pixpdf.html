@@ -728,30 +728,106 @@
     .btn-action:disabled { background: #94a3b8 !important; cursor: not-allowed; }
     .btn-abort { background: var(--danger); font-size: 13px; padding: 7px; min-height: 34px; }
 
-    /* 앱 전용 플로팅 토스트 메시지 (더블 탭 뒤로가기 종료 등) */
+    /* 앱 전용 프리미엄 플로팅 토스트 메시지 (모바일 뒤로가기 더블 탭 종료 & 카운트다운 게이지) */
     .app-toast {
       position: fixed;
-      bottom: 32px;
+      bottom: calc(28px + env(safe-area-inset-bottom, 0px));
       left: 50%;
-      transform: translateX(-50%) translateY(20px);
-      background: rgba(15, 23, 42, 0.88);
+      transform: translateX(-50%) translateY(24px) scale(0.92);
+      background: rgba(15, 23, 42, 0.92);
       color: #ffffff;
-      padding: 11px 22px;
-      border-radius: 30px;
-      font-size: 13.5px;
-      font-weight: 600;
+      padding: 10px 18px 12px 14px;
+      border-radius: 9999px;
       z-index: 10000;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
-      backdrop-filter: blur(6px);
-      white-space: nowrap;
-      text-align: center;
+      box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.55), 0 4px 14px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      max-width: calc(100vw - 32px);
+      width: max-content;
+      box-sizing: border-box;
+      overflow: hidden;
+      transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .app-toast.show {
       opacity: 1;
-      transform: translateX(-50%) translateY(0);
+      transform: translateX(-50%) translateY(0) scale(1);
+    }
+    .app-toast .toast-icon-wrap {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: rgba(13, 148, 136, 0.22);
+      border: 1px solid rgba(45, 212, 191, 0.35);
+      color: #2dd4bf;
+    }
+    .app-toast.toast-warning .toast-icon-wrap {
+      background: rgba(217, 119, 6, 0.25);
+      border: 1px solid rgba(251, 191, 36, 0.5);
+      color: #fbbf24;
+    }
+    .app-toast .toast-body {
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+      line-height: 1.35;
+      min-width: 0;
+    }
+    .app-toast .toast-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #fde047;
+      letter-spacing: -0.2px;
+      white-space: nowrap;
+    }
+    .app-toast .toast-desc {
+      font-size: 13px;
+      font-weight: 500;
+      color: #f1f5f9;
+      letter-spacing: -0.2px;
+      white-space: nowrap;
+    }
+    /* 2초 카운트다운 타이머 게이지 바 */
+    .app-toast .toast-progress {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      width: 100%;
+      background: linear-gradient(90deg, #0d9488, #2dd4bf);
+      border-radius: 0 0 9999px 9999px;
+      opacity: 0.9;
+    }
+    .app-toast.toast-warning .toast-progress {
+      background: linear-gradient(90deg, #d97706, #fbbf24);
+    }
+    .app-toast.show .toast-progress {
+      animation: toastProgressCountdown 2s linear forwards;
+    }
+    @keyframes toastProgressCountdown {
+      from { width: 100%; }
+      to { width: 0%; }
+    }
+    @media (max-width: 360px) {
+      .app-toast {
+        padding: 8px 14px 10px 12px;
+        gap: 8px;
+      }
+      .app-toast .toast-desc {
+        font-size: 12px;
+      }
+      .app-toast .toast-title {
+        font-size: 11.5px;
+      }
     }
 
     /* 글로벌 페이지 설정 모달 팝업 */
@@ -1712,7 +1788,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.3.7 (UI 가독성 개선, 모바일 투시변환 핀 핸들 연동 및 초고화질 미리보기 적용)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.3.8 (모바일 앱 종료 플로팅 토스트 UI 디자인 전면 개편 및 2초 카운트다운 타이머 적용)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -3053,7 +3129,48 @@
     function showExitToast(msg) {
       const toast = document.getElementById('appToast');
       if (!toast) return;
-      toast.textContent = msg;
+
+      const isWarning = msg.includes('저장되지 않은');
+      const isEsc = msg.includes('ESC');
+      const actionText = isEsc ? 'ESC 키를 한 번 더 누르면 종료됩니다' : "'뒤로' 버튼을 한 번 더 누르면 종료됩니다";
+
+      toast.classList.remove('show', 'toast-warning');
+
+      if (isWarning) {
+        toast.classList.add('toast-warning');
+        toast.innerHTML = `
+          <div class="toast-icon-wrap" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <div class="toast-body">
+            <span class="toast-title">저장되지 않은 작업이 있습니다</span>
+            <span class="toast-desc">${actionText}</span>
+          </div>
+          <div class="toast-progress"></div>
+        `;
+      } else {
+        toast.innerHTML = `
+          <div class="toast-icon-wrap" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </div>
+          <div class="toast-body">
+            <span class="toast-desc">${actionText}</span>
+          </div>
+          <div class="toast-progress"></div>
+        `;
+      }
+
+      // 강제 레이아웃 리플로우로 애니메이션 및 프로그레스 바 리셋
+      void toast.offsetWidth;
+
       toast.classList.add('show');
       if (toastHideTimer) clearTimeout(toastHideTimer);
       toastHideTimer = setTimeout(() => {
