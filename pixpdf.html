@@ -1843,7 +1843,7 @@
 <body>
 
   <!-- 숨겨진 공용 파일 인풋 -->
-  <input type="file" id="fileInput" style="display:none;" accept="application/pdf,image/*">
+  <input type="file" id="fileInput" style="display:none;" accept="application/pdf,image/*" multiple>
   <input type="file" id="insertFileInput" style="display:none;" accept="application/pdf,image/*" multiple>
 
   <!-- 상단 헤더 (단일 1행) -->
@@ -2388,7 +2388,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.9.7 (가운데 창 투시변환 돋보기 도입, 가운데·미니 돋보기 내 용지 외곽선/모서리/바탕 동시 표출)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.9.8 (가운데 창 돋보기 중심선 제거로 시야 확보, 파일 불러오기 최초 미동작 버그 원천 해결)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -3737,9 +3737,12 @@
 
     function triggerOpenFileDialog() {
       const fileInput = document.getElementById('fileInput');
-      fileInput.accept = 'application/pdf,image/*';
-      fileInput.multiple = true;
-      fileInput.click();
+      if (fileInput) {
+        fileInput.accept = 'application/pdf,image/*';
+        fileInput.multiple = true;
+        fileInput.value = '';
+        fileInput.click();
+      }
       closeMenuDropdown();
     }
 
@@ -4210,20 +4213,29 @@
     }
 
     // 파일 인풋 이벤트
-    document.getElementById('fileInput').addEventListener('change', async (e) => {
-      const files = Array.from(e.target.files);
-      if (files.length === 0) return;
-      await processFiles(files, -1, 'auto');
-      e.target.value = '';
-    });
+    const mainFileInput = document.getElementById('fileInput');
+    if (mainFileInput) {
+      mainFileInput.addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+        try {
+          await processFiles(files, -1, 'auto');
+        } finally {
+          e.target.value = '';
+        }
+      });
+    }
 
     const insertFileInput = document.getElementById('insertFileInput');
     if (insertFileInput) {
       insertFileInput.addEventListener('change', async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
-        await processFiles(files, pendingInsertIndex, 'insert-button');
-        e.target.value = '';
+        try {
+          await processFiles(files, pendingInsertIndex, 'insert-button');
+        } finally {
+          e.target.value = '';
+        }
       });
     }
 
@@ -4264,13 +4276,33 @@
       }
     });
 
+    // PDF.js 라이브러리 비동기 초기화 보장 헬퍼 (초기 로딩 지연 방어)
+    async function ensurePdfJsReady() {
+      if (window.pdfjsLib) return window.pdfjsLib;
+      for (let i = 0; i < 35; i++) {
+        await new Promise(r => setTimeout(r, 100));
+        if (window.pdfjsLib) return window.pdfjsLib;
+      }
+      return window.pdfjsLib || null;
+    }
+
     // 통합 파일 처리기 (PDF & 이미지 구분 없이 섞어서 자유자재로 불러오기 및 삽입)
     async function processFiles(files, customInsertIndex = -1, targetArea = 'center-area') {
       initHistoryAnchor();
       if (!files || files.length === 0) return;
 
       const pdfFiles = files.filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
-      const imgFiles = files.filter(f => f.type.startsWith('image/') || /\.(png|jpe?g|webp|bmp)$/i.test(f.name));
+      const imgFiles = files.filter(f => f.type.startsWith('image/') || /\.(png|jpe?g|webp|bmp|gif|tif|tiff|jfif|ico)$/i.test(f.name));
+
+      // 모바일 등에서 type/확장자가 생략된 파일 폴백 처리
+      const otherFiles = files.filter(f => !pdfFiles.includes(f) && !imgFiles.includes(f));
+      for (const f of otherFiles) {
+        if (f.name.toLowerCase().endsWith('.pdf')) {
+          pdfFiles.push(f);
+        } else {
+          imgFiles.push(f);
+        }
+      }
 
       if (pdfFiles.length === 0 && imgFiles.length === 0) return;
 
@@ -4278,12 +4310,19 @@
       let insertAt = customInsertIndex >= 0 ? customInsertIndex : (isFirstLoad ? 0 : docState.currentIndex + 1);
 
       // 1. PDF 파일 처리
-      for (const pdfFile of pdfFiles) {
-        updateStatusMsg(`${pdfFile.name} 로드 중...`);
-        try {
-          const arrayBuf = await pdfFile.arrayBuffer();
-          const loadedDoc = await pdfjsLib.getDocument({ data: arrayBuf }).promise;
-          const totalPages = loadedDoc.numPages;
+      if (pdfFiles.length > 0) {
+        const pdfLib = await ensurePdfJsReady();
+        if (!pdfLib) {
+          updateStatusMsg('PDF 엔진 로딩 중입니다. 잠시 후 다시 시도해 주세요.');
+          return;
+        }
+
+        for (const pdfFile of pdfFiles) {
+          updateStatusMsg(`${pdfFile.name} 로드 중...`);
+          try {
+            const arrayBuf = await pdfFile.arrayBuffer();
+            const loadedDoc = await pdfLib.getDocument({ data: arrayBuf }).promise;
+            const totalPages = loadedDoc.numPages;
 
           if (isFirstLoad && pdfFiles.length === 1 && imgFiles.length === 0) {
             // 최초 단일 PDF 로드 시: 전체 페이지를 기본 순서대로 등록
@@ -4331,6 +4370,7 @@
           updateStatusMsg('PDF 문서를 읽을 수 없습니다.');
         }
       }
+    }
 
       // 2. 이미지 파일 처리
       if (imgFiles.length > 0) {
@@ -5629,16 +5669,13 @@ const modal = document.getElementById('modalPdfPicker');
       // BR
       lctx.moveTo(pInLoupeX + pInLoupeW, pInLoupeY + pInLoupeH - arm); lctx.lineTo(pInLoupeX + pInLoupeW, pInLoupeY + pInLoupeH); lctx.lineTo(pInLoupeX + pInLoupeW - arm, pInLoupeY + pInLoupeH);
       // BL
-      lctx.moveTo(pInLoupeX + arm, pInLoupeY + pInLoupeH); lctx.lineTo(pInLoupeX, pInLoupeY + pInLoupeH); lctx.lineTo(pInLoupeX + pInLoupeY + pInLoupeH - arm);
+      lctx.moveTo(pInLoupeX + arm, pInLoupeY + pInLoupeH); lctx.lineTo(pInLoupeX, pInLoupeY + pInLoupeH); lctx.lineTo(pInLoupeX, pInLoupeY + pInLoupeH - arm);
       lctx.stroke();
-
-      // 6. 정밀 조준 십자선
-      drawLoupeCrosshair(lctx, cx, cy, 14);
 
       lctx.restore();
     }
 
-    // 중앙 메인 뷰어 투시 핀 드래그 시 정밀 확대 돋보기(Loupe) - 용지 외곽선/모서리 동시 표출
+    // 중앙 메인 뷰어 투시 핀 드래그 시 정밀 확대 돋보기(Loupe) - 용지 외곽선/모서리 동시 표출 (중심 십자선 없이 시원한 시야 확보)
     function updateViewerPinLoupe(pinKey, mouseX, mouseY) {
       if (!isPinDragging || isDraggingMiniPin || !pinKey) return;
       const loupe = document.getElementById('viewerPinLoupe');
@@ -5743,9 +5780,6 @@ const modal = document.getElementById('modalPdfPicker');
       // BL
       lctx.moveTo(pInLoupeX + arm, pInLoupeY + pInLoupeH); lctx.lineTo(pInLoupeX, pInLoupeY + pInLoupeH); lctx.lineTo(pInLoupeX, pInLoupeY + pInLoupeH - arm);
       lctx.stroke();
-
-      // 6. 정밀 조준 십자선
-      drawLoupeCrosshair(lctx, cx, cy, 15);
 
       lctx.restore();
     }
@@ -7041,6 +7075,10 @@ const modal = document.getElementById('modalPdfPicker');
 
     // 초기 워크스페이스 상태 초기화 및 히스토리 앵커 수립
     initHistoryAnchor();
+    const initFileInput = document.getElementById('fileInput');
+    if (initFileInput) initFileInput.value = '';
+    const initInsertInput = document.getElementById('insertFileInput');
+    if (initInsertInput) initInsertInput.value = '';
     refreshWorkspaceDisplay();
   </script>
 </body>
