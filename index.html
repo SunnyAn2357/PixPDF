@@ -1924,11 +1924,11 @@
     <!-- 2열: 중앙 원본 메인 뷰어 -->
     <div class="col-viewer" id="colViewerArea">
       <div class="viewer-toolbar">
-        <div class="viewer-nav" style="display: flex; align-items: center;">
-          <button class="btn-tool" id="btnPrevPage" onclick="navigateViewer(-1)">◀ 이전</button>
-          <span id="viewerPageIndicator" style="font-size:13.5px; font-weight:700;">- / -</span>
-          <button class="btn-tool" id="btnNextPage" onclick="navigateViewer(1)">다음 ▶</button>
-          </div>
+        <div class="viewer-nav" style="display: flex; align-items: center; gap: 6px;">
+          <button type="button" class="btn-tool-sm" id="btnPrevPage" title="이전 페이지 (← 또는 휠 위)" onclick="navigateViewer(-1)">◀ 이전</button>
+          <span id="viewerPageIndicator" style="font-size: 12px; font-weight: 700; color: var(--text-main); min-width: 44px; text-align: center;">- / -</span>
+          <button type="button" class="btn-tool-sm" id="btnNextPage" title="다음 페이지 (→ 또는 휠 아래)" onclick="navigateViewer(1)">다음 ▶</button>
+        </div>
         <div class="viewer-actions viewer-zoom-group">
           <button type="button" class="btn-tool-sm" title="화면 확대 (Ctrl+휠 위)" onclick="adjustZoom(0.15)">확대</button>
           <button type="button" class="btn-tool-sm" title="화면 축소 (Ctrl+휠 아래)" onclick="adjustZoom(-0.15)">축소</button>
@@ -2384,7 +2384,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.9.5 (투시변환 25% 추가 축소, 줌 배율 뱃지 순서 및 무배경 일관화, 용지 회전 가로 정렬, 투명 배경 라벨 일체화)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.9.6 (가운데 창 이전/다음 버튼 콤팩트 통일, 투시변환 시 가운데 창 자동 줌 축소·복원)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -5008,6 +5008,7 @@ const modal = document.getElementById('modalPdfPicker');
     }
     function resetZoom() {
       docState.zoom = 1.0;
+      docState.savedZoomBeforePerspective = null;
       applyZoom();
     }
     function applyZoom() {
@@ -5427,6 +5428,7 @@ const modal = document.getElementById('modalPdfPicker');
 
     // 현재 선택된 페이지의 투시 변환 UI 동기화 (페이지별 독립 활성화 상태 보장)
     function syncPerspectiveUI(active) {
+      const prevActive = isPerspectiveActive;
       isPerspectiveActive = Boolean(active);
       const overlay = document.getElementById('perspectiveOverlay');
       const miniOverlay = document.getElementById('miniPerspectiveOverlay');
@@ -5438,6 +5440,21 @@ const modal = document.getElementById('modalPdfPicker');
         btnToggle.classList.toggle('active', isPerspectiveActive);
         btnToggle.style.background = isPerspectiveActive ? '#0f766e' : '';
         btnToggle.style.color = isPerspectiveActive ? '#ffffff' : '';
+      }
+
+      // 가운데 창 투시변환 켤 때 이미지와 용지 전체 자동 축소 (약 25% 축소 / 0.75배) 및 끌 때 원래 배율로 복원
+      if (isPerspectiveActive && !prevActive) {
+        if (docState.savedZoomBeforePerspective === undefined || docState.savedZoomBeforePerspective === null) {
+          docState.savedZoomBeforePerspective = docState.zoom;
+          docState.zoom = Math.max(0.3, Math.round(docState.zoom * 0.75 * 100) / 100);
+          applyZoom();
+        }
+      } else if (!isPerspectiveActive && prevActive) {
+        if (docState.savedZoomBeforePerspective !== undefined && docState.savedZoomBeforePerspective !== null) {
+          docState.zoom = docState.savedZoomBeforePerspective;
+          docState.savedZoomBeforePerspective = null;
+          applyZoom();
+        }
       }
 
       if (isPerspectiveActive) {
