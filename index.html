@@ -2388,7 +2388,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.9.8 (가운데 창 돋보기 중심선 제거로 시야 확보, 파일 불러오기 최초 미동작 버그 원천 해결)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.9.9 (좌측 썸네일·가운데 뷰어·우측 프리뷰 전 창 초고해상도 렌더링 복원, 모바일 및 고해상도 가독성 극대화)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -2871,9 +2871,9 @@
           const origVp = page.getViewport({ scale: 1.0 });
           item.width = origVp.width;
           item.height = origVp.height;
-          // 고화질 2.0x 오프스크린 캔버스 렌더링
+          // 초고화질 2.5x 오프스크린 캔버스 렌더링 (모바일 및 고해상도 확대 시에도 칼같은 텍스트 가독성 확보)
           const offCanvas = document.createElement('canvas');
-          const vp = page.getViewport({ scale: 2.0 });
+          const vp = page.getViewport({ scale: 2.5 });
           offCanvas.width = vp.width;
           offCanvas.height = vp.height;
           const offCtx = offCanvas.getContext('2d');
@@ -2915,14 +2915,16 @@
       const basePaperH = (isPageRot90 ? origW : origH) + marginPx * 2;
       const paper = resolvePaperGeometry(sizeKey, isLandscape, basePaperW, basePaperH, cfg.customW, cfg.customH);
 
-      // 3. 대상 캔버스 해상도 결정
+      // 3. 대상 캔버스 해상도 결정 (초고해상도 복원)
       let canvasW, canvasH;
       if (options.isThumbnail) {
-        const baseW = 280;
+        // [모바일 및 고해상도 지원] 왼쪽 썸네일 카드가 모바일 및 고해상도 디스플레이에서 글자까지 또렷이 식별되도록 초고화질(800px) 해상도 보장
+        const baseW = 800;
         canvasW = baseW;
         canvasH = Math.max(40, Math.round(baseW / paper.ratio));
       } else {
-        const baseDim = 1200;
+        // [중앙 뷰어 & 우측 미니 프리뷰 원본 연동] 2000px 초고해상도 캔버스로 확대 시에도 텍스트 및 세부 디테일 완벽 보존
+        const baseDim = 2000;
         if (paper.ratio >= 1) {
           canvasW = baseDim;
           canvasH = Math.max(50, Math.round(baseDim / paper.ratio));
@@ -4582,18 +4584,15 @@
         card.appendChild(thumbCanvasWrap);
         container.appendChild(card);
 
-        // 비동기 경량 썸네일 렌더링
+        // 비동기 고화질 썸네일 렌더링 (모바일 및 고해상도 열람 시 칼같은 가독성 보장)
         (async () => {
           const cfg = getEffectiveItemSettings(idx);
-          const { rotImg } = getResolvedRotations(cfg);
-          if (item.type === 'pdf') {
-            const page = await item.doc.getPage(item.pageNum);
-            await renderPdfPageToCanvas(page, 0.65, rotImg, thumbCanvas);
-          } else {
-            drawPaperWithImage(thumbCanvas, item, cfg, { isThumbnail: true });
-            const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
-            if (thumbCanvasWrap) thumbCanvasWrap.classList.toggle('checkerboard-bg', isTransparent);
+          if (item.type === 'pdf' && !item.imgObj) {
+            await ensureItemCanvas(item);
           }
+          drawPaperWithImage(thumbCanvas, item, cfg, { isThumbnail: true });
+          const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
+          if (thumbCanvasWrap) thumbCanvasWrap.classList.toggle('checkerboard-bg', isTransparent);
           updateViewerEdits(idx);
         })();
       });
