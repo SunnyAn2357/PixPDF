@@ -2396,7 +2396,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.10.0 (기능별/목적별 모듈 분리 및 원클릭 오프라인 단일 파일 자동 번들러 구축)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.10.1 (이미지 이동 범위 동적 확장: 마지막 1픽셀이 종이 경계에 닿아있는 한 자유로운 패닝 지원)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -2874,7 +2874,58 @@
       }
     }
 
-    // PDF 페이지의 비트맵 캔버스를 보장하여 이미지와 100% 동일한 편집 파이프라인(회전, 용지 맞춤, 대두/소두, 투시변환) 제공
+    // 종이 위에 올려진 이미지가 종이 밖으로 나갈 때, 이미지의 마지막 1픽셀이 종이 경계와 닿아있을 때까지의 최대 허용 오프셋(%) 계산
+    function getImageOffsetMaxLimits(item, cfg) {
+      if (!item || !cfg) return { maxOffsetX: 100, maxOffsetY: 100 };
+
+      const sizeKey = cfg.pageSize || cfg.fit || 'original';
+      const marginPx = cfg.margin || 0;
+      const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
+
+      const origW = item.width || (item.imgObj ? item.imgObj.width : 1200);
+      const origH = item.height || (item.imgObj ? item.imgObj.height : 1600);
+
+      const isOrigLandscape = origW > origH;
+      const orientOpt = cfg.orient || 'auto';
+      const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
+      const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
+
+      const basePaperW = (isPageRot90 ? origH : origW) + marginPx * 2;
+      const basePaperH = (isPageRot90 ? origW : origH) + marginPx * 2;
+      const paper = resolvePaperGeometry(sizeKey, isLandscape, basePaperW, basePaperH, cfg.customW, cfg.customH);
+
+      const canvasW = 1000;
+      const canvasH = Math.max(50, Math.round(canvasW / (paper.ratio || 1)));
+
+      const scaleFactor = canvasW / (paper.widthPx || 1000);
+      const viewMargin = Math.round(marginPx * scaleFactor);
+      const innerW = Math.max(10, canvasW - (viewMargin * 2));
+      const innerH = Math.max(10, canvasH - (viewMargin * 2));
+
+      const rotImgW = isImgRot90 ? origH : origW;
+      const rotImgH = isImgRot90 ? origW : origH;
+      const fitScale = Math.min(innerW / rotImgW, innerH / rotImgH);
+      const baseDrawW = rotImgW * fitScale;
+      const baseDrawH = rotImgH * fitScale;
+
+      const cScale = cfg.contentScale || 1.0;
+      const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
+      const finalW = baseDrawW * cScale * scaleX;
+      const finalH = baseDrawH * cScale;
+
+      // 미세 회전 각도를 고려한 외접 사각형 (AABB) 크기
+      const fineRad = Math.abs((rotImg - Math.round(rotImg / 90) * 90) * Math.PI / 180);
+      const boxW = Math.abs(finalW * Math.cos(fineRad)) + Math.abs(finalH * Math.sin(fineRad));
+      const boxH = Math.abs(finalW * Math.sin(fineRad)) + Math.abs(finalH * Math.cos(fineRad));
+
+      // 이미지의 마지막 1픽셀이 종이 외곽선과 인접할 때까지 허용
+      // maxShiftX = (canvasW + boxW)/2 - 1px
+      // maxOffsetX = (maxShiftX / canvasW) * 100
+      const maxOffsetX = Math.max(10, Math.round((((canvasW + boxW) / 2 - 1) / canvasW * 100) * 10) / 10);
+      const maxOffsetY = Math.max(10, Math.round((((canvasH + boxH) / 2 - 1) / canvasH * 100) * 10) / 10);
+
+      return { maxOffsetX, maxOffsetY };
+    }
 
 
     // ==========================================================================
@@ -5869,6 +5920,7 @@ const modal = document.getElementById('modalPdfPicker');
     function adjustImageOffset(pixelDx, pixelDy) {
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
+      const item = docState.items[curIdx];
       const curX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
       const curY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
       const mainCanvas = document.getElementById('mainViewerCanvas');
@@ -5876,8 +5928,10 @@ const modal = document.getElementById('modalPdfPicker');
       const canvasH = (mainCanvas && mainCanvas.height) ? mainCanvas.height : 1200;
       const pctStepX = (pixelDx / canvasW) * 100;
       const pctStepY = (pixelDy / canvasH) * 100;
-      cfg.offsetX = Math.max(-50, Math.min(50, Math.round((curX + pctStepX) * 1000) / 1000));
-      cfg.offsetY = Math.max(-50, Math.min(50, Math.round((curY + pctStepY) * 1000) / 1000));
+
+      const { maxOffsetX, maxOffsetY } = getImageOffsetMaxLimits(item, cfg);
+      cfg.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, Math.round((curX + pctStepX) * 1000) / 1000));
+      cfg.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, Math.round((curY + pctStepY) * 1000) / 1000));
       updateViewerEdits();
       updateMiniPreview();
       if (isPerspectiveActive) updateCornerPins();
@@ -6713,8 +6767,10 @@ const modal = document.getElementById('modalPdfPicker');
 
             const curIdx = docState.currentIndex;
             const cfg = getEffectiveItemSettings(curIdx);
-            cfg.offsetX = Math.max(-50, Math.min(50, Math.round((miniPanStartOffsetX + pctDx) * 10) / 10));
-            cfg.offsetY = Math.max(-50, Math.min(50, Math.round((miniPanStartOffsetY + pctDy) * 10) / 10));
+            const item = docState.items[curIdx];
+            const { maxOffsetX, maxOffsetY } = getImageOffsetMaxLimits(item, cfg);
+            cfg.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, Math.round((miniPanStartOffsetX + pctDx) * 10) / 10));
+            cfg.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, Math.round((miniPanStartOffsetY + pctDy) * 10) / 10));
 
             updateViewerEdits(curIdx);
             updateMiniPreview();
@@ -6728,6 +6784,8 @@ const modal = document.getElementById('modalPdfPicker');
 
         const curIdx = docState.currentIndex;
         const cfg = getEffectiveItemSettings(curIdx);
+        const item = docState.items[curIdx];
+        const { maxOffsetX, maxOffsetY } = getImageOffsetMaxLimits(item, cfg);
 
         const dx = e.clientX - panStartX;
         const dy = e.clientY - panStartY;
@@ -6737,8 +6795,8 @@ const modal = document.getElementById('modalPdfPicker');
         const pctDx = (dx / rect.width) * 100;
         const pctDy = (dy / rect.height) * 100;
 
-        const nextX = Math.max(-50, Math.min(50, Math.round((panStartOffsetX + pctDx) * 10) / 10));
-        const nextY = Math.max(-50, Math.min(50, Math.round((panStartOffsetY + pctDy) * 10) / 10));
+        const nextX = Math.max(-maxOffsetX, Math.min(maxOffsetX, Math.round((panStartOffsetX + pctDx) * 10) / 10));
+        const nextY = Math.max(-maxOffsetY, Math.min(maxOffsetY, Math.round((panStartOffsetY + pctDy) * 10) / 10));
         cfg.offsetX = nextX;
         cfg.offsetY = nextY;
 
@@ -6907,8 +6965,10 @@ const modal = document.getElementById('modalPdfPicker');
 
             const curIdx = docState.currentIndex;
             const cfg = getEffectiveItemSettings(curIdx);
-            cfg.offsetX = Math.max(-50, Math.min(50, Math.round((miniPanStartOffsetX + pctDx) * 10) / 10));
-            cfg.offsetY = Math.max(-50, Math.min(50, Math.round((miniPanStartOffsetY + pctDy) * 10) / 10));
+            const item = docState.items[curIdx];
+            const { maxOffsetX, maxOffsetY } = getImageOffsetMaxLimits(item, cfg);
+            cfg.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, Math.round((miniPanStartOffsetX + pctDx) * 10) / 10));
+            cfg.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, Math.round((miniPanStartOffsetY + pctDy) * 10) / 10));
 
             updateViewerEdits(curIdx);
             updateMiniPreview();
@@ -6920,6 +6980,8 @@ const modal = document.getElementById('modalPdfPicker');
         if (!isPanning || e.touches.length !== 1) return;
         const curIdx = docState.currentIndex;
         const cfg = getEffectiveItemSettings(curIdx);
+        const item = docState.items[curIdx];
+        const { maxOffsetX, maxOffsetY } = getImageOffsetMaxLimits(item, cfg);
 
         const dx = e.touches[0].clientX - panStartX;
         const dy = e.touches[0].clientY - panStartY;
@@ -6929,8 +6991,8 @@ const modal = document.getElementById('modalPdfPicker');
         const pctDx = (dx / rect.width) * 100;
         const pctDy = (dy / rect.height) * 100;
 
-        const nextX = Math.max(-50, Math.min(50, Math.round((panStartOffsetX + pctDx) * 10) / 10));
-        const nextY = Math.max(-50, Math.min(50, Math.round((panStartOffsetY + pctDy) * 10) / 10));
+        const nextX = Math.max(-maxOffsetX, Math.min(maxOffsetX, Math.round((panStartOffsetX + pctDx) * 10) / 10));
+        const nextY = Math.max(-maxOffsetY, Math.min(maxOffsetY, Math.round((panStartOffsetY + pctDy) * 10) / 10));
 
         cfg.offsetX = nextX;
         cfg.offsetY = nextY;
