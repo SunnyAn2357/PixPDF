@@ -643,13 +643,15 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      margin-top: 10px;
       padding-top: 2px;
     }
     .dpad-container {
       display: grid;
       grid-template-columns: repeat(3, 27px);
       grid-template-rows: repeat(3, 21px);
-      gap: 2px;
+      row-gap: 3px; /* 상하 +1px (2px -> 3px) */
+      column-gap: 4px; /* 좌우 +2px (2px -> 4px) */
       justify-content: center;
       align-items: center;
     }
@@ -1236,8 +1238,21 @@
         border-right: none;
       }
       .mobile-fab.has-files { display: block !important; }
+      .preview-body-split {
+        align-items: stretch !important;
+      }
       .preview-sheet-stage {
         height: 250px !important; /* 모바일에서 시원한 조작 공간 확보 (기존 180px -> 250px) */
+      }
+      .preview-right-pane {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+      }
+      .dpad-wrap {
+        margin-top: auto !important;
+        padding-top: 12px !important;
+        padding-bottom: 6px !important;
       }
       .col-control {
         position: fixed;
@@ -1623,19 +1638,19 @@
               <div class="dpad-wrap">
                 <div class="dpad-container">
                   <div style="grid-column: 2; grid-row: 1;">
-                    <button type="button" class="btn-dpad" title="위로 이동" onclick="adjustImageOffset(0, -3)">▲</button>
+                    <button type="button" class="btn-dpad" title="위로 이동 (1px)" onclick="adjustImageOffset(0, -1)">▲</button>
                   </div>
                   <div style="grid-column: 1; grid-row: 2;">
-                    <button type="button" class="btn-dpad" title="왼쪽으로 이동" onclick="adjustImageOffset(-3, 0)">◀</button>
+                    <button type="button" class="btn-dpad" title="왼쪽으로 이동 (1px)" onclick="adjustImageOffset(-1, 0)">◀</button>
                   </div>
                   <div style="grid-column: 2; grid-row: 2;">
                     <button type="button" class="btn-dpad center" title="위치 중앙 초기화" onclick="resetImageOffset()">●</button>
                   </div>
                   <div style="grid-column: 3; grid-row: 2;">
-                    <button type="button" class="btn-dpad" title="오른쪽으로 이동" onclick="adjustImageOffset(3, 0)">▶</button>
+                    <button type="button" class="btn-dpad" title="오른쪽으로 이동 (1px)" onclick="adjustImageOffset(1, 0)">▶</button>
                   </div>
                   <div style="grid-column: 2; grid-row: 3;">
-                    <button type="button" class="btn-dpad" title="아래로 이동" onclick="adjustImageOffset(0, 3)">▼</button>
+                    <button type="button" class="btn-dpad" title="아래로 이동 (1px)" onclick="adjustImageOffset(0, 1)">▼</button>
                   </div>
                 </div>
               </div>
@@ -1816,7 +1831,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.5.2 (투시변환 리셋 시 우측 미리보기 캔버스 1회 클릭 즉시 동기화 버그 완벽 수정)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.6.0 (모바일 미니 프리뷰 터치 이동, 1px 정밀 리모콘 및 간격 개선)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -4252,6 +4267,11 @@
     let selectedCornerKey = null; // 'tl' | 'tr' | 'br' | 'bl'
     let isPinDragging = false;
     let isDraggingMiniPin = false;
+    let isMiniPanning = false;
+    let miniPanStartX = 0;
+    let miniPanStartY = 0;
+    let miniPanStartOffsetX = 0;
+    let miniPanStartOffsetY = 0;
     let activeDraggingPinKey = null;
     let pinDragStartMouseX = 0;
     let pinDragStartMouseY = 0;
@@ -4618,13 +4638,18 @@
       }
     }
 
-    function adjustImageOffset(dx, dy) {
+    function adjustImageOffset(pixelDx, pixelDy) {
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       const curX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
       const curY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
-      cfg.offsetX = Math.max(-50, Math.min(50, curX + dx));
-      cfg.offsetY = Math.max(-50, Math.min(50, curY + dy));
+      const mainCanvas = document.getElementById('mainViewerCanvas');
+      const canvasW = (mainCanvas && mainCanvas.width) ? mainCanvas.width : 1200;
+      const canvasH = (mainCanvas && mainCanvas.height) ? mainCanvas.height : 1200;
+      const pctStepX = (pixelDx / canvasW) * 100;
+      const pctStepY = (pixelDy / canvasH) * 100;
+      cfg.offsetX = Math.max(-50, Math.min(50, Math.round((curX + pctStepX) * 1000) / 1000));
+      cfg.offsetY = Math.max(-50, Math.min(50, Math.round((curY + pctStepY) * 1000) / 1000));
       updateViewerEdits();
       updateMiniPreview();
       if (isPerspectiveActive) updateCornerPins();
@@ -4743,7 +4768,7 @@
       }
       if (brightness !== 100) line2Parts.push(`밝기${brightness}%`);
       if (contrast !== 100) line2Parts.push(`명암${contrast}%`);
-      if (offsetX !== 0 || offsetY !== 0) line2Parts.push(`위치(${offsetX},${offsetY})`);
+      if (offsetX !== 0 || offsetY !== 0) line2Parts.push(`위치(${Number(offsetX.toFixed(1))},${Number(offsetY.toFixed(1))})`);
       const line2 = line2Parts.join(' · ');
 
       info.innerHTML = `<div class="mini-info-line1" title="${line1}">${line1}</div><div class="mini-info-line2" title="${line2}">${line2}</div>`;
@@ -5246,6 +5271,15 @@
             y: cfg.corners[cornerKey]?.y || 0
           };
           updateMiniPinLoupe(cornerKey);
+        } else if (window.innerWidth <= 768 && e.touches.length === 1 && docState.items.length > 0) {
+          // 모바일 전용: 미니 프리뷰 내 이미지 터치 드래그 이동 (Panning)
+          isMiniPanning = true;
+          miniPanStartX = e.touches[0].clientX;
+          miniPanStartY = e.touches[0].clientY;
+          const curIdx = docState.currentIndex;
+          const cfg = getEffectiveItemSettings(curIdx);
+          miniPanStartOffsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
+          miniPanStartOffsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
         }
       }, { passive: false });
     }
@@ -5405,6 +5439,9 @@
           const mvc = document.getElementById('mainViewerCanvas');
           if (mvc) mvc.style.transition = 'transform 0.1s ease';
         }
+        if (isMiniPanning) {
+          isMiniPanning = false;
+        }
       });
 
       // 터치 스크린 지원
@@ -5517,6 +5554,29 @@
           if (isDraggingMiniPin) {
             updateMiniPinLoupe(activeDraggingPinKey);
           }
+          return;
+        }
+
+        if (isMiniPanning && e.touches.length === 1) {
+          e.preventDefault();
+          const miniSheet = document.getElementById('miniSheet');
+          const stageEl = document.getElementById('previewSheetStage');
+          const dispW = (miniSheet && miniSheet.offsetWidth > 0) ? miniSheet.offsetWidth : (stageEl ? stageEl.offsetWidth : 150);
+          const dispH = (miniSheet && miniSheet.offsetHeight > 0) ? miniSheet.offsetHeight : (stageEl ? stageEl.offsetHeight : 200);
+
+          const dx = e.touches[0].clientX - miniPanStartX;
+          const dy = e.touches[0].clientY - miniPanStartY;
+          const pctDx = (dx / dispW) * 100;
+          const pctDy = (dy / dispH) * 100;
+
+          const curIdx = docState.currentIndex;
+          const cfg = getEffectiveItemSettings(curIdx);
+          cfg.offsetX = Math.max(-50, Math.min(50, Math.round((miniPanStartOffsetX + pctDx) * 10) / 10));
+          cfg.offsetY = Math.max(-50, Math.min(50, Math.round((miniPanStartOffsetY + pctDy) * 10) / 10));
+
+          updateViewerEdits(curIdx);
+          updateMiniPreview();
+          if (isPerspectiveActive) updateCornerPins();
           return;
         }
 
