@@ -144,6 +144,7 @@ flowchart TD
 | 함수명 | 모듈 파일 (`src/js/`) | 주요 역할 및 메커니즘 |
 | :--- | :--- | :--- |
 | `resolvePaperGeometry` | `01_state.js` | 선택된 규격(A4 등)과 방향에 따른 가로/세로 픽셀 및 종횡비 계산 |
+| `getImageOffsetMaxLimits`| `02_transform.js` | 마지막 1픽셀 접촉 한계 기준 이미지 최대 이동 허용 오프셋(%) 계산 |
 | `drawPerspectiveQuad` | `02_transform.js` | 삼각형 메쉬 분할 기반의 4개 코너 투시 왜곡 실시간 렌더링 |
 | `ensureItemCanvas` | `03_render.js` | PDF 페이지를 2.5x 고해상도 오프스크린 캔버스로 렌더링하여 캐싱 |
 | `drawPaperWithImage` | `03_render.js` | 바탕 용지 위에 여백, 회전, 스케일, 위치, 투시변환을 합성 렌더링 (**마스터 렌더러**) |

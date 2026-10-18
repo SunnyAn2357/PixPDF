@@ -619,6 +619,7 @@
     function adjustImageOffset(pixelDx, pixelDy) {
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
+      const item = docState.items[curIdx];
       const curX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
       const curY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
       const mainCanvas = document.getElementById('mainViewerCanvas');
@@ -626,8 +627,10 @@
       const canvasH = (mainCanvas && mainCanvas.height) ? mainCanvas.height : 1200;
       const pctStepX = (pixelDx / canvasW) * 100;
       const pctStepY = (pixelDy / canvasH) * 100;
-      cfg.offsetX = Math.max(-50, Math.min(50, Math.round((curX + pctStepX) * 1000) / 1000));
-      cfg.offsetY = Math.max(-50, Math.min(50, Math.round((curY + pctStepY) * 1000) / 1000));
+
+      const { maxOffsetX, maxOffsetY } = getImageOffsetMaxLimits(item, cfg);
+      cfg.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, Math.round((curX + pctStepX) * 1000) / 1000));
+      cfg.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, Math.round((curY + pctStepY) * 1000) / 1000));
       updateViewerEdits();
       updateMiniPreview();
       if (isPerspectiveActive) updateCornerPins();

@@ -290,8 +290,10 @@
 
             const curIdx = docState.currentIndex;
             const cfg = getEffectiveItemSettings(curIdx);
-            cfg.offsetX = Math.max(-50, Math.min(50, Math.round((miniPanStartOffsetX + pctDx) * 10) / 10));
-            cfg.offsetY = Math.max(-50, Math.min(50, Math.round((miniPanStartOffsetY + pctDy) * 10) / 10));
+            const item = docState.items[curIdx];
+            const { maxOffsetX, maxOffsetY } = getImageOffsetMaxLimits(item, cfg);
+            cfg.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, Math.round((miniPanStartOffsetX + pctDx) * 10) / 10));
+            cfg.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, Math.round((miniPanStartOffsetY + pctDy) * 10) / 10));
 
             updateViewerEdits(curIdx);
             updateMiniPreview();
@@ -305,6 +307,8 @@
 
         const curIdx = docState.currentIndex;
         const cfg = getEffectiveItemSettings(curIdx);
+        const item = docState.items[curIdx];
+        const { maxOffsetX, maxOffsetY } = getImageOffsetMaxLimits(item, cfg);
 
         const dx = e.clientX - panStartX;
         const dy = e.clientY - panStartY;
@@ -314,8 +318,8 @@
         const pctDx = (dx / rect.width) * 100;
         const pctDy = (dy / rect.height) * 100;
 
-        const nextX = Math.max(-50, Math.min(50, Math.round((panStartOffsetX + pctDx) * 10) / 10));
-        const nextY = Math.max(-50, Math.min(50, Math.round((panStartOffsetY + pctDy) * 10) / 10));
+        const nextX = Math.max(-maxOffsetX, Math.min(maxOffsetX, Math.round((panStartOffsetX + pctDx) * 10) / 10));
+        const nextY = Math.max(-maxOffsetY, Math.min(maxOffsetY, Math.round((panStartOffsetY + pctDy) * 10) / 10));
         cfg.offsetX = nextX;
         cfg.offsetY = nextY;
 
@@ -484,8 +488,10 @@
 
             const curIdx = docState.currentIndex;
             const cfg = getEffectiveItemSettings(curIdx);
-            cfg.offsetX = Math.max(-50, Math.min(50, Math.round((miniPanStartOffsetX + pctDx) * 10) / 10));
-            cfg.offsetY = Math.max(-50, Math.min(50, Math.round((miniPanStartOffsetY + pctDy) * 10) / 10));
+            const item = docState.items[curIdx];
+            const { maxOffsetX, maxOffsetY } = getImageOffsetMaxLimits(item, cfg);
+            cfg.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, Math.round((miniPanStartOffsetX + pctDx) * 10) / 10));
+            cfg.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, Math.round((miniPanStartOffsetY + pctDy) * 10) / 10));
 
             updateViewerEdits(curIdx);
             updateMiniPreview();
@@ -497,6 +503,8 @@
         if (!isPanning || e.touches.length !== 1) return;
         const curIdx = docState.currentIndex;
         const cfg = getEffectiveItemSettings(curIdx);
+        const item = docState.items[curIdx];
+        const { maxOffsetX, maxOffsetY } = getImageOffsetMaxLimits(item, cfg);
 
         const dx = e.touches[0].clientX - panStartX;
         const dy = e.touches[0].clientY - panStartY;
@@ -506,8 +514,8 @@
         const pctDx = (dx / rect.width) * 100;
         const pctDy = (dy / rect.height) * 100;
 
-        const nextX = Math.max(-50, Math.min(50, Math.round((panStartOffsetX + pctDx) * 10) / 10));
-        const nextY = Math.max(-50, Math.min(50, Math.round((panStartOffsetY + pctDy) * 10) / 10));
+        const nextX = Math.max(-maxOffsetX, Math.min(maxOffsetX, Math.round((panStartOffsetX + pctDx) * 10) / 10));
+        const nextY = Math.max(-maxOffsetY, Math.min(maxOffsetY, Math.round((panStartOffsetY + pctDy) * 10) / 10));
 
         cfg.offsetX = nextX;
         cfg.offsetY = nextY;

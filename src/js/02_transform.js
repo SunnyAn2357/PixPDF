@@ -320,4 +320,55 @@
       }
     }
 
-    // PDF 페이지의 비트맵 캔버스를 보장하여 이미지와 100% 동일한 편집 파이프라인(회전, 용지 맞춤, 대두/소두, 투시변환) 제공
+    // 종이 위에 올려진 이미지가 종이 밖으로 나갈 때, 이미지의 마지막 1픽셀이 종이 경계와 닿아있을 때까지의 최대 허용 오프셋(%) 계산
+    function getImageOffsetMaxLimits(item, cfg) {
+      if (!item || !cfg) return { maxOffsetX: 100, maxOffsetY: 100 };
+
+      const sizeKey = cfg.pageSize || cfg.fit || 'original';
+      const marginPx = cfg.margin || 0;
+      const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
+
+      const origW = item.width || (item.imgObj ? item.imgObj.width : 1200);
+      const origH = item.height || (item.imgObj ? item.imgObj.height : 1600);
+
+      const isOrigLandscape = origW > origH;
+      const orientOpt = cfg.orient || 'auto';
+      const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
+      const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
+
+      const basePaperW = (isPageRot90 ? origH : origW) + marginPx * 2;
+      const basePaperH = (isPageRot90 ? origW : origH) + marginPx * 2;
+      const paper = resolvePaperGeometry(sizeKey, isLandscape, basePaperW, basePaperH, cfg.customW, cfg.customH);
+
+      const canvasW = 1000;
+      const canvasH = Math.max(50, Math.round(canvasW / (paper.ratio || 1)));
+
+      const scaleFactor = canvasW / (paper.widthPx || 1000);
+      const viewMargin = Math.round(marginPx * scaleFactor);
+      const innerW = Math.max(10, canvasW - (viewMargin * 2));
+      const innerH = Math.max(10, canvasH - (viewMargin * 2));
+
+      const rotImgW = isImgRot90 ? origH : origW;
+      const rotImgH = isImgRot90 ? origW : origH;
+      const fitScale = Math.min(innerW / rotImgW, innerH / rotImgH);
+      const baseDrawW = rotImgW * fitScale;
+      const baseDrawH = rotImgH * fitScale;
+
+      const cScale = cfg.contentScale || 1.0;
+      const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
+      const finalW = baseDrawW * cScale * scaleX;
+      const finalH = baseDrawH * cScale;
+
+      // 미세 회전 각도를 고려한 외접 사각형 (AABB) 크기
+      const fineRad = Math.abs((rotImg - Math.round(rotImg / 90) * 90) * Math.PI / 180);
+      const boxW = Math.abs(finalW * Math.cos(fineRad)) + Math.abs(finalH * Math.sin(fineRad));
+      const boxH = Math.abs(finalW * Math.sin(fineRad)) + Math.abs(finalH * Math.cos(fineRad));
+
+      // 이미지의 마지막 1픽셀이 종이 외곽선과 인접할 때까지 허용
+      // maxShiftX = (canvasW + boxW)/2 - 1px
+      // maxOffsetX = (maxShiftX / canvasW) * 100
+      const maxOffsetX = Math.max(10, Math.round((((canvasW + boxW) / 2 - 1) / canvasW * 100) * 10) / 10);
+      const maxOffsetY = Math.max(10, Math.round((((canvasH + boxH) / 2 - 1) / canvasH * 100) * 10) / 10);
+
+      return { maxOffsetX, maxOffsetY };
+    }
