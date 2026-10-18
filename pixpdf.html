@@ -1728,32 +1728,57 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 6px;
-      padding: 4px 6px;
+      gap: 8px;
+      padding: 5px 8px;
       background: var(--bg-card-sub, #f8fafc);
       border: 1px solid var(--border-light, #e2e8f0);
       border-radius: 6px;
-      margin-top: 2px;
+      margin-top: 3px;
     }
     .paper-rot-label {
-      font-size: 11.5px;
-      font-weight: 600;
-      color: var(--text-main);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sub);
       white-space: nowrap;
+      flex-shrink: 0;
     }
     .paper-rot-controls {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
       flex: 1;
       justify-content: flex-end;
+    }
+    .btn-rot-paper {
+      height: 23px;
+      padding: 0 7px;
+      font-size: 11px;
+      font-weight: 600;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--text-main);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      white-space: nowrap;
+      line-height: 1;
+      transition: all 0.15s ease;
+    }
+    .btn-rot-paper:hover {
+      background: var(--primary-light, #f0fdfa);
+      color: var(--primary);
+      border-color: var(--primary);
     }
     .paper-rot-val {
       font-size: 11.5px;
       font-weight: 700;
       color: var(--primary);
-      min-width: 24px;
+      min-width: 22px;
       text-align: right;
+      padding-left: 2px;
     }
 
     /* 가운데 창 메인 뷰어 줌 버튼 & 배율 표시 */
@@ -1784,14 +1809,11 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 42px;
-      padding: 2px 5px;
-      font-size: 11.5px;
+      min-width: 38px;
+      padding: 0 4px;
+      font-size: 12px;
       font-weight: 700;
       color: var(--primary);
-      background: rgba(15, 118, 110, 0.08);
-      border: 1px solid rgba(15, 118, 110, 0.2);
-      border-radius: 4px;
       text-align: center;
       user-select: none;
     }
@@ -1909,9 +1931,9 @@
           </div>
         <div class="viewer-actions viewer-zoom-group">
           <button type="button" class="btn-tool-sm" title="화면 확대 (Ctrl+휠 위)" onclick="adjustZoom(0.15)">확대</button>
-          <span id="viewerZoomBadge" class="viewer-zoom-badge" title="현재 배율">100%</span>
           <button type="button" class="btn-tool-sm" title="화면 축소 (Ctrl+휠 아래)" onclick="adjustZoom(-0.15)">축소</button>
           <button type="button" class="btn-tool-sm" title="화면 배율 100% 리셋" onclick="resetZoom()">리셋</button>
+          <span id="viewerZoomBadge" class="viewer-zoom-badge" title="현재 배율">100%</span>
         </div>
       </div>
       <div class="viewer-viewport" id="viewerViewport">
@@ -2002,11 +2024,9 @@
                   <option value="20">20px (넓음)</option>
                 </select>
               </div>
-              <div class="field-item" id="grpTransparentBgControl" style="display: flex; align-items: flex-end; padding-bottom: 2px;">
-                <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 500; color: var(--text-main); margin: 0; user-select: none;" title="PNG 저장 시 남는 여백을 투명하게 처리합니다">
-                  <input type="checkbox" id="chkTransparentBgControl" checked onchange="onTransparentBgChange(this.checked)" style="width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; margin: 0;">
-                  <span>투명 배경</span>
-                </label>
+              <div class="field-item" id="grpTransparentBgControl" style="cursor: pointer;" onclick="const chk = document.getElementById('chkTransparentBgControl'); if (chk && event.target !== chk) { chk.checked = !chk.checked; onTransparentBgChange(chk.checked); }">
+                <label id="lblTransparentBg" for="chkTransparentBgControl" title="PNG 저장 시 남는 여백을 투명하게 처리합니다" style="cursor: pointer;">투명 배경</label>
+                <input type="checkbox" id="chkTransparentBgControl" checked onchange="onTransparentBgChange(this.checked)" style="width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; margin: 0;">
               </div>
             </div>
 
@@ -2014,9 +2034,9 @@
             <div class="paper-rot-bar">
               <span class="paper-rot-label" title="바탕 종이 자체를 90도 회전합니다 (내용물 이미지는 유지)">용지 회전</span>
               <div class="paper-rot-controls">
-                <button type="button" class="btn-rot-mini" title="종이 반시계 방향 90도 회전" onclick="rotatePageByDelta(-90)">⟲ -90°</button>
-                <button type="button" class="btn-rot-mini" title="종이 0도 정방향 초기화" onclick="rotatePageTo(0)">0°</button>
-                <button type="button" class="btn-rot-mini" title="종이 시계 방향 90도 회전" onclick="rotatePageByDelta(90)">⟳ +90°</button>
+                <button type="button" class="btn-rot-paper" title="종이 반시계 방향 90도 회전" onclick="rotatePageByDelta(-90)">⟲ -90°</button>
+                <button type="button" class="btn-rot-paper" title="종이 0도 정방향 초기화" onclick="rotatePageTo(0)">0°</button>
+                <button type="button" class="btn-rot-paper" title="종이 시계 방향 90도 회전" onclick="rotatePageByDelta(90)">⟳ +90°</button>
                 <span id="lblPageRotVal" class="paper-rot-val">0°</span>
               </div>
             </div>
@@ -2364,7 +2384,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.9.4 (티커/히스토리 정리 및 객체 안내창 이전, 뷰어 줌 도구 개선, 투시변환 핀-왜곡 한계 완벽 고정, 용지 회전 1줄화)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.9.5 (투시변환 25% 추가 축소, 줌 배율 뱃지 순서 및 무배경 일관화, 용지 회전 가로 정렬, 투명 배경 라벨 일체화)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -5601,13 +5621,13 @@ const modal = document.getElementById('modalPdfPicker');
 
       // [스마트 다이내믹 뷰포트]
       // 1) 평상시 (투시변환 OFF): 스테이지를 시원하게 채워 용지와 이미지를 크게 열람 (여백 최소화 14px)
-      // 2) 투시변환 ON: 핀을 용지 밖으로 넓게 당길 수 있도록 용지를 약 65~70% 크기로 축소하고 회색 작업 영역을 넉넉히 확보!
+      // 2) 투시변환 ON: 핀을 용지 밖으로 넓게 당길 수 있도록 기존보다 25% 더 축소하여 회색 작업 영역을 대폭 확장!
       let maxBoxW, maxBoxH;
       if (isPerspectiveActive) {
-        const marginX = Math.max(22, Math.round(stageW * 0.18));
-        const marginY = Math.max(26, Math.round(stageH * 0.18));
-        maxBoxW = Math.max(80, stageW - marginX * 2);
-        maxBoxH = Math.max(90, stageH - marginY * 2);
+        const prevBoxW = Math.max(70, stageW - Math.max(22, Math.round(stageW * 0.18)) * 2);
+        const prevBoxH = Math.max(80, stageH - Math.max(26, Math.round(stageH * 0.18)) * 2);
+        maxBoxW = Math.max(50, Math.round(prevBoxW * 0.75));
+        maxBoxH = Math.max(60, Math.round(prevBoxH * 0.75));
       } else {
         maxBoxW = Math.max(100, stageW - 14);
         maxBoxH = Math.max(120, stageH - 14);
