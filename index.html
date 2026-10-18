@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
@@ -22,7 +22,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/utif/3.1.0/UTIF.min.js"></script>
   <style>
-    :root {
+  
+:root {
       --primary: #0f766e;
       --primary-hover: #115e59;
       --primary-light: #ccfbf1;
@@ -1838,6 +1839,8 @@
         min-width: 260px !important;
       }
     }
+
+  
   </style>
 </head>
 <body>
@@ -2384,11 +2387,16 @@
   <div id="printContainer"></div>
 
   <script>
+  
+    // ==========================================================================
+    // [MODULE] 01_state.js
+    // ==========================================================================
+
     const isHttpEnv = window.location.protocol.startsWith('http');
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.9.9 (좌측 썸네일·가운데 뷰어·우측 프리뷰 전 창 초고해상도 렌더링 복원, 모바일 및 고해상도 가독성 극대화)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.10.0 (기능별/목적별 모듈 분리 및 원클릭 오프라인 단일 파일 자동 번들러 구축)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -2538,6 +2546,11 @@
         st.textContent = text;
       }
     }
+
+
+    // ==========================================================================
+    // [MODULE] 02_transform.js
+    // ==========================================================================
 
     // 용지(종이) 회전 함수
     function rotatePageByDelta(delta) {
@@ -2862,6 +2875,12 @@
     }
 
     // PDF 페이지의 비트맵 캔버스를 보장하여 이미지와 100% 동일한 편집 파이프라인(회전, 용지 맞춤, 대두/소두, 투시변환) 제공
+
+
+    // ==========================================================================
+    // [MODULE] 03_render.js
+    // ==========================================================================
+
     async function ensureItemCanvas(item) {
       if (!item) return null;
       if (item.type === 'image') return item.imgObj;
@@ -3332,6 +3351,11 @@
 
       onSettingChange('rot_updated', rot);
     }
+
+
+    // ==========================================================================
+    // [MODULE] 04_file_mgr.js
+    // ==========================================================================
 
     function onGlobalPageSizeChange(val) {
       const grp = document.getElementById('groupGlobalCustomPx');
@@ -4977,6 +5001,12 @@ const modal = document.getElementById('modalPdfPicker');
 
     // 2열 메인 뷰어 캔버스 렌더링 (용지 규격 + 여백 + 회전 + 맞춤 비율 정밀 반영)
     let currentRenderTask = null;
+
+
+    // ==========================================================================
+    // [MODULE] 05_viewer.js
+    // ==========================================================================
+
     async function renderMainViewerCanvas(index) {
       const canvas = document.getElementById('mainViewerCanvas');
       if (!canvas) return;
@@ -5212,6 +5242,12 @@ const modal = document.getElementById('modalPdfPicker');
     let pinDragStartCornerVal = { x: 0, y: 0 };
 
     // 메인 뷰어 캔버스 상의 이미지 4개 코너 절대 좌표(캔버스 픽셀 단위) 산출
+
+
+    // ==========================================================================
+    // [MODULE] 06_perspective_loupe.js
+    // ==========================================================================
+
     function getCornerCanvasPoints(item, cfg, canvasW, canvasH) {
       if (!item || !item.imgObj) return null;
       const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
@@ -5995,6 +6031,12 @@ const modal = document.getElementById('modalPdfPicker');
     }
 
     // [핵심] 통합 듀얼 저장 라우터 (PDF 저장 vs Img 저장)
+
+
+    // ==========================================================================
+    // [MODULE] 07_export.js
+    // ==========================================================================
+
     async function executeActionSave(targetType) {
       if (targetType === 'img') {
         await executeSaveSplitImages();
@@ -6373,6 +6415,11 @@ const modal = document.getElementById('modalPdfPicker');
       isAborted = true;
       document.getElementById('btnAbort').disabled = true;
     }
+
+
+    // ==========================================================================
+    // [MODULE] 08_events.js
+    // ==========================================================================
 
     // -------------------------------------------------------------
     // 전역 Ctrl + 마우스 휠 분기 처리 (PC 모드 전용 창별 독립 조절 / 브라우저 전체 확대 차단)
@@ -7079,6 +7126,8 @@ const modal = document.getElementById('modalPdfPicker');
     const initInsertInput = document.getElementById('insertFileInput');
     if (initInsertInput) initInsertInput.value = '';
     refreshWorkspaceDisplay();
+
+
   </script>
 </body>
 </html>
