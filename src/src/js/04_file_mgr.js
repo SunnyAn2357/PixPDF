@@ -623,7 +623,7 @@
 
     // 모바일 설정 패널 토글 (히스토리 동기화 지원)
     function toggleMobileControl(show, syncHistory = true) {
-      if (window.innerWidth > 768) return;
+      if (window.innerWidth > 860) return;
       const col = document.getElementById('colControl');
       if (!col) return;
       if (show) {
