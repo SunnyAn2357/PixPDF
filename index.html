@@ -1708,78 +1708,92 @@
       border-color: #0f766e;
     }
 
-    /* 왼쪽 창 흐르는 자막 바 (Ticker) - 다크 틸/슬레이트 프로페셔널 바 */
-    .thumb-ticker-bar {
-      height: 25px;
-      background: linear-gradient(90deg, #042024 0%, #062b2f 100%);
-      border-bottom: 1px solid rgba(0, 0, 0, 0.35);
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    /* 오른쪽 창 객체 설정 상태 안내 텍스트 (리모콘과 객체 회전 사이) */
+    .object-status-hint {
+      padding: 3px 6px;
+      margin: 4px 0 6px 0;
+      font-size: 11px;
+      color: var(--text-muted, #64748b);
+      background: rgba(0, 0, 0, 0.025);
+      border-radius: 4px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: none;
+    }
+
+    /* 1행 용지 회전 바 */
+    .paper-rot-bar {
       display: flex;
       align-items: center;
-      padding: 0 8px;
-      gap: 7px;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 4px 6px;
+      background: var(--bg-card-sub, #f8fafc);
+      border: 1px solid var(--border-light, #e2e8f0);
+      border-radius: 6px;
+      margin-top: 2px;
+    }
+    .paper-rot-label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+    }
+    .paper-rot-controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+      justify-content: flex-end;
+    }
+    .paper-rot-val {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--primary);
+      min-width: 24px;
+      text-align: right;
+    }
+
+    /* 가운데 창 메인 뷰어 줌 버튼 & 배율 표시 */
+    .viewer-zoom-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-tool-sm {
+      padding: 3px 8px;
+      font-size: 11.5px;
+      font-weight: 600;
+      border: 1px solid var(--border-light);
+      background: #ffffff;
+      color: var(--text-main);
+      border-radius: 4px;
       cursor: pointer;
       user-select: none;
-      transition: background 0.15s ease;
-      overflow: hidden;
-      flex-shrink: 0;
+      transition: all 0.15s ease;
+      line-height: 1.2;
     }
-    .thumb-ticker-bar:hover {
-      background: linear-gradient(90deg, #072d32 0%, #0c3e44 100%);
+    .btn-tool-sm:hover {
+      background: var(--primary-light, #f0fdfa);
+      border-color: var(--primary);
+      color: var(--primary);
     }
-    .thumb-ticker-bar:hover .ticker-text {
-      animation-play-state: paused;
-    }
-    .ticker-icon {
+    .viewer-zoom-badge {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      color: #2dd4bf;
-      flex-shrink: 0;
-    }
-    .ticker-track {
-      flex: 1;
-      overflow: hidden;
-      white-space: nowrap;
-      position: relative;
-      mask-image: linear-gradient(90deg, transparent 0%, black 8px, black calc(100% - 8px), transparent 100%);
-      -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 8px, black calc(100% - 8px), transparent 100%);
-    }
-    .ticker-text {
-      display: inline-block;
-      white-space: nowrap;
+      min-width: 42px;
+      padding: 2px 5px;
       font-size: 11.5px;
-      font-weight: 600;
-      color: #99f6e4;
-      letter-spacing: -0.2px;
-      padding-left: 4px;
-      transition: opacity 0.2s ease;
-    }
-
-    /* 작업 히스토리 모달 항목 */
-    .history-log-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      padding: 8px 10px;
-      border-radius: 6px;
-      background: #ffffff;
-      border: 1px solid var(--border-light);
-      font-size: 12px;
-      line-height: 1.4;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-    }
-    .history-log-time {
-      font-size: 10.5px;
       font-weight: 700;
-      color: var(--text-muted);
-      flex-shrink: 0;
-      padding-top: 1px;
-    }
-    .history-log-text {
-      flex: 1;
-      color: var(--text-main);
-      word-break: break-all;
+      color: var(--primary);
+      background: rgba(15, 118, 110, 0.08);
+      border: 1px solid rgba(15, 118, 110, 0.2);
+      border-radius: 4px;
+      text-align: center;
+      user-select: none;
     }
 
     /* 데스크톱 크기 축소 시 가운데 창 가변 & 우측창 고정 (861px 이상 데스크톱 전용) */
@@ -1879,18 +1893,6 @@
         </div>
       </div>
       
-      <!-- 흐르는 자막 메시지 바 (클릭 시 히스토리 모달 열림) -->
-      <div class="thumb-ticker-bar" id="thumbTickerBar" onclick="openHistoryLogModal()" title="클릭하면 지금까지의 작업 기록(History)을 볼 수 있습니다">
-        <span class="ticker-icon" title="작업 알림">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-          </svg>
-        </span>
-        <div class="ticker-track">
-          <span class="ticker-text" id="statusTickerText">준비 완료</span>
-        </div>
-      </div>
       <div id="thumbList" class="thumb-list"></div>
     </div>
 
@@ -1905,10 +1907,11 @@
           <span id="viewerPageIndicator" style="font-size:13.5px; font-weight:700;">- / -</span>
           <button class="btn-tool" id="btnNextPage" onclick="navigateViewer(1)">다음 ▶</button>
           </div>
-        <div class="viewer-actions">
-          <button class="btn-tool" onclick="adjustZoom(0.15)">확대</button>
-          <button class="btn-tool" onclick="adjustZoom(-0.15)">축소</button>
-          <button class="btn-tool" onclick="resetZoom()">100%</button>
+        <div class="viewer-actions viewer-zoom-group">
+          <button type="button" class="btn-tool-sm" title="화면 확대 (Ctrl+휠 위)" onclick="adjustZoom(0.15)">확대</button>
+          <span id="viewerZoomBadge" class="viewer-zoom-badge" title="현재 배율">100%</span>
+          <button type="button" class="btn-tool-sm" title="화면 축소 (Ctrl+휠 아래)" onclick="adjustZoom(-0.15)">축소</button>
+          <button type="button" class="btn-tool-sm" title="화면 배율 100% 리셋" onclick="resetZoom()">리셋</button>
         </div>
       </div>
       <div class="viewer-viewport" id="viewerViewport">
@@ -1999,25 +2002,22 @@
                   <option value="20">20px (넓음)</option>
                 </select>
               </div>
-              <div class="field-item" id="grpTransparentBgControl">
-                <label title="PNG 저장 시 남는 여백을 투명하게 처리합니다">배경</label>
-                <label class="btn-toggle-trans" title="PNG 저장 시 투명 배경 처리">
-                  <input type="checkbox" id="chkTransparentBgControl" checked onchange="onTransparentBgChange(this.checked)">
+              <div class="field-item" id="grpTransparentBgControl" style="display: flex; align-items: flex-end; padding-bottom: 2px;">
+                <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; font-weight: 500; color: var(--text-main); margin: 0; user-select: none;" title="PNG 저장 시 남는 여백을 투명하게 처리합니다">
+                  <input type="checkbox" id="chkTransparentBgControl" checked onchange="onTransparentBgChange(this.checked)" style="width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; margin: 0;">
                   <span>투명 배경</span>
                 </label>
               </div>
             </div>
 
-            <!-- 3행: 용지 회전 -->
-            <div class="field-item-full">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-                <label title="바탕 종이 자체를 90도 회전합니다 (내용물 이미지는 유지)">용지 회전</label>
-                <span id="lblPageRotVal" style="font-size: 11px; font-weight: 700; color: var(--primary);">0°</span>
-              </div>
-              <div class="btn-row-3">
-                <button type="button" class="btn-tool" title="종이 반시계 방향 90도 회전" onclick="rotatePageByDelta(-90)">⟲ -90°</button>
-                <button type="button" class="btn-tool" title="종이 0도 정방향 초기화" onclick="rotatePageTo(0)">0° 초기화</button>
-                <button type="button" class="btn-tool" title="종이 시계 방향 90도 회전" onclick="rotatePageByDelta(90)">⟳ +90°</button>
+            <!-- 3행: 용지 회전 (1줄 바) -->
+            <div class="paper-rot-bar">
+              <span class="paper-rot-label" title="바탕 종이 자체를 90도 회전합니다 (내용물 이미지는 유지)">용지 회전</span>
+              <div class="paper-rot-controls">
+                <button type="button" class="btn-rot-mini" title="종이 반시계 방향 90도 회전" onclick="rotatePageByDelta(-90)">⟲ -90°</button>
+                <button type="button" class="btn-rot-mini" title="종이 0도 정방향 초기화" onclick="rotatePageTo(0)">0°</button>
+                <button type="button" class="btn-rot-mini" title="종이 시계 방향 90도 회전" onclick="rotatePageByDelta(90)">⟳ +90°</button>
+                <span id="lblPageRotVal" class="paper-rot-val">0°</span>
               </div>
             </div>
           </div>
@@ -2119,6 +2119,11 @@
                   </div>
                 </div>
               </div>
+            </div>
+
+            <!-- 안내 상태 메시지 (기존 티커 대체: 리모콘과 객체 회전 사이 은은한 1줄 회색조 텍스트) -->
+            <div class="object-status-hint" id="objectStatusHint">
+              <span id="statusHintText">준비 완료</span>
             </div>
 
             <!-- 하단 1행 회전 바: [⟲] [0°] [⟳] ──[슬라이더]── 0° -->
@@ -2348,31 +2353,6 @@
       </div>
   </div>
 
-  <!-- [작업 히스토리 모달] -->
-  <div class="modal-overlay" id="modalHistoryLog" onclick="onHistoryLogBackdropClick(event)">
-    <div class="modal-dialog" style="max-width: 520px; width: 92%;">
-      <div class="modal-header">
-        <h3 style="display: flex; align-items: center; gap: 8px;">
-          <span>📜 작업 기록 (History)</span>
-          <span id="historyLogCountBadge" style="font-size: 11px; padding: 2px 7px; border-radius: 12px; background: rgba(15, 118, 110, 0.1); color: var(--primary); font-weight: 700;">0개 기록</span>
-        </h3>
-        <button class="modal-close-btn" onclick="closeHistoryLogModal(true)">✕</button>
-      </div>
-      <div style="padding: 10px 16px 6px 16px; font-size: 12px; color: var(--text-muted); border-bottom: 1px solid var(--border-light);">
-        현재 세션에서 수행된 파일 및 편집 조작 기록입니다. (최신순)
-      </div>
-      <div class="modal-body" style="padding: 12px 16px; max-height: 55vh; overflow-y: auto;">
-        <div id="historyLogListContainer" style="display: flex; flex-direction: column; gap: 8px;">
-          <!-- 동적 히스토리 로그 항목 -->
-        </div>
-      </div>
-      <div class="modal-footer" style="justify-content: space-between;">
-        <button class="btn-tool" onclick="clearHistoryLogs()" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">기록 비우기</button>
-        <button class="btn-tool" onclick="closeHistoryLogModal(true)">닫기</button>
-      </div>
-    </div>
-  </div>
-
   <!-- [앱 전용 플로팅 토스트] 더블 탭 종료 및 빠른 알림 -->
   <div id="appToast" class="app-toast"></div>
 
@@ -2384,7 +2364,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.9.3 (창별 Ctrl+휠 독립 줌, 미리보기 이동 회색박스 제한 및 터치 이동 유지 버그 해결, 투시변환 핀-왜곡 한계 일체화)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.9.4 (티커/히스토리 정리 및 객체 안내창 이전, 뷰어 줌 도구 개선, 투시변환 핀-왜곡 한계 완벽 고정, 용지 회전 1줄화)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -2523,90 +2503,16 @@
       }
     };
 
-    // 하위 호환성 및 기존 함수 연동을 위한 양방향 Proxy
-    // 작업 히스토리 및 상태 자막 시스템
-    function updateStatusMsg(text, icon = '📝') {
-      const now = new Date();
-      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-      const entry = { time: timeStr, text: text, icon: icon, ts: Date.now() };
-
-      if (!docState.historyLogs) docState.historyLogs = [];
-      docState.historyLogs.unshift(entry);
-      if (docState.historyLogs.length > 50) docState.historyLogs.pop();
-
-      const tickerText = document.getElementById('statusTickerText');
-      if (tickerText) {
-        tickerText.textContent = text;
-        tickerText.style.animation = 'none';
-        void tickerText.offsetWidth; // reflow to restart marquee
-        tickerText.style.animation = '';
+    // 작업 상태 안내 메시지 (오른쪽 창 리모콘 밑 안내창 갱신)
+    function updateStatusMsg(text) {
+      const hint = document.getElementById('statusHintText');
+      if (hint) {
+        hint.textContent = text;
       }
       const st = document.getElementById('statusText');
       if (st) {
         st.textContent = text;
       }
-    }
-
-    function openHistoryLogModal() {
-      renderHistoryLogList();
-      const modal = document.getElementById('modalHistoryLog');
-      if (modal) {
-        modal.classList.add('show');
-        try { history.pushState({ appLayer: 'historyLog' }, ''); } catch (err) {}
-      }
-    }
-
-    function closeHistoryLogModal(syncHistory = true) {
-      const modal = document.getElementById('modalHistoryLog');
-      if (modal && modal.classList.contains('show')) {
-        modal.classList.remove('show');
-        if (syncHistory && history.state && (history.state.appLayer === 'historyLog' || history.state.modal === 'historyLog')) {
-          isClosingLayerProgrammatically = true;
-          history.back();
-        }
-      }
-    }
-
-    function onHistoryLogBackdropClick(e) {
-      if (e.target.id === 'modalHistoryLog') {
-        closeHistoryLogModal(true);
-      }
-    }
-
-    function renderHistoryLogList() {
-      const container = document.getElementById('historyLogListContainer');
-      const badge = document.getElementById('historyLogCountBadge');
-      if (!container) return;
-
-      if (!docState.historyLogs) docState.historyLogs = [];
-      if (badge) badge.textContent = `${docState.historyLogs.length}개 기록`;
-
-      if (docState.historyLogs.length === 0) {
-        container.innerHTML = `
-          <div style="text-align: center; padding: 35px 10px; color: var(--text-muted); font-size: 13px;">
-            <div style="font-size: 26px; margin-bottom: 6px;">📜</div>
-            아직 기록된 작업 내역이 없습니다.
-          </div>
-        `;
-        return;
-      }
-
-      let html = '';
-      docState.historyLogs.forEach(item => {
-        html += `
-          <div class="history-log-item">
-            <span class="history-log-time">${item.time}</span>
-            <span style="font-size: 13px;">${item.icon}</span>
-            <span class="history-log-text">${item.text}</span>
-          </div>
-        `;
-      });
-      container.innerHTML = html;
-    }
-
-    function clearHistoryLogs() {
-      docState.historyLogs = [];
-      renderHistoryLogList();
     }
 
     // 용지(종이) 회전 함수
@@ -5087,6 +4993,8 @@ const modal = document.getElementById('modalPdfPicker');
     function applyZoom() {
       const wrap = document.getElementById('viewerWrap');
       if (wrap) wrap.style.transform = `scale(${docState.zoom})`;
+      const badge = document.getElementById('viewerZoomBadge');
+      if (badge) badge.textContent = `${Math.round(docState.zoom * 100)}%`;
       if (isPerspectiveActive) updateCornerPins();
     }
 
@@ -5337,11 +5245,50 @@ const modal = document.getElementById('modalPdfPicker');
         tr: toCanv(pLocal.tr),
         br: toCanv(pLocal.br),
         bl: toCanv(pLocal.bl),
+        baseLocal: {
+          tl: { x: dx - trapTopOffset, y: dy },
+          tr: { x: dx + dw + trapTopOffset, y: dy },
+          br: { x: dx + dw + trapBotOffset, y: dy + dh },
+          bl: { x: dx - trapBotOffset, y: dy + dh }
+        },
+        scalePxX,
+        scalePxY,
         dw,
         dh,
         cx,
         cy,
         rotRad
+      };
+    }
+
+    // 미니 프리뷰 스테이지(회색 박스) 좌표로부터 투시 모서리 좌표 역산 (스테이지 테두리 밖 이탈 원천 방어)
+    function calcCornerFromMiniStagePos(pts, cornerKey, stageX, stageY, miniSheet, stageEl, canvas) {
+      if (!pts || !pts.baseLocal || !pts.baseLocal[cornerKey]) return { x: 0, y: 0 };
+      const pinPad = 11;
+      const stageW = stageEl ? stageEl.offsetWidth : 150;
+      const stageH = stageEl ? stageEl.offsetHeight : 180;
+      const clampedX = Math.max(pinPad, Math.min(stageW - pinPad, stageX));
+      const clampedY = Math.max(pinPad, Math.min(stageH - pinPad, stageY));
+
+      const mScaleX = miniSheet.offsetWidth / canvas.width;
+      const mScaleY = miniSheet.offsetHeight / canvas.height;
+      const offX = miniSheet.offsetLeft;
+      const offY = miniSheet.offsetTop;
+
+      const canvX = (clampedX - offX) / mScaleX;
+      const canvY = (clampedY - offY) / mScaleY;
+
+      const cos = Math.cos(-pts.rotRad);
+      const sin = Math.sin(-pts.rotRad);
+      const dCanvX = canvX - pts.cx;
+      const dCanvY = canvY - pts.cy;
+      const localX = dCanvX * cos - dCanvY * sin;
+      const localY = dCanvX * sin + dCanvY * cos;
+      const base = pts.baseLocal[cornerKey];
+
+      return {
+        x: Math.round((localX - base.x) / pts.scalePxX),
+        y: Math.round((localY - base.y) / pts.scalePxY)
       };
     }
 
@@ -6353,67 +6300,55 @@ const modal = document.getElementById('modalPdfPicker');
           const pts = getCornerCanvasPoints(item, cfg, canvas.width, canvas.height);
           if (!pts || !pts.dw || !pts.dh) return;
 
-          let scaleX, scaleY;
-          let deltaScreenX, deltaScreenY;
-
-          let curClientX = e.clientX;
-          let curClientY = e.clientY;
-
           if (isDraggingMiniPin) {
             const stageEl = document.getElementById('previewSheetStage');
-            if (stageEl) {
-              const sRect = stageEl.getBoundingClientRect();
-              const pinPad = 11;
-              curClientX = Math.max(sRect.left + pinPad, Math.min(sRect.right - pinPad, curClientX));
-              curClientY = Math.max(sRect.top + pinPad, Math.min(sRect.bottom - pinPad, curClientY));
-            }
             const miniSheet = document.getElementById('miniSheet');
-            const dispW = miniSheet ? (miniSheet.offsetWidth || 125) : 125;
-            const dispH = miniSheet ? (miniSheet.offsetHeight || 150) : 150;
-            scaleX = dispW / canvas.width;
-            scaleY = dispH / canvas.height;
-            deltaScreenX = curClientX - pinDragStartMouseX;
-            deltaScreenY = curClientY - pinDragStartMouseY;
+            if (stageEl && miniSheet) {
+              const sRect = stageEl.getBoundingClientRect();
+              const stageX = e.clientX - sRect.left;
+              const stageY = e.clientY - sRect.top;
+              if (!cfg.corners) {
+                cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+              }
+              cfg.corners[activeDraggingPinKey] = calcCornerFromMiniStagePos(pts, activeDraggingPinKey, stageX, stageY, miniSheet, stageEl, canvas);
+            }
           } else {
-            const cRect = canvas.getBoundingClientRect();
-            const pinPad = 14;
-            curClientX = Math.max(cRect.left + pinPad, Math.min(cRect.right - pinPad, curClientX));
-            curClientY = Math.max(cRect.top + pinPad, Math.min(cRect.bottom - pinPad, curClientY));
+            // 가운데 창(메인 뷰어): 용지 밖으로 자유롭게 핀 이동 지원 (캔버스 클램프 완전 제거)
             const dispW = canvas.clientWidth || canvas.offsetWidth;
             const dispH = canvas.clientHeight || canvas.offsetHeight;
             if (!dispW || !dispH) return;
-            scaleX = dispW / canvas.width;
-            scaleY = dispH / canvas.height;
+            const scaleX = dispW / canvas.width;
+            const scaleY = dispH / canvas.height;
             const zoom = docState.zoom || 1.0;
-            deltaScreenX = (curClientX - pinDragStartMouseX) / zoom;
-            deltaScreenY = (curClientY - pinDragStartMouseY) / zoom;
+            const deltaScreenX = (e.clientX - pinDragStartMouseX) / zoom;
+            const deltaScreenY = (e.clientY - pinDragStartMouseY) / zoom;
+
+            const deltaCanvX = deltaScreenX / scaleX;
+            const deltaCanvY = deltaScreenY / scaleY;
+
+            // 이미지 회전 각도 역변환 (Unrotate)
+            const cos = Math.cos(-pts.rotRad);
+            const sin = Math.sin(-pts.rotRad);
+            const deltaLocalX = deltaCanvX * cos - deltaCanvY * sin;
+            const deltaLocalY = deltaCanvX * sin + deltaCanvY * cos;
+
+            const srcW = item.imgObj?.naturalWidth || item.imgObj?.width || pts.dw;
+            const srcH = item.imgObj?.naturalHeight || item.imgObj?.height || pts.dh;
+            const scalePxX = pts.dw / srcW;
+            const scalePxY = pts.dh / srcH;
+
+            // 원본 이미지 픽셀 단위로 환산
+            const deltaOrigPxX = Math.round(deltaLocalX / scalePxX);
+            const deltaOrigPxY = Math.round(deltaLocalY / scalePxY);
+
+            if (!cfg.corners) {
+              cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+            }
+            cfg.corners[activeDraggingPinKey] = {
+              x: pinDragStartCornerVal.x + deltaOrigPxX,
+              y: pinDragStartCornerVal.y + deltaOrigPxY
+            };
           }
-
-          const deltaCanvX = deltaScreenX / scaleX;
-          const deltaCanvY = deltaScreenY / scaleY;
-
-          // 이미지 회전 각도 역변환 (Unrotate)
-          const cos = Math.cos(-pts.rotRad);
-          const sin = Math.sin(-pts.rotRad);
-          const deltaLocalX = deltaCanvX * cos - deltaCanvY * sin;
-          const deltaLocalY = deltaCanvX * sin + deltaCanvY * cos;
-
-          const srcW = item.imgObj?.naturalWidth || item.imgObj?.width || pts.dw;
-          const srcH = item.imgObj?.naturalHeight || item.imgObj?.height || pts.dh;
-          const scalePxX = pts.dw / srcW;
-          const scalePxY = pts.dh / srcH;
-
-          // 원본 이미지 픽셀 단위로 환산
-          const deltaOrigPxX = Math.round(deltaLocalX / scalePxX);
-          const deltaOrigPxY = Math.round(deltaLocalY / scalePxY);
-
-          if (!cfg.corners) {
-            cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
-          }
-          cfg.corners[activeDraggingPinKey] = {
-            x: pinDragStartCornerVal.x + deltaOrigPxX,
-            y: pinDragStartCornerVal.y + deltaOrigPxY
-          };
 
           updateViewerEdits(curIdx);
           updateMiniPreview();
@@ -6555,66 +6490,54 @@ const modal = document.getElementById('modalPdfPicker');
           const pts = getCornerCanvasPoints(item, cfg, canvas.width, canvas.height);
           if (!pts || !pts.dw || !pts.dh) return;
 
-          let scaleX, scaleY;
-          let deltaScreenX, deltaScreenY;
-
-          let curTouchX = e.touches[0].clientX;
-          let curTouchY = e.touches[0].clientY;
-
           if (isDraggingMiniPin) {
             const stageEl = document.getElementById('previewSheetStage');
-            if (stageEl) {
-              const sRect = stageEl.getBoundingClientRect();
-              const pinPad = 11;
-              curTouchX = Math.max(sRect.left + pinPad, Math.min(sRect.right - pinPad, curTouchX));
-              curTouchY = Math.max(sRect.top + pinPad, Math.min(sRect.bottom - pinPad, curTouchY));
-            }
             const miniSheet = document.getElementById('miniSheet');
-            const dispW = miniSheet ? (miniSheet.offsetWidth || 125) : 125;
-            const dispH = miniSheet ? (miniSheet.offsetHeight || 150) : 150;
-            scaleX = dispW / canvas.width;
-            scaleY = dispH / canvas.height;
-            deltaScreenX = curTouchX - pinDragStartMouseX;
-            deltaScreenY = curTouchY - pinDragStartMouseY;
+            if (stageEl && miniSheet) {
+              const sRect = stageEl.getBoundingClientRect();
+              const stageX = e.touches[0].clientX - sRect.left;
+              const stageY = e.touches[0].clientY - sRect.top;
+              if (!cfg.corners) {
+                cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+              }
+              cfg.corners[activeDraggingPinKey] = calcCornerFromMiniStagePos(pts, activeDraggingPinKey, stageX, stageY, miniSheet, stageEl, canvas);
+            }
           } else {
-            const cRect = canvas.getBoundingClientRect();
-            const pinPad = 14;
-            curTouchX = Math.max(cRect.left + pinPad, Math.min(cRect.right - pinPad, curTouchX));
-            curTouchY = Math.max(cRect.top + pinPad, Math.min(cRect.bottom - pinPad, curTouchY));
+            // 가운데 창(메인 뷰어): 용지 밖으로 자유롭게 핀 이동 지원 (캔버스 클램프 완전 제거)
             const dispW = canvas.clientWidth || canvas.offsetWidth;
             const dispH = canvas.clientHeight || canvas.offsetHeight;
             if (!dispW || !dispH) return;
-            scaleX = dispW / canvas.width;
-            scaleY = dispH / canvas.height;
+            const scaleX = dispW / canvas.width;
+            const scaleY = dispH / canvas.height;
             const zoom = docState.zoom || 1.0;
-            deltaScreenX = (curTouchX - pinDragStartMouseX) / zoom;
-            deltaScreenY = (curTouchY - pinDragStartMouseY) / zoom;
+            const deltaScreenX = (e.touches[0].clientX - pinDragStartMouseX) / zoom;
+            const deltaScreenY = (e.touches[0].clientY - pinDragStartMouseY) / zoom;
+
+            const deltaCanvX = deltaScreenX / scaleX;
+            const deltaCanvY = deltaScreenY / scaleY;
+
+            const cos = Math.cos(-pts.rotRad);
+            const sin = Math.sin(-pts.rotRad);
+            const deltaLocalX = deltaCanvX * cos - deltaCanvY * sin;
+            const deltaLocalY = deltaCanvX * sin + deltaCanvY * cos;
+
+            const srcW = item.imgObj?.naturalWidth || item.imgObj?.width || pts.dw;
+            const srcH = item.imgObj?.naturalHeight || item.imgObj?.height || pts.dh;
+            const scalePxX = pts.dw / srcW;
+            const scalePxY = pts.dh / srcH;
+
+            // 원본 이미지 픽셀 단위로 환산
+            const deltaOrigPxX = Math.round(deltaLocalX / scalePxX);
+            const deltaOrigPxY = Math.round(deltaLocalY / scalePxY);
+
+            if (!cfg.corners) {
+              cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+            }
+            cfg.corners[activeDraggingPinKey] = {
+              x: pinDragStartCornerVal.x + deltaOrigPxX,
+              y: pinDragStartCornerVal.y + deltaOrigPxY
+            };
           }
-
-          const deltaCanvX = deltaScreenX / scaleX;
-          const deltaCanvY = deltaScreenY / scaleY;
-
-          const cos = Math.cos(-pts.rotRad);
-          const sin = Math.sin(-pts.rotRad);
-          const deltaLocalX = deltaCanvX * cos - deltaCanvY * sin;
-          const deltaLocalY = deltaCanvX * sin + deltaCanvY * cos;
-
-          const srcW = item.imgObj?.naturalWidth || item.imgObj?.width || pts.dw;
-          const srcH = item.imgObj?.naturalHeight || item.imgObj?.height || pts.dh;
-          const scalePxX = pts.dw / srcW;
-          const scalePxY = pts.dh / srcH;
-
-          // 원본 이미지 픽셀 단위로 환산
-          const deltaOrigPxX = Math.round(deltaLocalX / scalePxX);
-          const deltaOrigPxY = Math.round(deltaLocalY / scalePxY);
-
-          if (!cfg.corners) {
-            cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
-          }
-          cfg.corners[activeDraggingPinKey] = {
-            x: pinDragStartCornerVal.x + deltaOrigPxX,
-            y: pinDragStartCornerVal.y + deltaOrigPxY
-          };
 
           updateViewerEdits(curIdx);
           updateMiniPreview();
@@ -6719,11 +6642,6 @@ const modal = document.getElementById('modalPdfPicker');
     window.addEventListener('keydown', (e) => {
       // 1. ESC 키: 팝업 모달, 햄버거 메뉴 및 모바일 패널 닫기 (최상위 레이어부터 순차 닫기)
       if (e.key === 'Escape') {
-        const histModal = document.getElementById('modalHistoryLog');
-        if (histModal && histModal.classList.contains('show')) {
-          closeHistoryLogModal(true);
-          return;
-        }
         const fileMgrModal = document.getElementById('modalOpenFilesManager');
         if (fileMgrModal && fileMgrModal.classList.contains('show')) {
           closeOpenFilesManagerModal(true);
@@ -6788,12 +6706,6 @@ const modal = document.getElementById('modalPdfPicker');
         return;
       }
 
-      // 0. 작업 히스토리 모달 닫기
-      const histModal = document.getElementById('modalHistoryLog');
-      if (histModal && histModal.classList.contains('show')) {
-        closeHistoryLogModal(false);
-        return;
-      }
       // 0. 열린 파일 관리 모달 닫기
       const fileMgrModal = document.getElementById('modalOpenFilesManager');
       if (fileMgrModal && fileMgrModal.classList.contains('show')) {
