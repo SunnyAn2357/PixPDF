@@ -141,20 +141,42 @@ flowchart TD
 
 ## 8. 핵심 함수 사전 (Function Dictionary)
 
-| 함수명 | 위치/성격 | 주요 역할 및 메커니즘 |
+| 함수명 | 모듈 파일 (`src/js/`) | 주요 역할 및 메커니즘 |
 | :--- | :--- | :--- |
-| `resolvePaperGeometry` | 용지 기하 연산 | 선택된 규격(A4 등)과 방향에 따른 가로/세로 픽셀 및 종횡비 계산 |
-| `ensureItemCanvas` | 리소스 로더 | PDF 페이지를 2.5x 고해상도 오프스크린 캔버스로 렌더링하여 캐싱 |
-| `drawPaperWithImage` | **마스터 렌더러** | 바탕 용지 위에 여백, 회전, 스케일, 위치, 투시변환을 합성 렌더링 |
-| `renderThumbnailList` | 1열 관리 | 좌측 썸네일 카드 목록 생성 및 800px 고화질 렌더링 트리거 |
-| `updateThumbnailCanvas`| 1열 단일 갱신 | 특정 인덱스의 썸네일 카드 캔버스만 즉시 다시 그리기 |
-| `loadMainViewer` | 2열 관리 | 선택된 인덱스를 2열 메인 뷰어에 로드하고 줌/인디케이터 동기화 |
-| `renderMainViewerCanvas`| 2열 렌더러 | 2열 메인 캔버스에 2000px 초고해상도로 합성 렌더링 |
-| `updateMiniPreview` | 3열 프리뷰 | 2열 캔버스를 3열 미니 시트에 정률 복사하고 실시간 편집 메타 표출 |
-| `updateCornerPins` | 투시변환 | 현재 활성 창(메인 뷰어 또는 미니 시트)의 4개 코너 핀 위치 계산 및 갱신 |
-| `updateMiniPinLoupe` | 돋보기 엔진 | 미니 프리뷰 핀 조작 시 용지 경계와 이미지를 확대한 돋보기 표출 |
-| `updateViewerPinLoupe` | 돋보기 엔진 | 메인 뷰어 핀 조작 시 용지 경계와 이미지를 확대한 돋보기 표출 |
-| `applyZoom` | 뷰어 네비게이션 | 2열 메인 뷰어 확대/축소 배율 적용 및 배지 텍스트 갱신 |
-| `handleDropFiles` | 파일 수집 | 드래그 앤 드롭 또는 파일 선택창으로부터 PDF/이미지 파싱 |
-| `exportImagesAsPdf` | 출력 엔진 | 다중 페이지 합성 캔버스를 단일 PDF 파일로 직렬화하여 저장 |
-| `exportPdfAsImages` | 출력 엔진 | 합성 캔버스들을 개별 이미지로 변환 후 ZIP 압축 다운로드 |
+| `resolvePaperGeometry` | `01_state.js` | 선택된 규격(A4 등)과 방향에 따른 가로/세로 픽셀 및 종횡비 계산 |
+| `drawPerspectiveQuad` | `02_transform.js` | 삼각형 메쉬 분할 기반의 4개 코너 투시 왜곡 실시간 렌더링 |
+| `ensureItemCanvas` | `03_render.js` | PDF 페이지를 2.5x 고해상도 오프스크린 캔버스로 렌더링하여 캐싱 |
+| `drawPaperWithImage` | `03_render.js` | 바탕 용지 위에 여백, 회전, 스케일, 위치, 투시변환을 합성 렌더링 (**마스터 렌더러**) |
+| `updateThumbnailCanvas`| `03_render.js` | 특정 인덱스의 썸네일 카드 캔버스만 즉시 다시 그리기 |
+| `renderThumbnailList` | `04_file_mgr.js` | 좌측 썸네일 카드 목록 생성 및 800px 고화질 렌더링 트리거 |
+| `processFiles` | `04_file_mgr.js` | 드래그 앤 드롭 또는 파일 선택창으로부터 PDF/이미지 파싱 |
+| `openPdfPicker` | `04_file_mgr.js` | PDF 낱장/범위 선택 모달 표출 및 삽입 처리 |
+| `renderMainViewerCanvas`| `05_viewer.js` | 2열 메인 캔버스에 2000px 초고해상도로 합성 렌더링 |
+| `loadMainViewer` | `05_viewer.js` | 선택된 인덱스를 2열 메인 뷰어에 로드하고 줌/인디케이터 동기화 |
+| `applyZoom` | `05_viewer.js` | 2열 메인 뷰어 확대/축소 배율 적용 및 배지 텍스트 갱신 |
+| `updateCornerPins` | `06_perspective_loupe.js` | 현재 활성 창(메인 뷰어 또는 미니 시트)의 4개 코너 핀 위치 계산 및 갱신 |
+| `updateMiniPinLoupe` | `06_perspective_loupe.js` | 미니 프리뷰 핀 조작 시 용지 경계와 이미지를 확대한 돋보기 표출 |
+| `updateViewerPinLoupe` | `06_perspective_loupe.js` | 메인 뷰어 핀 조작 시 용지 경계와 이미지를 확대한 돋보기 표출 |
+| `updateMiniPreview` | `06_perspective_loupe.js` | 2열 캔버스를 3열 미니 시트에 정률 복사하고 실시간 편집 메타 표출 |
+| `executeActionSave` | `07_export.js` | 체크된 항목들을 단일 PDF 또는 ZIP 분할 이미지로 분기 저장 |
+| `executeSaveMergedPdf` | `07_export.js` | 다중 페이지 합성 캔버스를 단일 PDF 파일로 직렬화하여 저장 |
+| `executeSaveSplitImages` | `07_export.js` | 합성 캔버스들을 개별 이미지로 변환 후 ZIP 압축 다운로드 |
+
+---
+
+## 9. 모듈식 소스 디렉터리 구조 (`src/`) 및 원클릭 빌더
+
+- `src/template.html`: 공통 HTML 골격 및 메타 태그
+- `src/css/style.css`: 전체 앱 스타일시트 (1800라인)
+- `src/js/` (8대 기능별 JS 모듈):
+  - `01_state.js`: 전역 상태(`docState`), PWA 등록, 용지 규격 상수(`PAPER_SPECS`)
+  - `02_transform.js`: 회전 연산, 사각/사다리꼴 투시변환 수식
+  - `03_render.js`: `drawPaperWithImage`, PDF 2.5x 렌더러, 썸네일 합성
+  - `04_file_mgr.js`: 파일 로더, PDF 페이지 선택기, 드래그&드롭, 썸네일 리스트
+  - `05_viewer.js`: 2열 메인 뷰어 제어, 줌 네비게이션, 필터 조절
+  - `06_perspective_loupe.js`: 4코너 핀 제어, 정밀 돋보기(Loupe), 3열 미니 프리뷰
+  - `07_export.js`: PDF/ZIP 저장 엔진 및 바이너리 인코더
+  - `08_events.js`: 휠 줌/스크롤, 터치 패닝, 뒤로가기 더블 탭 종료
+- `build.ps1` / `build.bat`:
+  - 1초 만에 `src/`의 모든 모듈을 단일 독립 파일(`pixpdf.html` / `index.html`)로 병합.
+  - 회사업무용 오프라인 환경에서 단일 파일만 복사해가면 더블 클릭으로 100% 정상 구동 보장.
