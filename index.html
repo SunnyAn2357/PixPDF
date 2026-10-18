@@ -1230,7 +1230,7 @@
     }
 
     /* 모바일 반응형 (768px 이하) */
-    @media (max-width: 768px) {
+    @media (max-width: 860px) {
       .col-viewer, .col-resizer { display: none !important; }
       .col-thumb {
         width: 100% !important;
@@ -1465,6 +1465,311 @@
         justify-content: flex-end;
       }
     }
+  
+    /* V2.8.0 리뉴얼 카드 박스 및 자막/히스토리 스타일 */
+    .control-card-box {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 11px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .control-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-light);
+      padding-bottom: 5px;
+    }
+    .control-card-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .control-card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .card-grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      align-items: center;
+    }
+    .field-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .field-item label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sub);
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin: 0;
+      cursor: help;
+    }
+    .field-item select {
+      flex: 1;
+      min-width: 0;
+      padding: 4px 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      background: #ffffff;
+      color: var(--text-main);
+      cursor: pointer;
+    }
+    .field-item-full {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .field-item-full label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sub);
+      margin: 0;
+    }
+    .btn-row-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+    }
+    .btn-row-3 .btn-tool {
+      padding: 3.5px 0;
+      font-size: 11px;
+      font-weight: 600;
+      text-align: center;
+      justify-content: center;
+    }
+    .btn-toggle-trans {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+      user-select: none;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      padding: 3px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex: 1;
+      justify-content: center;
+    }
+    .btn-toggle-trans input {
+      width: 14px;
+      height: 14px;
+      accent-color: var(--primary);
+      cursor: pointer;
+      margin: 0;
+    }
+
+    /* 객체 회전 1행 바 */
+    .object-rot-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding-top: 5px;
+      border-top: 1px dashed var(--border-light);
+      margin-top: 3px;
+    }
+    .object-rot-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--text-sub);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .object-rot-controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+      min-width: 0;
+    }
+    .btn-rot-mini {
+      width: 24px;
+      height: 22px;
+      padding: 0;
+      font-size: 11px;
+      font-weight: 700;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.12s ease;
+    }
+    .btn-rot-mini:hover {
+      background: #e2e8f0;
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+    .slider-rot-mini {
+      flex: 1;
+      min-width: 0;
+      accent-color: var(--primary);
+      cursor: pointer;
+      height: 4px;
+    }
+    .object-rot-val {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+      width: 28px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* 저장 카드 박스 */
+    .export-card-box {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+    .action-btn-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .btn-action-dual {
+      flex: 1;
+      padding: 9px 0;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    }
+    .btn-action-dual.btn-pdf {
+      background: #0f766e;
+      color: #ffffff;
+      border-color: #0f766e;
+    }
+    .btn-action-dual.btn-pdf:hover {
+      background: #0d9488;
+    }
+    .btn-action-dual.btn-img {
+      background: #ffffff;
+      color: #0f766e;
+      border-color: rgba(15, 118, 110, 0.4);
+    }
+    .btn-action-dual.btn-img:hover {
+      background: #f0fdfa;
+      border-color: #0f766e;
+    }
+
+    /* 왼쪽 창 흐르는 자막 바 (Ticker) */
+    .thumb-ticker-bar {
+      height: 25px;
+      background: rgba(15, 118, 110, 0.07);
+      border-bottom: 1px solid rgba(15, 118, 110, 0.15);
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s ease;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .thumb-ticker-bar:hover {
+      background: rgba(15, 118, 110, 0.14);
+    }
+    .ticker-icon {
+      font-size: 11px;
+      flex-shrink: 0;
+    }
+    .ticker-track {
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      position: relative;
+    }
+    .ticker-text {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #0f766e;
+    }
+    .ticker-badge {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--primary);
+      background: #ffffff;
+      border: 1px solid rgba(15, 118, 110, 0.25);
+      padding: 1px 5px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    /* 작업 히스토리 모달 항목 */
+    .history-log-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      background: #ffffff;
+      border: 1px solid var(--border-light);
+      font-size: 12px;
+      line-height: 1.4;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .history-log-time {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+    .history-log-text {
+      flex: 1;
+      color: var(--text-main);
+      word-break: break-all;
+    }
+
+    /* 데스크톱 크기 축소 시 가운데 창 가변 & 우측창 고정 */
+    .col-control {
+      width: 330px !important;
+      min-width: 330px !important;
+      max-width: 330px !important;
+      flex: 0 0 330px !important;
+      flex-shrink: 0 !important;
+    }
+    .col-thumb {
+      width: 290px;
+      min-width: 240px;
+      max-width: 400px;
+      flex-shrink: 0;
+    }
+    .col-viewer {
+      flex: 1 !important;
+      min-width: 260px !important;
+    }
   </style>
 </head>
 <body>
@@ -1510,13 +1815,24 @@
         <div style="display:flex; align-items:center; gap:6px; position:relative;">
           <button class="btn-add-thumb" id="btnFileMgrDropdown" onclick="toggleFileMgrDropdown(event)" title="열린 파일 관리 및 새 파일/페이지 삽입">파일 관리 ▾</button>
           <div class="menu-dropdown insert-dropdown" id="menuFileMgrDropdown" style="top:32px; right:0; left:auto; width:165px; z-index:210;">
-            <button class="menu-item" onclick="openOpenFilesManagerModal(event)" style="padding:9px 12px; font-size:12.5px; font-weight:700; color:var(--primary);">📂 열린 파일 관리</button>
+            <button class="menu-item" onclick="triggerInsertFileAction(event)" style="padding:9px 12px; font-size:12.5px;">➕ 새 파일 삽입</button>
+            <button class="menu-item" onclick="insertBlankPageAction(event)" style="padding:9px 12px; font-size:12.5px;">📄 빈 페이지 삽입</button>
             <div style="height:1px; background:var(--border-light); margin:2px 0;"></div>
+            <button class="menu-item" onclick="openOpenFilesManagerModal(event)" style="padding:9px 12px; font-size:12.5px; font-weight:700; color:var(--primary);">📂 열린 파일 관리</button>
+          </div>
             <button class="menu-item" onclick="triggerInsertFileAction(event)" style="padding:9px 12px; font-size:12.5px;">➕ 새 파일 삽입</button>
             <button class="menu-item" onclick="insertBlankPageAction(event)" style="padding:9px 12px; font-size:12.5px;">📄 빈 페이지 삽입</button>
           </div>
           <span id="thumbCount">0/0</span>
         </div>
+      
+      <!-- 흐르는 자막 메시지 바 (클릭 시 히스토리 모달 열림) -->
+      <div class="thumb-ticker-bar" id="thumbTickerBar" onclick="openHistoryLogModal()" title="클릭하면 지금까지의 작업 기록(History)을 볼 수 있습니다">
+        <span class="ticker-icon">🔔</span>
+        <div class="ticker-track">
+          <span class="ticker-text" id="statusTickerText">준비 완료</span>
+        </div>
+        <span class="ticker-badge">기록 📜</span>
       </div>
       <div id="thumbList" class="thumb-list"></div>
     </div>
@@ -1555,7 +1871,7 @@
           <div class="viewer-empty-icon">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
           </div>
-          <h3>문서 또는 이미지를 불러오세요</h3>
+          <h3>PDF 또는 이미지를 불러오세요</h3>
           <p>상단의 <b>[📁 파일 열기]</b>를 누르거나,<br>PDF 문서 및 이미지 파일들을 자유롭게 <b>드래그 앤 드롭</b>해 보세요.</p>
         </div>
       </div>
@@ -1570,220 +1886,225 @@
             <span>⚙️ 페이지 편집 & 저장</span>
             <span id="mobilePageIndicator" style="font-size: 11.5px; color: var(--primary); font-weight: 700; background: var(--primary-subtle); padding: 2px 7px; border-radius: 10px;">- / -</span>
           </div>
-          <button class="mobile-close-btn" onclick="toggleMobileControl(false)">✕ 닫기</button>
-        </div>
-
-        <!-- [통합 컨트롤 패널] PDF 및 이미지 모드 통일 -->
-        <div id="optionsUnified" style="display: flex; flex-direction: column; gap: 10px;">
-          <!-- 1. 용지 규격 -->
-          <div class="control-group">
-            <label>용지 규격</label>
-            <select id="selPageSize" onchange="onSettingChange('pageSize', this.value)">
-              <option value="original" selected>원본 크기</option>
-              <option value="a4">A4 (210×297mm)</option>
-              <option value="a3">A3 (297×420mm)</option>
-              <option value="a5">A5 (148×210mm)</option>
-              <option value="b3">B3 (353×500mm)</option>
-              <option value="b4">B4 (250×353mm)</option>
-              <option value="b5">B5 (176×250mm)</option>
-              <option value="custom">사용자 정의 (픽셀)</option>
-            </select>
+        <!-- 1. [용지 설정] 카드 박스 (정확히 3줄 압축 배치) -->
+        <div class="control-card-box">
+          <div class="control-card-header">
+            <span class="control-card-title">📄 용지 설정</span>
           </div>
-
-          <div class="control-group" id="groupCustomPx" style="display: none;">
-            <label>사용자 정의 크기 (px)</label>
-            <div class="custom-px-row">
-              <input type="number" id="txtCustomWidth" value="1920" min="100" max="10000" placeholder="너비" oninput="onSettingChange('customW', this.value)">
-              <span>×</span>
-              <input type="number" id="txtCustomHeight" value="1080" min="100" max="10000" placeholder="높이" oninput="onSettingChange('customH', this.value)">
+          <div class="control-card-body">
+            <!-- 1행: 규격 & 방향 -->
+            <div class="card-grid-2col">
+              <div class="field-item">
+                <label title="출력할 용지 규격 (A4, A3, B5, 원본 등)">규격</label>
+                <select id="selPageSize" onchange="onSettingChange('pageSize', this.value)">
+                  <option value="original" selected>원본</option>
+                  <option value="a4">A4</option>
+                  <option value="a3">A3</option>
+                  <option value="a5">A5</option>
+                  <option value="b3">B3</option>
+                  <option value="b4">B4</option>
+                  <option value="b5">B5</option>
+                  <option value="custom">직접지정</option>
+                </select>
+              </div>
+              <div class="field-item">
+                <label title="용지의 가로/세로 방향">방향</label>
+                <select id="selOrientation" onchange="onSettingChange('orient', this.value)">
+                  <option value="auto" selected>자동</option>
+                  <option value="p">세로</option>
+                  <option value="l">가로</option>
+                </select>
+              </div>
             </div>
-          </div>
 
-          <!-- 2. 용지 방향 -->
-          <div class="control-group">
-            <label>용지 방향</label>
-            <select id="selOrientation" onchange="onSettingChange('orient', this.value)">
-              <option value="auto" selected>자동 (비율 기준)</option>
-              <option value="p">세로 (Portrait)</option>
-              <option value="l">가로 (Landscape)</option>
-            </select>
-          </div>
+            <!-- 사용자 정의 픽셀 입력 (custom 선택 시 노출) -->
+            <div class="control-group" id="groupCustomPx" style="display: none; margin-top: -2px;">
+              <div class="custom-px-row">
+                <input type="number" id="txtCustomWidth" value="1920" min="100" max="10000" placeholder="너비" oninput="onSettingChange('customW', this.value)">
+                <span>×</span>
+                <input type="number" id="txtCustomHeight" value="1080" min="100" max="10000" placeholder="높이" oninput="onSettingChange('customH', this.value)">
+              </div>
+            </div>
 
-          <!-- 3. 여백 설정 -->
-          <div class="control-group">
-            <label id="lblMargin">여백 설정</label>
-            <select id="selMargin" onchange="onSettingChange('margin', this.value)">
-              <option value="0" selected>0px (여백 없음)</option>
-              <option value="10">10px (기본)</option>
-              <option value="20">20px (넓음)</option>
-            </select>
-          </div>
-
-          <!-- 4. 해상도 / 화질 -->
-          <div class="control-group">
-            <label>해상도 / 화질</label>
-            <select id="selScale" onchange="onSettingChange('scale', this.value)">
-              <option value="1.5">×1.5 (화면용 / 용량 절약)</option>
-              <option value="2.0">×2.0 (고해상도 A4 권장)</option>
-              <option value="3.0" selected>×3.0 (초고해상도 인쇄용)</option>
-              <option value="4.0">×4.0 (최상급 원본 극대화 / 600DPI급)</option>
-            </select>
-          </div>
-
-          <!-- 5. 출력 포맷 -->
-          <div class="control-group">
-            <label>출력 포맷 (이미지 저장 시)</label>
-            <select id="selFormat" onchange="onSettingChange('format', this.value)">
-              <option value="png" selected>PNG (무손실 / 투명 배경 지원)</option>
-              <option value="jpeg">JPG (사진 압축 / 고효율)</option>
-              <option value="webp">WebP (최신 웹 규격)</option>
-              <option value="bmp">BMP (윈도우 비트맵 표준)</option>
-              <option value="ico">ICO (아이콘 규격 / 256px)</option>
-              <option value="tiff">TIFF (인쇄 / 출판 규격)</option>
-            </select>
-          </div>
-
-          <!-- 5-1. 배경 투명화 옵션 (PNG 선택 시 모바일 및 사이드바 노출) -->
-          <div class="control-group" id="grpTransparentBgControl" style="display: none;">
-            <label id="lblTransparentBgControl" style="display: flex; align-items: center; justify-content: space-between; background: #f8fafc; border: 1px solid var(--border-light); border-radius: 6px; padding: 7px 11px; cursor: pointer; user-select: none;">
-              <span style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--text-main); font-size: 13px;">
-                <input type="checkbox" id="chkTransparentBgControl" checked onchange="onTransparentBgChange(this.checked)" style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--primary);">
-                배경 투명화
-              </span>
-              <span style="font-size: 11px; color: var(--text-muted); font-weight: 500;">여백 및 모서리 투명</span>
-            </label>
-          </div>
-
-          <!-- 6. 회전 설정 (페이지 & 이미지 선택적 회전 및 90도 원클릭 버튼) -->
-          <div class="control-group">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-              <div style="display: flex; align-items: center; gap: 6px;">
-                <label style="margin: 0; font-weight: 700;">회전</label>
-                <label class="rot-target-chk" title="체크 시 페이지(용지)의 가로/세로 방향을 회전합니다">
-                  <input type="checkbox" id="chkRotPage" checked onchange="onRotTargetChange()">
-                  <span>페이지</span>
-                </label>
-                <label class="rot-target-chk" title="체크 시 내부 이미지(내용물)의 각도를 회전합니다">
-                  <input type="checkbox" id="chkRotImg" checked onchange="onRotTargetChange()">
-                  <span>이미지</span>
+            <!-- 2행: 여백 & 배경 -->
+            <div class="card-grid-2col">
+              <div class="field-item">
+                <label id="lblMargin" title="용지 외곽 여백 크기">여백</label>
+                <select id="selMargin" onchange="onSettingChange('margin', this.value)">
+                  <option value="0" selected>0px (없음)</option>
+                  <option value="10">10px (기본)</option>
+                  <option value="20">20px (넓음)</option>
+                </select>
+              </div>
+              <div class="field-item" id="grpTransparentBgControl">
+                <label title="PNG 저장 시 남는 여백을 투명하게 처리합니다">배경</label>
+                <label class="btn-toggle-trans" title="PNG 저장 시 투명 배경 처리">
+                  <input type="checkbox" id="chkTransparentBgControl" checked onchange="onTransparentBgChange(this.checked)">
+                  <span>투명 배경</span>
                 </label>
               </div>
-              <span id="lblRotationVal" style="font-size:12px; font-weight:700; color:var(--primary);">0°</span>
             </div>
-            <div style="display: flex; gap: 6px; margin-bottom: 4px;">
-              <button type="button" class="btn-tool" style="flex:1; padding:4px 0; font-size:11px;" onclick="rotateCurrentByDelta(-90)">⟲ -90°</button>
-              <button type="button" class="btn-tool" style="flex:1; padding:4px 0; font-size:11px;" onclick="rotateCurrentTo(0)">0° 초기화</button>
-              <button type="button" class="btn-tool" style="flex:1; padding:4px 0; font-size:11px;" onclick="rotateCurrentByDelta(90)">⟳ +90°</button>
-            </div>
-            <input type="range" id="sliderRotation" min="-180" max="180" value="0" step="1" oninput="onSliderRotationInput(this.value)" style="width: 100%; accent-color: var(--primary); cursor: pointer;" title="각도 미세 조절 (-180° ~ +180°)">
-          </div>
-        </div>
 
-        <!-- 미리보기 / 이미지 편집 영역 (좌: 시트 미리보기, 우: 편집 메뉴) -->
-        <div class="preview-section">
-          <div class="preview-header">
-            <span class="preview-title">미리보기 / 이미지 편집</span>
-          </div>
-          <div class="preview-body-split">
-            <!-- 좌측: 실제 미리보기 창 -->
-            <div class="preview-left-pane">
-              <div class="preview-sheet-stage" id="previewSheetStage">
-                <div id="miniEmpty" class="mini-empty-placeholder">문서 대기 중</div>
-                <div id="miniSheet" class="preview-paper-sheet" style="display: none; position: relative;">
-                  <canvas id="miniCanvas" style="width: 100%; height: 100%; display: block;"></canvas>
-                </div>
-                <!-- 투시변환 오버레이를 miniSheet 바깥인 previewSheetStage로 승격하여 종이 밖에서도 핀 표시 및 조작 가능! -->
-                <div id="miniPerspectiveOverlay" class="perspective-overlay" style="display: none; position: absolute; inset: 0; pointer-events: none; z-index: 20;">
-                  <svg id="miniPerspectiveSvg" class="perspective-svg" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;">
-                    <polygon id="miniPerspectivePolygon" points="" style="fill: rgba(15, 118, 110, 0.15); stroke: var(--primary); stroke-width: 1.5; stroke-dasharray: 4 2;" />
-                  </svg>
-                  <div id="miniPinTL" class="corner-pin mini-corner-pin" data-corner="tl" title="좌상단 모서리 (드래그)"><span class="pin-label">TL</span></div>
-                  <div id="miniPinTR" class="corner-pin mini-corner-pin" data-corner="tr" title="우상단 모서리 (드래그)"><span class="pin-label">TR</span></div>
-                  <div id="miniPinBR" class="corner-pin mini-corner-pin" data-corner="br" title="우하단 모서리 (드래그)"><span class="pin-label">BR</span></div>
-                  <div id="miniPinBL" class="corner-pin mini-corner-pin" data-corner="bl" title="좌하단 모서리 (드래그)"><span class="pin-label">BL</span></div>
-                </div>
-                <!-- 모바일/우측 핀 터치 드래그 시 손가락 위에 뜨는 정밀 확대 돋보기(Loupe) -->
-                <div id="miniPinLoupe" class="pin-loupe" style="display: none;">
-                  <canvas id="miniLoupeCanvas" width="90" height="90"></canvas>
-                </div>
+            <!-- 3행: 용지 회전 -->
+            <div class="field-item-full">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                <label title="바탕 종이 자체를 90도 회전합니다 (내용물 이미지는 유지)">용지 회전</label>
+                <span id="lblPageRotVal" style="font-size: 11px; font-weight: 700; color: var(--primary);">0°</span>
               </div>
-              <div id="miniInfo" class="mini-info-text">선택 항목 기준 윤곽</div>
-            </div>
-            <!-- 우측: 메뉴 버튼들 (위에서부터 한 줄씩) -->
-            <div class="preview-right-pane">
-              <!-- 1행: 확대 / 축소 / 리셋 -->
-              <div class="edit-btn-row">
-                <button type="button" class="btn-edit-tool" title="내용물 확대" onclick="adjustPreviewScale(0.1)">확대</button>
-                <button type="button" class="btn-edit-tool" title="내용물 축소" onclick="adjustPreviewScale(-0.1)">축소</button>
-                <button type="button" class="btn-edit-tool" title="크기 100% 초기화" onclick="resetPreviewScale()">리셋</button>
-              </div>
-              <!-- 2행: 뚱뚱 / 홀쭉 / 1:1 -->
-              <div class="edit-btn-row">
-                <button type="button" class="btn-edit-tool" title="가로 넓히기 (뚱뚱하게)" onclick="adjustScaleX(0.1)">뚱뚱</button>
-                <button type="button" class="btn-edit-tool" title="가로 좁히기 (홀쭉하게)" onclick="adjustScaleX(-0.1)">홀쭉</button>
-                <button type="button" class="btn-edit-tool" title="가로비율 100% 초기화" onclick="resetScaleX()">1:1</button>
-              </div>
-              <!-- 3행: 대두 / 소두 / 1:1 (사다리꼴 변형) -->
-              <div class="edit-btn-row">
-                <button type="button" class="btn-edit-tool" title="밑변 고정 + 윗변 1% 확대 (대두)" onclick="adjustTrapezoid('top')">대두</button>
-                <button type="button" class="btn-edit-tool" title="윗변 고정 + 밑변 1% 확대 (소두)" onclick="adjustTrapezoid('bot')">소두</button>
-                <button type="button" class="btn-edit-tool" title="사다리꼴 변형 1:1 초기화" onclick="resetTrapezoid()">1:1</button>
-              </div>
-              <!-- 4행: 투시 변환 (네 모서리 개별 조절 & 리셋) -->
-              <div class="edit-btn-row">
-                <button type="button" class="btn-edit-tool" id="btnTogglePerspective" style="flex:2;" title="화면에 4개 모서리 조절 핀을 띄워 자유롭게 투시 왜곡을 조절합니다" onclick="togglePerspectiveMode()">📐 투시변환</button>
-                <button type="button" class="btn-edit-tool" title="네 모서리 위치 초기화" onclick="resetCorners()">리셋</button>
-              </div>
-
-              <!-- 3행: 밝게 / 어둡게 / 리셋 -->
-              <div class="edit-btn-row">
-                <button type="button" class="btn-edit-tool" title="밝게 (+10%)" onclick="adjustBrightness(10)">밝게</button>
-                <button type="button" class="btn-edit-tool" title="어둡게 (-10%)" onclick="adjustBrightness(-10)">어둡게</button>
-                <button type="button" class="btn-edit-tool" title="밝기 100% 초기화" onclick="resetBrightness()">리셋</button>
-              </div>
-              <!-- 4행: 진하게 / 연하게 / 리셋 -->
-              <div class="edit-btn-row">
-                <button type="button" class="btn-edit-tool" title="진하게 / 대비 증가 (+10%)" onclick="adjustContrast(10)">진하게</button>
-                <button type="button" class="btn-edit-tool" title="연하게 / 대비 감소 (-10%)" onclick="adjustContrast(-10)">연하게</button>
-                <button type="button" class="btn-edit-tool" title="명암 100% 초기화" onclick="resetContrast()">리셋</button>
-              </div>
-              <!-- 5행: 상/하/좌/우 타원 리모콘 버튼 -->
-              <div class="dpad-wrap">
-                <div class="dpad-container">
-                  <div style="grid-column: 2; grid-row: 1;">
-                    <button type="button" class="btn-dpad" title="위로 이동 (1px)" onclick="adjustImageOffset(0, -1)">▲</button>
-                  </div>
-                  <div style="grid-column: 1; grid-row: 2;">
-                    <button type="button" class="btn-dpad" title="왼쪽으로 이동 (1px)" onclick="adjustImageOffset(-1, 0)">◀</button>
-                  </div>
-                  <div style="grid-column: 2; grid-row: 2;">
-                    <button type="button" class="btn-dpad center" title="위치 중앙 초기화" onclick="resetImageOffset()">●</button>
-                  </div>
-                  <div style="grid-column: 3; grid-row: 2;">
-                    <button type="button" class="btn-dpad" title="오른쪽으로 이동 (1px)" onclick="adjustImageOffset(1, 0)">▶</button>
-                  </div>
-                  <div style="grid-column: 2; grid-row: 3;">
-                    <button type="button" class="btn-dpad" title="아래로 이동 (1px)" onclick="adjustImageOffset(0, 1)">▼</button>
-                  </div>
-                </div>
+              <div class="btn-row-3">
+                <button type="button" class="btn-tool" title="종이 반시계 방향 90도 회전" onclick="rotatePageByDelta(-90)">⟲ -90°</button>
+                <button type="button" class="btn-tool" title="종이 0도 정방향 초기화" onclick="rotatePageTo(0)">0° 초기화</button>
+                <button type="button" class="btn-tool" title="종이 시계 방향 90도 회전" onclick="rotatePageByDelta(90)">⟳ +90°</button>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 실행 영역 (듀얼 변환 버튼: PDF 저장 & Img 저장) -->
-        <div class="action-section">
-          <div class="status-text" id="statusText">준비 완료</div>
-          <div class="progress-bar-wrap" id="progWrap">
+        <!-- 2. [객체 설정] 카드 박스 (기존 편집 버튼 100% 보존 + 하단 1행 회전 바) -->
+        <div class="control-card-box">
+          <div class="control-card-header">
+            <span class="control-card-title">🖼️ 객체 설정</span>
+          </div>
+          <div class="control-card-body">
+            <!-- 미리보기 / 이미지 편집 영역 (좌: 시트 미리보기, 우: 기존 편집 메뉴 100% 유지) -->
+            <div class="preview-body-split">
+              <!-- 좌측: 실제 미리보기 창 -->
+              <div class="preview-left-pane">
+                <div class="preview-sheet-stage" id="previewSheetStage">
+                  <div id="miniEmpty" class="mini-empty-placeholder">문서 대기 중</div>
+                  <div id="miniSheet" class="preview-paper-sheet" style="display: none; position: relative;">
+                    <canvas id="miniCanvas" style="width: 100%; height: 100%; display: block;"></canvas>
+                  </div>
+                  <!-- 투시변환 오버레이 -->
+                  <div id="miniPerspectiveOverlay" class="perspective-overlay" style="display: none; position: absolute; inset: 0; pointer-events: none; z-index: 20;">
+                    <svg id="miniPerspectiveSvg" class="perspective-svg" style="position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;">
+                      <polygon id="miniPerspectivePolygon" points="" style="fill: rgba(15, 118, 110, 0.15); stroke: var(--primary); stroke-width: 1.5; stroke-dasharray: 4 2;" />
+                    </svg>
+                    <div id="miniPinTL" class="corner-pin mini-corner-pin" data-corner="tl" title="좌상단 모서리 (드래그)"><span class="pin-label">TL</span></div>
+                    <div id="miniPinTR" class="corner-pin mini-corner-pin" data-corner="tr" title="우상단 모서리 (드래그)"><span class="pin-label">TR</span></div>
+                    <div id="miniPinBR" class="corner-pin mini-corner-pin" data-corner="br" title="우하단 모서리 (드래그)"><span class="pin-label">BR</span></div>
+                    <div id="miniPinBL" class="corner-pin mini-corner-pin" data-corner="bl" title="좌하단 모서리 (드래그)"><span class="pin-label">BL</span></div>
+                  </div>
+                  <!-- 확대경 -->
+                  <div id="miniPinLoupe" class="pin-loupe" style="display: none;">
+                    <canvas id="miniLoupeCanvas" width="90" height="90"></canvas>
+                  </div>
+                </div>
+                <div id="miniInfo" class="mini-info-text">선택 항목 기준 윤곽</div>
+              </div>
+              <!-- 우측: 메뉴 버튼들 (기존 버튼 100% 완전 보존!) -->
+              <div class="preview-right-pane">
+                <!-- 1행: 확대 / 축소 / 리셋 -->
+                <div class="edit-btn-row">
+                  <button type="button" class="btn-edit-tool" title="내용물 확대" onclick="adjustPreviewScale(0.1)">확대</button>
+                  <button type="button" class="btn-edit-tool" title="내용물 축소" onclick="adjustPreviewScale(-0.1)">축소</button>
+                  <button type="button" class="btn-edit-tool" title="크기 100% 초기화" onclick="resetPreviewScale()">리셋</button>
+                </div>
+                <!-- 2행: 뚱뚱 / 홀쭉 / 1:1 -->
+                <div class="edit-btn-row">
+                  <button type="button" class="btn-edit-tool" title="가로 넓히기 (뚱뚱하게)" onclick="adjustScaleX(0.1)">뚱뚱</button>
+                  <button type="button" class="btn-edit-tool" title="가로 좁히기 (홀쭉하게)" onclick="adjustScaleX(-0.1)">홀쭉</button>
+                  <button type="button" class="btn-edit-tool" title="가로비율 100% 초기화" onclick="resetScaleX()">1:1</button>
+                </div>
+                <!-- 3행: 대두 / 소두 / 1:1 (사다리꼴 변형) -->
+                <div class="edit-btn-row">
+                  <button type="button" class="btn-edit-tool" title="밑변 고정 + 윗변 1% 확대 (대두)" onclick="adjustTrapezoid('top')">대두</button>
+                  <button type="button" class="btn-edit-tool" title="윗변 고정 + 밑변 1% 확대 (소두)" onclick="adjustTrapezoid('bot')">소두</button>
+                  <button type="button" class="btn-edit-tool" title="사다리꼴 변형 1:1 초기화" onclick="resetTrapezoid()">1:1</button>
+                </div>
+                <!-- 4행: 투시 변환 (네 모서리 개별 조절 & 리셋) -->
+                <div class="edit-btn-row">
+                  <button type="button" class="btn-edit-tool" id="btnTogglePerspective" style="flex:2;" title="화면에 4개 모서리 조절 핀을 띄워 자유롭게 투시 왜곡을 조절합니다" onclick="togglePerspectiveMode()">📐 투시변환</button>
+                  <button type="button" class="btn-edit-tool" title="네 모서리 위치 초기화" onclick="resetCorners()">리셋</button>
+                </div>
+                <!-- 5행: 밝게 / 어둡게 / 리셋 -->
+                <div class="edit-btn-row">
+                  <button type="button" class="btn-edit-tool" title="밝게 (+10%)" onclick="adjustBrightness(10)">밝게</button>
+                  <button type="button" class="btn-edit-tool" title="어둡게 (-10%)" onclick="adjustBrightness(-10)">어둡게</button>
+                  <button type="button" class="btn-edit-tool" title="밝기 100% 초기화" onclick="resetBrightness()">리셋</button>
+                </div>
+                <!-- 6행: 진하게 / 연하게 / 리셋 -->
+                <div class="edit-btn-row">
+                  <button type="button" class="btn-edit-tool" title="진하게 / 대비 증가 (+10%)" onclick="adjustContrast(10)">진하게</button>
+                  <button type="button" class="btn-edit-tool" title="연하게 / 대비 감소 (-10%)" onclick="adjustContrast(-10)">연하게</button>
+                  <button type="button" class="btn-edit-tool" title="명암 100% 초기화" onclick="resetContrast()">리셋</button>
+                </div>
+                <!-- 7행: 상/하/좌/우 1px 정밀 타원 리모콘 버튼 -->
+                <div class="dpad-wrap">
+                  <div class="dpad-container">
+                    <div style="grid-column: 2; grid-row: 1;">
+                      <button type="button" class="btn-dpad" title="위로 이동 (1px)" onclick="adjustImageOffset(0, -1)">▲</button>
+                    </div>
+                    <div style="grid-column: 1; grid-row: 2;">
+                      <button type="button" class="btn-dpad" title="왼쪽으로 이동 (1px)" onclick="adjustImageOffset(-1, 0)">◀</button>
+                    </div>
+                    <div style="grid-column: 2; grid-row: 2;">
+                      <button type="button" class="btn-dpad center" title="위치 중앙 초기화" onclick="resetImageOffset()">●</button>
+                    </div>
+                    <div style="grid-column: 3; grid-row: 2;">
+                      <button type="button" class="btn-dpad" title="오른쪽으로 이동 (1px)" onclick="adjustImageOffset(1, 0)">▶</button>
+                    </div>
+                    <div style="grid-column: 2; grid-row: 3;">
+                      <button type="button" class="btn-dpad" title="아래로 이동 (1px)" onclick="adjustImageOffset(0, 1)">▼</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 하단 1행 회전 바: [⟲] [0°] [⟳] ──[슬라이더]── 0° -->
+            <div class="object-rot-bar">
+              <span class="object-rot-label" title="내용물 이미지 각도 회전">객체 회전</span>
+              <div class="object-rot-controls">
+                <button type="button" class="btn-rot-mini" title="이미지 -90° 회전" onclick="rotateImageByDelta(-90)">⟲</button>
+                <button type="button" class="btn-rot-mini" title="이미지 0° 초기화" onclick="rotateImageTo(0)">0°</button>
+                <button type="button" class="btn-rot-mini" title="이미지 +90° 회전" onclick="rotateImageByDelta(90)">⟳</button>
+                <input type="range" id="sliderRotation" min="-180" max="180" value="0" step="1" oninput="onSliderRotationInput(this.value)" class="slider-rot-mini" title="각도 미세 조절 (-180° ~ +180°)">
+                <span id="lblRotationVal" class="object-rot-val">0°</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. [저장 / 출력 규격] 카드 박스 -->
+        <div class="control-card-box export-card-box">
+          <div class="card-grid-2col" style="margin-bottom: 8px;">
+            <div class="field-item">
+              <label title="출력 해상도 화질">화질</label>
+              <select id="selScale" onchange="onSettingChange('scale', this.value)">
+                <option value="1.5">×1.5 (화면용)</option>
+                <option value="2.0">×2.0 (고해상도)</option>
+                <option value="3.0" selected>×3.0 (초고화질)</option>
+                <option value="4.0">×4.0 (600DPI급)</option>
+              </select>
+            </div>
+            <div class="field-item">
+              <label title="출력 포맷 (이미지 저장 시)">포맷</label>
+              <select id="selFormat" onchange="onSettingChange('format', this.value)">
+                <option value="png" selected>PNG (무손실/투명)</option>
+                <option value="jpeg">JPG (압축/고효율)</option>
+                <option value="webp">WebP (최신웹)</option>
+                <option value="bmp">BMP (윈도우 비트맵)</option>
+                <option value="ico">ICO (아이콘 256px)</option>
+                <option value="tiff">TIFF (인쇄출판)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 듀얼 변환 버튼 (PDF 저장 & Img 저장) -->
+          <div class="action-btn-row">
+            <button class="btn-action-dual btn-pdf" id="btnSavePdf" onclick="executeActionSave('pdf')">
+              <span class="btn-icon">📄</span> PDF 저장
+            </button>
+            <button class="btn-action-dual btn-img" id="btnSaveImg" onclick="executeActionSave('img')">
+              <span class="btn-icon">🖼️</span> Img 저장
+            </button>
+          </div>
+          <!-- 진행률 바만 보존 -->
+          <div class="progress-bar-wrap" id="progWrap" style="margin-top: 6px; display: none;">
             <div class="progress-bar-fill" id="progFill"></div>
           </div>
-          <div class="action-btn-row">
-            <button id="btnSavePdf" class="btn-action btn-action-dual" disabled onclick="executeActionSave('pdf')">📄 PDF 저장</button>
-            <button id="btnSaveImg" class="btn-action btn-action-dual btn-secondary" disabled onclick="executeActionSave('img')">🖼️ Img 저장</button>
-          </div>
-          <button id="btnAbort" class="btn-action btn-abort" style="display:none;" onclick="abortAction()">변환 중단</button>
         </div>
-
       </div>
     </div>
 
@@ -1954,6 +2275,30 @@
       <div class="modal-footer" style="justify-content: flex-end;">
         <button class="btn-tool" onclick="closeOpenFilesManagerModal(true)">닫기</button>
       </div>
+  </div>
+
+  <!-- [작업 히스토리 모달] -->
+  <div class="modal-overlay" id="modalHistoryLog" onclick="onHistoryLogBackdropClick(event)">
+    <div class="modal-dialog" style="max-width: 520px; width: 92%;">
+      <div class="modal-header">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <span>📜 작업 기록 (History)</span>
+          <span id="historyLogCountBadge" style="font-size: 11px; padding: 2px 7px; border-radius: 12px; background: rgba(15, 118, 110, 0.1); color: var(--primary); font-weight: 700;">0개 기록</span>
+        </h3>
+        <button class="modal-close-btn" onclick="closeHistoryLogModal(true)">✕</button>
+      </div>
+      <div style="padding: 10px 16px 6px 16px; font-size: 12px; color: var(--text-muted); border-bottom: 1px solid var(--border-light);">
+        현재 세션에서 수행된 파일 및 편집 조작 기록입니다. (최신순)
+      </div>
+      <div class="modal-body" style="padding: 12px 16px; max-height: 55vh; overflow-y: auto;">
+        <div id="historyLogListContainer" style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- 동적 히스토리 로그 항목 -->
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: space-between;">
+        <button class="btn-tool" onclick="clearHistoryLogs()" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">기록 비우기</button>
+        <button class="btn-tool" onclick="closeHistoryLogModal(true)">닫기</button>
+      </div>
     </div>
   </div>
 
@@ -1968,7 +2313,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.7.0 (가운데 배경투명화 삭제, 파일 관리 드롭다운 및 열린 파일 관리/페이지 재선택 기능 추가)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.8.0 (용지/객체 설정 분류 리뉴얼, 1행 회전 버튼바, 흐르는 자막 및 히스토리 모달, 상호배타 메뉴)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -2108,6 +2453,150 @@
     };
 
     // 하위 호환성 및 기존 함수 연동을 위한 양방향 Proxy
+    // 작업 히스토리 및 상태 자막 시스템
+    function updateStatusMsg(text, icon = '📝') {
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+      const entry = { time: timeStr, text: text, icon: icon, ts: Date.now() };
+
+      if (!docState.historyLogs) docState.historyLogs = [];
+      docState.historyLogs.unshift(entry);
+      if (docState.historyLogs.length > 50) docState.historyLogs.pop();
+
+      const tickerText = document.getElementById('statusTickerText');
+      if (tickerText) {
+        tickerText.textContent = text;
+      }
+      const st = document.getElementById('statusText');
+      if (st) {
+        st.textContent = text;
+      }
+    }
+
+    function openHistoryLogModal() {
+      renderHistoryLogList();
+      const modal = document.getElementById('modalHistoryLog');
+      if (modal) {
+        modal.classList.add('show');
+        try { history.pushState({ appLayer: 'historyLog' }, ''); } catch (err) {}
+      }
+    }
+
+    function closeHistoryLogModal(syncHistory = true) {
+      const modal = document.getElementById('modalHistoryLog');
+      if (modal && modal.classList.contains('show')) {
+        modal.classList.remove('show');
+        if (syncHistory && history.state && (history.state.appLayer === 'historyLog' || history.state.modal === 'historyLog')) {
+          isClosingLayerProgrammatically = true;
+          history.back();
+        }
+      }
+    }
+
+    function onHistoryLogBackdropClick(e) {
+      if (e.target.id === 'modalHistoryLog') {
+        closeHistoryLogModal(true);
+      }
+    }
+
+    function renderHistoryLogList() {
+      const container = document.getElementById('historyLogListContainer');
+      const badge = document.getElementById('historyLogCountBadge');
+      if (!container) return;
+
+      if (!docState.historyLogs) docState.historyLogs = [];
+      if (badge) badge.textContent = `${docState.historyLogs.length}개 기록`;
+
+      if (docState.historyLogs.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 35px 10px; color: var(--text-muted); font-size: 13px;">
+            <div style="font-size: 26px; margin-bottom: 6px;">📜</div>
+            아직 기록된 작업 내역이 없습니다.
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      docState.historyLogs.forEach(item => {
+        html += `
+          <div class="history-log-item">
+            <span class="history-log-time">${item.time}</span>
+            <span style="font-size: 13px;">${item.icon}</span>
+            <span class="history-log-text">${item.text}</span>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function clearHistoryLogs() {
+      docState.historyLogs = [];
+      renderHistoryLogList();
+    }
+
+    // 용지(종이) 회전 함수
+    function rotatePageByDelta(delta) {
+      const cur = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(cur);
+      let curPage = parseInt(cfg.rotPage !== undefined ? cfg.rotPage : 0, 10) || 0;
+      let nextPage = curPage + delta;
+      if (nextPage > 180) nextPage -= 360;
+      if (nextPage <= -180) nextPage += 360;
+      cfg.rotPage = nextPage;
+      const lblPage = document.getElementById('lblPageRotVal');
+      if (lblPage) lblPage.textContent = `${nextPage}°`;
+      updateViewerEdits();
+      updateMiniPreview();
+      updateStatusMsg(`용지 회전: ${nextPage}°`, '📄');
+    }
+
+    function rotatePageTo(val) {
+      const cur = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(cur);
+      cfg.rotPage = val;
+      const lblPage = document.getElementById('lblPageRotVal');
+      if (lblPage) lblPage.textContent = `${val}°`;
+      updateViewerEdits();
+      updateMiniPreview();
+      updateStatusMsg('용지 회전 0° 초기화', '📄');
+    }
+
+    // 객체(내용물 이미지) 회전 함수
+    function rotateImageByDelta(delta) {
+      const cur = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(cur);
+      let curImg = parseInt(cfg.rotImg !== undefined ? cfg.rotImg : 0, 10) || 0;
+      let nextImg = curImg + delta;
+      if (nextImg > 180) nextImg -= 360;
+      if (nextImg <= -180) nextImg += 360;
+      cfg.rotImg = nextImg;
+      cfg.rot = nextImg;
+      const slider = document.getElementById('sliderRotation');
+      if (slider) slider.value = nextImg;
+      const lblRot = document.getElementById('lblRotationVal');
+      if (lblRot) lblRot.textContent = `${nextImg}°`;
+      updateViewerEdits();
+      updateMiniPreview();
+      if (isPerspectiveActive) updateCornerPins();
+      updateStatusMsg(`객체 회전: ${nextImg}°`, '🖼️');
+    }
+
+    function rotateImageTo(val) {
+      const cur = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(cur);
+      cfg.rotImg = val;
+      cfg.rot = val;
+      const slider = document.getElementById('sliderRotation');
+      if (slider) slider.value = val;
+      const lblRot = document.getElementById('lblRotationVal');
+      if (lblRot) lblRot.textContent = `${val}°`;
+      updateViewerEdits();
+      updateMiniPreview();
+      if (isPerspectiveActive) updateCornerPins();
+      updateStatusMsg('객체 회전 0° 초기화', '🖼️');
+    }
+
     function registerOpenedFile(file, type, loadedDoc = null, customTotalPages = 1) {
       if (!docState.openedFiles) docState.openedFiles = [];
       const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
@@ -2639,6 +3128,8 @@
       if (sliderRot) sliderRot.value = cfg.rot || 0;
       const lblRot = document.getElementById('lblRotationVal');
       if (lblRot) lblRot.textContent = `${cfg.rot || 0}°`;
+      const lblPage = document.getElementById('lblPageRotVal');
+      if (lblPage) lblPage.textContent = `${cfg.rotPage || 0}°`;
 
       // 7. 투시 변환 활성화 여부 동기화 (페이지별 독립 유지)
       syncPerspectiveUI(Boolean(cfg.isPerspectiveActive));
@@ -2991,13 +3482,14 @@
 
     btnHamburger.addEventListener('click', (e) => {
       e.stopPropagation();
-      closeInsertDropdown();
+      closeFileMgrDropdown();
       menuDropdown.classList.toggle('show');
     });
 
     // [+ 삽입] 드롭다운 메뉴 제어
     function toggleFileMgrDropdown(e) {
       if (e) e.stopPropagation();
+      closeMenuDropdown();
       const menu = document.getElementById('menuFileMgrDropdown') || document.getElementById('menuInsertDropdown');
       if (menu) menu.classList.toggle('show');
     }
@@ -3128,7 +3620,7 @@
         closeOpenFilesManagerModal(true);
         refreshWorkspaceDisplay();
       }
-      document.getElementById('statusText').textContent = `[${fileName}] ${count}개 페이지가 제외되었습니다.`;
+      updateStatusMsg(`[${fileName}] ${count}개 페이지가 제외되었습니다.`);
     }
 
     function reselectPdfPages(fileId) {
@@ -3231,7 +3723,7 @@
 
       await refreshWorkspaceDisplay();
       await loadMainViewer(insertAt);
-      document.getElementById('statusText').textContent = `#${insertAt + 1} 위치에 빈 페이지가 삽입되었습니다.`;
+      updateStatusMsg(`#${insertAt + 1} 위치에 빈 페이지가 삽입되었습니다.`);
     }
 
     window.addEventListener('click', () => {
@@ -3273,7 +3765,7 @@
       }
       printStyleEl.textContent = '';
       let printPageSeq = 0;
-      document.getElementById('statusText').textContent = `인쇄 데이터 준비 중 (${selectedIndices.length}페이지)...`;
+      updateStatusMsg(`인쇄 데이터 준비 중 (${selectedIndices.length}페이지)...`);
 
       try {
         for (let step = 0; step < selectedIndices.length; step++) {
@@ -3400,7 +3892,7 @@
           printContainer.appendChild(pageItem);
         }
 
-        document.getElementById('statusText').textContent = '인쇄 대화상자 호출 중...';
+        updateStatusMsg('인쇄 대화상자 호출 중...');
         await new Promise(r => setTimeout(r, 100)); // DOM 렌더링 완료 대기
 
         window.print();
@@ -3409,20 +3901,20 @@
         setTimeout(() => {
           printContainer.innerHTML = '';
           printStyleEl.textContent = '';
-          document.getElementById('statusText').textContent = '준비 완료';
+          updateStatusMsg('준비 완료');
         }, 1000);
 
       } catch (err) {
         console.error(err);
         alert(`인쇄 처리 중 오류: ${err.message}`);
         printContainer.innerHTML = '';
-        document.getElementById('statusText').textContent = '인쇄 오류 발생';
+        updateStatusMsg('인쇄 오류 발생');
       }
     }
 
     function triggerConvertAction() {
       closeMenuDropdown();
-      if (window.innerWidth <= 768) {
+      if (window.innerWidth <= 860) {
         toggleMobileControl(true);
       } else {
         executeActionSave('pdf');
@@ -3437,7 +3929,7 @@
       docState.currentIndex = 0;
       docState.doc = null;
       refreshWorkspaceDisplay();
-      document.getElementById('statusText').textContent = '문서를 닫았습니다.';
+      updateStatusMsg('문서를 닫았습니다.');
     }
 
     // 활성 작업 존재 여부 확인 (이탈/새로고침 방어용)
@@ -3680,14 +4172,14 @@
         await renderThumbnailList();
         await loadMainViewer(docState.currentIndex || 0);
         updateThumbCounts();
-        document.getElementById('statusText').textContent = `${docState.items.length}개 항목 대기 중`;
+        updateStatusMsg(`${docState.items.length}개 항목 대기 중`);
       } else {
         const emptyGuide = `
           <div class="thumb-empty-guide" style="padding: 32px 14px; text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; justify-content: center;">
             <div style="width: 46px; height: 46px; border-radius: 12px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b; margin-bottom: 10px;">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
             </div>
-            <div style="font-size: 14px; font-weight: 700; color: var(--text-sub); margin-bottom: 4px; white-space: nowrap;">문서 또는 이미지를 불러오세요.</div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--text-sub); margin-bottom: 4px; white-space: nowrap;">PDF 또는 이미지를 불러오세요.</div>
             <p style="font-size: 11.5px; line-height: 1.5; color: var(--text-muted); margin-bottom: 14px;">PDF와 이미지를 자유롭게 섞어서 편집, 재구성, 저장합니다.</p>
             <button class="btn-tool" style="background: var(--primary); color: #fff; border-color: var(--primary); padding: 8px 18px; font-size: 13px; font-weight: 700; border-radius: 6px; cursor: pointer;" onclick="triggerOpenFileDialog()">📁 파일 열기</button>
           </div>
@@ -3708,7 +4200,7 @@
         if (btnSavePdf) btnSavePdf.disabled = true;
         if (btnSaveImg) btnSaveImg.disabled = true;
         updateThumbCounts();
-        document.getElementById('statusText').textContent = '준비 완료';
+        updateStatusMsg('준비 완료');
         syncControlsForCurrentPage();
       }
     }
@@ -3783,7 +4275,7 @@
 
       // 1. PDF 파일 처리
       for (const pdfFile of pdfFiles) {
-        document.getElementById('statusText').textContent = `${pdfFile.name} 로드 중...`;
+        updateStatusMsg(`${pdfFile.name} 로드 중...`);
         try {
           const arrayBuf = await pdfFile.arrayBuffer();
           const loadedDoc = await pdfjsLib.getDocument({ data: arrayBuf }).promise;
@@ -3832,13 +4324,13 @@
           }
         } catch (err) {
           console.error('PDF 로드 오류:', err);
-          document.getElementById('statusText').textContent = 'PDF 문서를 읽을 수 없습니다.';
+          updateStatusMsg('PDF 문서를 읽을 수 없습니다.');
         }
       }
 
       // 2. 이미지 파일 처리
       if (imgFiles.length > 0) {
-        document.getElementById('statusText').textContent = '이미지를 불러오는 중...';
+        updateStatusMsg('이미지를 불러오는 중...');
         const newItems = [];
         for (const file of imgFiles) {
           try {
@@ -3879,7 +4371,7 @@
       await refreshWorkspaceDisplay();
       if (docState.items.length > 0) {
         await loadMainViewer(docState.currentIndex);
-        document.getElementById('statusText').textContent = `${docState.items.length}개 항목이 준비되었습니다.`;
+        updateStatusMsg(`${docState.items.length}개 항목이 준비되었습니다.`);
       }
     }
 
@@ -3923,7 +4415,7 @@
         card.onclick = (e) => {
           if (e.target.closest('input[type="checkbox"]') || e.target.closest('button')) return;
           loadMainViewer(idx);
-          if (window.innerWidth <= 768) {
+          if (window.innerWidth <= 860) {
             toggleMobileControl(true);
           }
         };
@@ -4356,7 +4848,7 @@ const modal = document.getElementById('modalPdfPicker');
         closePdfPickerModal();
         await refreshWorkspaceDisplay();
         await loadMainViewer(docState.currentIndex);
-        document.getElementById('statusText').textContent = `[${pickerState.file.name}] 페이지가 ${newPages.length}장으로 갱신되었습니다.`;
+        updateStatusMsg(`[${pickerState.file.name}] 페이지가 ${newPages.length}장으로 갱신되었습니다.`);
         return;
       }
 
@@ -4392,7 +4884,7 @@ const modal = document.getElementById('modalPdfPicker');
       closePdfPickerModal();
       await refreshWorkspaceDisplay();
       await loadMainViewer(pdfState.currentIndex);
-      document.getElementById('statusText').textContent = `${newPages.length}개 페이지가 삽입되었습니다.`;
+      updateStatusMsg(`${newPages.length}개 페이지가 삽입되었습니다.`);
     }
 
     document.getElementById('chkSelectAll').addEventListener('change', (e) => {
@@ -5227,7 +5719,7 @@ const modal = document.getElementById('modalPdfPicker');
       try {
         for (let idx = 0; idx < selectedIndices.length; idx++) {
           if (isAborted) {
-            document.getElementById('statusText').textContent = '변환이 중단되었습니다.';
+            updateStatusMsg('변환이 중단되었습니다.');
             break;
           }
 
@@ -5239,7 +5731,7 @@ const modal = document.getElementById('modalPdfPicker');
 
           const pct = Math.round(((idx + 1) / selectedIndices.length) * 100);
           document.getElementById('progFill').style.width = `${pct}%`;
-          document.getElementById('statusText').textContent = `이미지 변환 중: [${idx + 1} / ${selectedIndices.length}] (${pct}%)...`;
+          updateStatusMsg(`이미지 변환 중: [${idx + 1} / ${selectedIndices.length}] (${pct}%)...`);
 
           await new Promise(r => setTimeout(r, 0));
 
@@ -5383,10 +5875,10 @@ const modal = document.getElementById('modalPdfPicker');
             a.href = url;
             a.click();
             setTimeout(() => URL.revokeObjectURL(url), 2000);
-            document.getElementById('statusText').textContent = '완료! 이미지 1장 저장됨.';
+            updateStatusMsg('완료! 이미지 1장 저장됨.');
           } else {
             // 다중 파일 ZIP 압축 다운로드
-            document.getElementById('statusText').textContent = 'ZIP 파일 생성 중...';
+            updateStatusMsg('ZIP 파일 생성 중...');
             const zip = new JSZip();
             exportBlobs.forEach(item => zip.file(item.name, item.blob));
             const zipBlob = await zip.generateAsync({ type: 'blob' });
@@ -5399,12 +5891,12 @@ const modal = document.getElementById('modalPdfPicker');
             a.click();
             setTimeout(() => URL.revokeObjectURL(url), 2000);
 
-            document.getElementById('statusText').textContent = `완료! ${exportBlobs.length}장 이미지 저장됨.`;
+            updateStatusMsg(`완료! ${exportBlobs.length}장 이미지 저장됨.`);
           }
         }
       } catch (err) {
         console.error(err);
-        document.getElementById('statusText').textContent = `오류: ${err.message}`;
+        updateStatusMsg(`오류: ${err.message}`);
       } finally {
         updateThumbCounts();
         document.getElementById('btnAbort').style.display = 'none';
@@ -5432,7 +5924,7 @@ const modal = document.getElementById('modalPdfPicker');
       try {
         for (let idx = 0; idx < selectedIndices.length; idx++) {
           if (isAborted) {
-            document.getElementById('statusText').textContent = 'PDF 생성이 중단되었습니다.';
+            updateStatusMsg('PDF 생성이 중단되었습니다.');
             break;
           }
 
@@ -5444,7 +5936,7 @@ const modal = document.getElementById('modalPdfPicker');
 
           const pct = Math.round(((idx + 1) / selectedIndices.length) * 100);
           document.getElementById('progFill').style.width = `${pct}%`;
-          document.getElementById('statusText').textContent = `PDF 생성 중: [${idx + 1} / ${selectedIndices.length}] (${pct}%)...`;
+          updateStatusMsg(`PDF 생성 중: [${idx + 1} / ${selectedIndices.length}] (${pct}%)...`);
 
           await new Promise(r => setTimeout(r, 0));
 
@@ -5562,11 +6054,11 @@ const modal = document.getElementById('modalPdfPicker');
         if (!isAborted && newPdfDoc) {
           const baseName = docState.fileName || 'document';
           newPdfDoc.save(`${baseName}_edited.pdf`);
-          document.getElementById('statusText').textContent = `완료! ${selectedIndices.length}페이지 PDF 저장됨.`;
+          updateStatusMsg(`완료! ${selectedIndices.length}페이지 PDF 저장됨.`);
         }
       } catch (err) {
         console.error(err);
-        document.getElementById('statusText').textContent = `PDF 생성 오류: ${err.message}`;
+        updateStatusMsg(`PDF 생성 오류: ${err.message}`);
       } finally {
         updateThumbCounts();
         document.getElementById('btnAbort').style.display = 'none';
@@ -5667,7 +6159,7 @@ const modal = document.getElementById('modalPdfPicker');
             y: cfg.corners[cornerKey]?.y || 0
           };
           updateMiniPinLoupe(cornerKey);
-        } else if (window.innerWidth <= 768 && e.touches.length === 1 && docState.items.length > 0) {
+        } else if (window.innerWidth <= 860 && e.touches.length === 1 && docState.items.length > 0) {
           // 모바일 전용: 미니 프리뷰 내 이미지 터치 드래그 이동 (Panning)
           isMiniPanning = true;
           miniPanStartX = e.touches[0].clientX;
@@ -6019,6 +6511,11 @@ const modal = document.getElementById('modalPdfPicker');
     window.addEventListener('keydown', (e) => {
       // 1. ESC 키: 팝업 모달, 햄버거 메뉴 및 모바일 패널 닫기 (최상위 레이어부터 순차 닫기)
       if (e.key === 'Escape') {
+        const histModal = document.getElementById('modalHistoryLog');
+        if (histModal && histModal.classList.contains('show')) {
+          closeHistoryLogModal(true);
+          return;
+        }
         const fileMgrModal = document.getElementById('modalOpenFilesManager');
         if (fileMgrModal && fileMgrModal.classList.contains('show')) {
           closeOpenFilesManagerModal(true);
@@ -6077,6 +6574,18 @@ const modal = document.getElementById('modalPdfPicker');
 
     // 브라우저 뒤로가기(하드웨어/제스처) 시 열려 있는 레이어 닫기 및 2회 터치 시 앱 종료
     window.addEventListener('popstate', (e) => {
+      if (isAppExiting) return;
+      if (isClosingLayerProgrammatically) {
+        isClosingLayerProgrammatically = false;
+        return;
+      }
+
+      // 0. 작업 히스토리 모달 닫기
+      const histModal = document.getElementById('modalHistoryLog');
+      if (histModal && histModal.classList.contains('show')) {
+        closeHistoryLogModal(false);
+        return;
+      }
       // 0. 열린 파일 관리 모달 닫기
       const fileMgrModal = document.getElementById('modalOpenFilesManager');
       if (fileMgrModal && fileMgrModal.classList.contains('show')) {
