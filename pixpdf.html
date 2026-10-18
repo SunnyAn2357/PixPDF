@@ -1350,6 +1350,121 @@
         object-fit: contain;
       }
     }
+  
+    /* 열린 파일 관리 모달 스타일 */
+    .file-mgr-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 11px 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      transition: all 0.15s ease;
+    }
+    .file-mgr-card:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.07);
+    }
+    .file-mgr-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 3.5px;
+    }
+    .file-mgr-title-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .file-mgr-badge {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 5px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      flex-shrink: 0;
+    }
+    .file-mgr-badge.pdf {
+      background: rgba(15, 118, 110, 0.12);
+      color: #0f766e;
+    }
+    .file-mgr-badge.image {
+      background: rgba(99, 102, 241, 0.12);
+      color: #4f46e5;
+    }
+    .file-mgr-badge.blank {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+    .file-mgr-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-mgr-detail {
+      font-size: 11.5px;
+      color: var(--text-sub);
+      line-height: 1.35;
+      word-break: break-all;
+    }
+    .file-mgr-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .btn-mgr-resync {
+      background: var(--primary-subtle);
+      color: var(--primary);
+      border-color: rgba(15, 118, 110, 0.3);
+      font-weight: 600;
+      font-size: 11.5px;
+      padding: 5px 9px;
+      white-space: nowrap;
+    }
+    .btn-mgr-resync:hover:not(:disabled) {
+      background: var(--primary);
+      color: #ffffff;
+    }
+    .btn-mgr-resync:disabled {
+      opacity: 0.35;
+      cursor: not-allowed !important;
+      background: #f1f5f9 !important;
+      border-color: #cbd5e1 !important;
+      color: #94a3b8 !important;
+    }
+    .btn-mgr-delete {
+      background: #ffffff;
+      color: #ef4444;
+      border-color: rgba(239, 68, 68, 0.3);
+      font-weight: 600;
+      font-size: 11.5px;
+      padding: 5px 9px;
+      white-space: nowrap;
+    }
+    .btn-mgr-delete:hover {
+      background: #fef2f2;
+      border-color: #ef4444;
+    }
+    @media (max-width: 600px) {
+      .file-mgr-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 9px;
+      }
+      .file-mgr-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1393,10 +1508,12 @@
       <div class="thumb-toolbar">
         <label id="lblSelectAll"><input type="checkbox" id="chkSelectAll"> 전체선택</label>
         <div style="display:flex; align-items:center; gap:6px; position:relative;">
-          <button class="btn-add-thumb" id="btnInsertDropdown" onclick="toggleInsertDropdown(event)" title="페이지 또는 파일 삽입">+ 삽입 ▾</button>
-          <div class="menu-dropdown insert-dropdown" id="menuInsertDropdown" style="top:32px; right:0; left:auto; width:130px; z-index:210;">
-            <button class="menu-item" onclick="insertBlankPageAction(event)" style="padding:10px 14px; font-size:13px;">📄 빈페이지</button>
-            <button class="menu-item" onclick="triggerInsertFileAction(event)" style="padding:10px 14px; font-size:13px;">📁 파일</button>
+          <button class="btn-add-thumb" id="btnFileMgrDropdown" onclick="toggleFileMgrDropdown(event)" title="열린 파일 관리 및 새 파일/페이지 삽입">파일 관리 ▾</button>
+          <div class="menu-dropdown insert-dropdown" id="menuFileMgrDropdown" style="top:32px; right:0; left:auto; width:165px; z-index:210;">
+            <button class="menu-item" onclick="openOpenFilesManagerModal(event)" style="padding:9px 12px; font-size:12.5px; font-weight:700; color:var(--primary);">📂 열린 파일 관리</button>
+            <div style="height:1px; background:var(--border-light); margin:2px 0;"></div>
+            <button class="menu-item" onclick="triggerInsertFileAction(event)" style="padding:9px 12px; font-size:12.5px;">➕ 새 파일 삽입</button>
+            <button class="menu-item" onclick="insertBlankPageAction(event)" style="padding:9px 12px; font-size:12.5px;">📄 빈 페이지 삽입</button>
           </div>
           <span id="thumbCount">0/0</span>
         </div>
@@ -1414,11 +1531,7 @@
           <button class="btn-tool" id="btnPrevPage" onclick="navigateViewer(-1)">◀ 이전</button>
           <span id="viewerPageIndicator" style="font-size:13.5px; font-weight:700;">- / -</span>
           <button class="btn-tool" id="btnNextPage" onclick="navigateViewer(1)">다음 ▶</button>
-          <label id="chkTransparentBgWrap" class="transparent-bg-toggle" style="display: none; align-items: center; margin-left: 14px; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-sub); cursor: pointer; user-select: none;" title="PNG 저장 시 회전/이동/축소로 남는 여백을 투명하게 처리합니다">
-            <input type="checkbox" id="chkTransparentBg" checked onchange="onTransparentBgChange(this.checked)" style="width: 15px; height: 15px; cursor: pointer; accent-color: var(--primary);">
-            <span>배경 투명화</span>
-          </label>
-        </div>
+          </div>
         <div class="viewer-actions">
           <button class="btn-tool" onclick="adjustZoom(0.15)">확대</button>
           <button class="btn-tool" onclick="adjustZoom(-0.15)">축소</button>
@@ -1820,6 +1933,30 @@
     </div>
   </div>
 
+  <!-- [열린 파일 관리 모달] -->
+  <div class="modal-overlay" id="modalOpenFilesManager" onclick="onOpenFilesManagerBackdropClick(event)">
+    <div class="modal-dialog" style="max-width: 580px; width: 94%;">
+      <div class="modal-header">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <span>📂 열린 파일 관리</span>
+          <span id="openFilesCountBadge" style="font-size: 11px; padding: 2px 7px; border-radius: 12px; background: rgba(15, 118, 110, 0.1); color: var(--primary); font-weight: 700;">0개 파일</span>
+        </h3>
+        <button class="modal-close-btn" onclick="closeOpenFilesManagerModal(true)">✕</button>
+      </div>
+      <div style="padding: 10px 16px 6px 16px; font-size: 12px; color: var(--text-muted); border-bottom: 1px solid var(--border-light);">
+        워크스페이스에 불러온 파일 목록입니다. (파일을 연 순서대로 정렬)
+      </div>
+      <div class="modal-body" style="padding: 12px 16px; max-height: 60vh; overflow-y: auto;">
+        <div id="openFilesListContainer" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- 파일 카드들이 동적으로 렌더링됨 -->
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content: flex-end;">
+        <button class="btn-tool" onclick="closeOpenFilesManagerModal(true)">닫기</button>
+      </div>
+    </div>
+  </div>
+
   <!-- [앱 전용 플로팅 토스트] 더블 탭 종료 및 빠른 알림 -->
   <div id="appToast" class="app-toast"></div>
 
@@ -1831,7 +1968,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.6.0 (모바일 미니 프리뷰 터치 이동, 1px 정밀 리모콘 및 간격 개선)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.7.0 (가운데 배경투명화 삭제, 파일 관리 드롭다운 및 열린 파일 관리/페이지 재선택 기능 추가)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -1939,7 +2076,8 @@
 
     // [핵심] 단일 통합 작업 공간 상태 관리 (PDF와 이미지 구분 없이 섞어서 편집)
     const docState = {
-      items: [], // [{ type: 'pdf'|'image', doc, pageNum, name, width, height, imgObj, file, settings: { fit, pageSize, quality, scale, rot, rotTarget, contentScale, scaleX, trapezoid, brightness, contrast, offsetX, offsetY, orient, margin, format, transparentBg, customW, customH } }]
+      items: [],
+      openedFiles: [], // [{ fileId, name, type, file, doc, totalDocPages, openedAt }] // [{ type: 'pdf'|'image', doc, pageNum, name, width, height, imgObj, file, settings: { fit, pageSize, quality, scale, rot, rotTarget, contentScale, scaleX, trapezoid, brightness, contrast, offsetX, offsetY, orient, margin, format, transparentBg, customW, customH } }]
       checkList: [],
       currentIndex: 0,
       zoom: 1.0,
@@ -1970,6 +2108,41 @@
     };
 
     // 하위 호환성 및 기존 함수 연동을 위한 양방향 Proxy
+    function registerOpenedFile(file, type, loadedDoc = null, customTotalPages = 1) {
+      if (!docState.openedFiles) docState.openedFiles = [];
+      const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+      const record = {
+        fileId: fileId,
+        name: file ? file.name : (type === 'blank' ? '빈 페이지' : '이름 없음'),
+        type: type,
+        file: file || null,
+        doc: loadedDoc || null,
+        totalDocPages: loadedDoc ? loadedDoc.numPages : customTotalPages,
+        openedAt: Date.now()
+      };
+      docState.openedFiles.push(record);
+      return fileId;
+    }
+
+    function formatPageRanges(pages) {
+      if (!pages || pages.length === 0) return '없음';
+      const sorted = [...new Set(pages)].sort((a, b) => a - b);
+      const ranges = [];
+      let start = sorted[0];
+      let end = sorted[0];
+      for (let i = 1; i < sorted.length; i++) {
+        if (sorted[i] === end + 1) {
+          end = sorted[i];
+        } else {
+          ranges.push(start === end ? `${start}` : `${start}~${end}`);
+          start = sorted[i];
+          end = sorted[i];
+        }
+      }
+      ranges.push(start === end ? `${start}` : `${start}~${end}`);
+      return ranges.join(', ');
+    }
+
     const pdfState = {
       get doc() { return docState.items[docState.currentIndex]?.doc || null; },
       set doc(d) {},
@@ -1991,7 +2164,9 @@
       file: null,
       total: 0,
       selected: [],
-      targetInsertIndex: -1
+      targetInsertIndex: -1,
+      mode: 'insert',
+      resyncFileId: null
     };
     let pendingInsertIndex = -1;
 
@@ -2821,18 +2996,155 @@
     });
 
     // [+ 삽입] 드롭다운 메뉴 제어
-    function toggleInsertDropdown(e) {
+    function toggleFileMgrDropdown(e) {
       if (e) e.stopPropagation();
-      closeMenuDropdown();
-      const menu = document.getElementById('menuInsertDropdown');
+      const menu = document.getElementById('menuFileMgrDropdown') || document.getElementById('menuInsertDropdown');
       if (menu) menu.classList.toggle('show');
     }
+    const toggleInsertDropdown = toggleFileMgrDropdown;
 
-    function closeInsertDropdown() {
-      const menu = document.getElementById('menuInsertDropdown');
-      if (menu && menu.classList.contains('show')) {
-        menu.classList.remove('show');
+    function closeFileMgrDropdown() {
+      const menu = document.getElementById('menuFileMgrDropdown') || document.getElementById('menuInsertDropdown');
+      if (menu) menu.classList.remove('show');
+    }
+    const closeInsertDropdown = closeFileMgrDropdown;
+
+    function openOpenFilesManagerModal(e) {
+      if (e) e.stopPropagation();
+      closeFileMgrDropdown();
+      renderOpenFilesList();
+      const modal = document.getElementById('modalOpenFilesManager');
+      if (modal) {
+        modal.classList.add('show');
+        try { history.pushState({ appLayer: 'openFilesManager' }, ''); } catch (err) {}
       }
+    }
+
+    function closeOpenFilesManagerModal(syncHistory = true) {
+      const modal = document.getElementById('modalOpenFilesManager');
+      if (modal && modal.classList.contains('show')) {
+        modal.classList.remove('show');
+        if (syncHistory && history.state && (history.state.appLayer === 'openFilesManager' || history.state.modal === 'openFilesManager')) {
+          isClosingLayerProgrammatically = true;
+          history.back();
+        }
+      }
+    }
+
+    function onOpenFilesManagerBackdropClick(e) {
+      if (e.target.id === 'modalOpenFilesManager') {
+        closeOpenFilesManagerModal(true);
+      }
+    }
+
+    function renderOpenFilesList() {
+      const container = document.getElementById('openFilesListContainer');
+      const badge = document.getElementById('openFilesCountBadge');
+      if (!container) return;
+
+      if (!docState.openedFiles) docState.openedFiles = [];
+
+      const activeFiles = docState.openedFiles.filter(f => {
+        return docState.items.some(it => it.fileId === f.fileId);
+      });
+
+      if (badge) badge.textContent = `${activeFiles.length}개 파일`;
+
+      if (activeFiles.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 40px 10px; color: var(--text-muted); font-size: 13px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">📂</div>
+            현재 열려 있는 파일이 없습니다.
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      activeFiles.forEach((f, idx) => {
+        const fileItems = docState.items.filter(it => it.fileId === f.fileId);
+        const currentPages = fileItems.map(it => it.pageNum).filter(Boolean);
+        const pageRangeStr = formatPageRanges(currentPages);
+
+        let detailText = '';
+        if (f.type === 'pdf') {
+          detailText = `총 ${f.totalDocPages}p 중 <strong>${fileItems.length}페이지</strong> 열림 (p.${pageRangeStr})`;
+        } else if (f.type === 'image') {
+          detailText = `이미지 파일 (1페이지 열림)`;
+        } else {
+          detailText = `빈 페이지 (${fileItems.length}개 열림)`;
+        }
+
+        const isPdf = f.type === 'pdf';
+
+        html += `
+          <div class="file-mgr-card">
+            <div class="file-mgr-info">
+              <div class="file-mgr-title-row">
+                <span style="font-size: 12px; font-weight: 700; color: var(--text-muted); width: 22px;">#${idx + 1}</span>
+                <span class="file-mgr-badge ${f.type}">${f.type}</span>
+                <span class="file-mgr-name" title="${f.name}">${f.name}</span>
+              </div>
+              <div class="file-mgr-detail">${detailText}</div>
+            </div>
+            <div class="file-mgr-actions">
+              <button type="button" class="btn-tool btn-mgr-resync" 
+                ${!isPdf ? 'disabled style="opacity:0.35; cursor:not-allowed;" title="이미지는 단일 페이지이므로 재선택을 지원하지 않습니다"' : `title="페이지 번호 재선택" onclick="reselectPdfPages('${f.fileId}')"`}>
+                📑 페이지 재선택
+              </button>
+              <button type="button" class="btn-tool btn-mgr-delete" title="이 파일의 모든 페이지 제외" onclick="removeFileEntirely('${f.fileId}')">
+                🗑️ 파일 제외
+              </button>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    async function removeFileEntirely(fileId) {
+      const fileRecord = docState.openedFiles.find(f => f.fileId === fileId);
+      const fileName = fileRecord ? fileRecord.name : '해당 파일';
+      const count = docState.items.filter(it => it.fileId === fileId).length;
+
+      const newItems = [];
+      const newChecks = [];
+      for (let i = 0; i < docState.items.length; i++) {
+        if (docState.items[i].fileId !== fileId) {
+          newItems.push(docState.items[i]);
+          newChecks.push(docState.checkList[i]);
+        }
+      }
+
+      docState.items = newItems;
+      docState.checkList = newChecks;
+      docState.currentIndex = Math.max(0, Math.min(docState.currentIndex, docState.items.length - 1));
+
+      await renderThumbnailList();
+      if (docState.items.length > 0) {
+        await loadMainViewer(docState.currentIndex);
+        renderOpenFilesList();
+      } else {
+        closeOpenFilesManagerModal(true);
+        refreshWorkspaceDisplay();
+      }
+      document.getElementById('statusText').textContent = `[${fileName}] ${count}개 페이지가 제외되었습니다.`;
+    }
+
+    function reselectPdfPages(fileId) {
+      const fileRecord = docState.openedFiles.find(f => f.fileId === fileId);
+      if (!fileRecord || !fileRecord.doc) {
+        alert('해당 PDF 문서 데이터를 찾을 수 없습니다.');
+        return;
+      }
+      closeOpenFilesManagerModal(false);
+
+      const currentPages = docState.items
+        .filter(it => it.fileId === fileId)
+        .map(it => it.pageNum)
+        .filter(Boolean);
+
+      openPdfPicker(fileRecord.doc, fileRecord.file, -1, 'resync', fileId, currentPages);
     }
 
     function triggerInsertFileAction(e) {
@@ -2904,8 +3216,10 @@
         customH: cfg.customH
       };
 
+      const blankFileId = registerOpenedFile(null, 'blank', null, 1);
       const newPageItem = {
         type: 'image',
+        fileId: blankFileId,
         name: `빈페이지_${insertAt + 1}.png`,
         imgObj: imgObj,
         width: canvasW,
@@ -3479,9 +3793,11 @@
 
           if (isFirstLoad && pdfFiles.length === 1 && imgFiles.length === 0) {
             // 최초 단일 PDF 로드 시: 전체 페이지를 기본 순서대로 등록
+            const pdfFileId = registerOpenedFile(pdfFile, 'pdf', loadedDoc, totalPages);
             docState.fileName = pdfFile.name.replace(/\.[^/.]+$/, "");
             const newPages = Array.from({ length: totalPages }, (_, i) => ({
               type: 'pdf',
+              fileId: pdfFileId,
               doc: loadedDoc,
               pageNum: i + 1,
               name: `${pdfFile.name} (p.${i + 1})`,
@@ -3495,9 +3811,10 @@
             docState.currentIndex = 0;
             document.getElementById('chkSelectAll').checked = true;
           } else if (totalPages === 1) {
-            // 1페이지 PDF는 피커 없이 즉시 삽입!
+            const singlePdfFileId = registerOpenedFile(pdfFile, 'pdf', loadedDoc, 1);
             const newPage = {
               type: 'pdf',
+              fileId: singlePdfFileId,
               doc: loadedDoc,
               pageNum: 1,
               name: `${pdfFile.name} (p.1)`,
@@ -3527,9 +3844,11 @@
         const newItems = [];
         for (const file of imgFiles) {
           try {
+            const imgFileId = registerOpenedFile(file, 'image', null, 1);
             const imgObj = await loadImageSafe(file);
             newItems.push({
               type: 'image',
+              fileId: imgFileId,
               file: file,
               imgObj: imgObj,
               name: file.name,
@@ -3783,27 +4102,39 @@
     // -------------------------------------------------------------
     // [PDF 페이지 선택 모달 (Picker Modal) 제어 함수들]
     // -------------------------------------------------------------
-    function openPdfPicker(pdfDoc, file, targetInsertIndex = -1) {
+    function openPdfPicker(pdfDoc, file, targetInsertIndex = -1, mode = 'insert', resyncFileId = null, initialPages = []) {
       pickerState.doc = pdfDoc;
       pickerState.file = file;
       pickerState.total = pdfDoc.numPages;
-      pickerState.selected = new Array(pdfDoc.numPages).fill(true);
       pickerState.targetInsertIndex = targetInsertIndex;
+      pickerState.mode = mode;
+      pickerState.resyncFileId = resyncFileId;
 
-      const modal = document.getElementById('modalPdfPicker');
+      if (mode === 'resync' && initialPages && initialPages.length > 0) {
+        const selMap = new Set(initialPages);
+        pickerState.selected = Array.from({ length: pdfDoc.numPages }, (_, i) => selMap.has(i + 1));
+      } else {
+        pickerState.selected = new Array(pdfDoc.numPages).fill(true);
+      }
+const modal = document.getElementById('modalPdfPicker');
       const title = document.getElementById('pickerModalTitle');
       const posText = document.getElementById('pickerTargetPosText');
       const chkAll = document.getElementById('chkPickerSelectAll');
       const txtRange = document.getElementById('txtPickerRange');
 
-      title.textContent = `📑 [${file.name}] 페이지 선택 (${pdfDoc.numPages}페이지)`;
-      chkAll.checked = true;
-      txtRange.value = '';
-
-      if (targetInsertIndex >= 0 && targetInsertIndex < pdfState.pages.length) {
-        posText.textContent = `삽입 위치: #${targetInsertIndex + 1} 앞`;
+      const btnConfirm = document.getElementById('btnConfirmPickerInsert');
+      if (mode === 'resync') {
+        title.textContent = `📑 [${file.name}] 페이지 재선택 (${pdfDoc.numPages}페이지)`;
+        if (btnConfirm) btnConfirm.textContent = '페이지 변경 적용';
+        posText.textContent = `기존 워크스페이스 위치에서 변경된 페이지로 즉시 갱신됩니다.`;
       } else {
-        posText.textContent = `삽입 위치: 문서 끝`;
+        title.textContent = `📑 [${file.name}] 페이지 선택 (${pdfDoc.numPages}페이지)`;
+        if (btnConfirm) btnConfirm.textContent = '선택 페이지 삽입';
+        if (targetInsertIndex >= 0 && targetInsertIndex < pdfState.pages.length) {
+          posText.textContent = `삽입 위치: #${targetInsertIndex + 1} 앞`;
+        } else {
+          posText.textContent = `삽입 위치: 문서 끝`;
+        }
       }
 
       modal.classList.add('show');
@@ -3964,12 +4295,79 @@
       });
 
       if (selectedNums.length === 0) {
-        alert('삽입할 페이지를 1개 이상 선택해 주세요.');
+        alert(pickerState.mode === 'resync' 
+          ? '최소 1개 이상의 페이지를 선택해야 합니다. (파일 전체를 제외하려면 파일 관리의 [파일 제외]를 사용하세요.)' 
+          : '삽입할 페이지를 1개 이상 선택해 주세요.');
         return;
       }
 
+      if (pickerState.mode === 'resync') {
+        const fileId = pickerState.resyncFileId;
+        const oldSettingsMap = new Map();
+        let firstIdx = -1;
+
+        docState.items.forEach((it, idx) => {
+          if (it.fileId === fileId) {
+            if (firstIdx === -1) firstIdx = idx;
+            if (it.pageNum && it.settings) {
+              oldSettingsMap.set(it.pageNum, it.settings);
+            }
+          }
+        });
+        if (firstIdx === -1) firstIdx = docState.items.length;
+
+        const newPages = selectedNums.map(pageNum => ({
+          type: 'pdf',
+          fileId: fileId,
+          file: pickerState.file,
+          doc: pickerState.doc,
+          pageNum: pageNum,
+          name: `${pickerState.file.name} (p.${pageNum})`,
+          settings: oldSettingsMap.get(pageNum) || {
+            ...docState.globalSettings,
+            rotTarget: { ...docState.globalSettings.rotTarget }
+          }
+        }));
+        const newChecks = new Array(newPages.length).fill(true);
+
+        const updatedItems = [];
+        const updatedChecks = [];
+        let inserted = false;
+
+        for (let i = 0; i < docState.items.length; i++) {
+          if (docState.items[i].fileId === fileId) {
+            if (!inserted) {
+              updatedItems.push(...newPages);
+              updatedChecks.push(...newChecks);
+              inserted = true;
+            }
+          } else {
+            updatedItems.push(docState.items[i]);
+            updatedChecks.push(docState.checkList[i]);
+          }
+        }
+        if (!inserted) {
+          updatedItems.push(...newPages);
+          updatedChecks.push(...newChecks);
+        }
+
+        docState.items = updatedItems;
+        docState.checkList = updatedChecks;
+        docState.currentIndex = Math.min(firstIdx, docState.items.length - 1);
+
+        closePdfPickerModal();
+        await refreshWorkspaceDisplay();
+        await loadMainViewer(docState.currentIndex);
+        document.getElementById('statusText').textContent = `[${pickerState.file.name}] 페이지가 ${newPages.length}장으로 갱신되었습니다.`;
+        return;
+      }
+
+      // 일반 insert 모드
+      const insertFileId = registerOpenedFile(pickerState.file, 'pdf', pickerState.doc, pickerState.total);
       const newPages = selectedNums.map(pageNum => ({
         type: 'pdf',
+        fileId: insertFileId,
+        file: pickerState.file,
         doc: pickerState.doc,
         pageNum: pageNum,
         name: `${pickerState.file.name} (p.${pageNum})`,
@@ -5623,6 +6021,11 @@
     window.addEventListener('keydown', (e) => {
       // 1. ESC 키: 팝업 모달, 햄버거 메뉴 및 모바일 패널 닫기 (최상위 레이어부터 순차 닫기)
       if (e.key === 'Escape') {
+        const fileMgrModal = document.getElementById('modalOpenFilesManager');
+        if (fileMgrModal && fileMgrModal.classList.contains('show')) {
+          closeOpenFilesManagerModal(true);
+          return;
+        }
         const pickerModal = document.getElementById('modalPdfPicker');
         if (pickerModal && pickerModal.classList.contains('show')) {
           closePdfPickerModal(true);
@@ -5675,14 +6078,15 @@
     });
 
     // 브라우저 뒤로가기(하드웨어/제스처) 시 열려 있는 레이어 닫기 및 2회 터치 시 앱 종료
-    window.addEventListener('popstate', () => {
-      if (isAppExiting) return;
-      if (isClosingLayerProgrammatically) {
-        isClosingLayerProgrammatically = false;
+    window.addEventListener('popstate', (e) => {
+      // 0. 열린 파일 관리 모달 닫기
+      const fileMgrModal = document.getElementById('modalOpenFilesManager');
+      if (fileMgrModal && fileMgrModal.classList.contains('show')) {
+        closeOpenFilesManagerModal(false);
         return;
       }
 
-      // 1. PDF 페이지 선택 모달 닫기
+      // 1. PDF 페이지 선택 피커 닫기
       const pickerModal = document.getElementById('modalPdfPicker');
       if (pickerModal && pickerModal.classList.contains('show')) {
         closePdfPickerModal(false);
