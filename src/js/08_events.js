@@ -706,6 +706,8 @@
 
     // 초기 워크스페이스 상태 초기화 및 히스토리 앵커 수립
     initHistoryAnchor();
+    // 모바일 브라우저의 히스토리 자동 건너뛰기 방어 (사용자 첫 터치/클릭 시 앵커 재수립)
+    window.addEventListener('pointerdown', () => { initHistoryAnchor(); }, { once: true });
     const initFileInput = document.getElementById('fileInput');
     if (initFileInput) initFileInput.value = '';
     const initInsertInput = document.getElementById('insertFileInput');

@@ -4033,7 +4033,7 @@
 
     // 모바일 설정 패널 토글 (히스토리 동기화 지원)
     function toggleMobileControl(show, syncHistory = true) {
-      if (window.innerWidth > 768) return;
+      if (window.innerWidth > 860) return;
       const col = document.getElementById('colControl');
       if (!col) return;
       if (show) {
@@ -7183,6 +7183,8 @@ const modal = document.getElementById('modalPdfPicker');
 
     // 초기 워크스페이스 상태 초기화 및 히스토리 앵커 수립
     initHistoryAnchor();
+    // 모바일 브라우저의 히스토리 자동 건너뛰기 방어 (사용자 첫 터치/클릭 시 앵커 재수립)
+    window.addEventListener('pointerdown', () => { initHistoryAnchor(); }, { once: true });
     const initFileInput = document.getElementById('fileInput');
     if (initFileInput) initFileInput.value = '';
     const initInsertInput = document.getElementById('insertFileInput');
