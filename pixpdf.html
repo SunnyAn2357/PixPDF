@@ -1949,6 +1949,10 @@
             <div id="pinBL" class="corner-pin" data-corner="bl" title="좌하단 모서리 (드래그)"><span class="pin-label">BL</span></div>
           </div>
         </div>
+        <!-- 메인 뷰어 투시변환 정밀 확대경 (Loupe) -->
+        <div id="viewerPinLoupe" class="pin-loupe" style="display: none;">
+          <canvas id="viewerLoupeCanvas" width="220" height="220" style="width: 110px; height: 110px;"></canvas>
+        </div>
         <div id="viewerEmptyMsg" class="viewer-empty">
           <div class="viewer-empty-icon">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
@@ -2073,7 +2077,7 @@
                   </div>
                   <!-- 확대경 -->
                   <div id="miniPinLoupe" class="pin-loupe" style="display: none;">
-                    <canvas id="miniLoupeCanvas" width="90" height="90"></canvas>
+                    <canvas id="miniLoupeCanvas" width="200" height="200" style="width: 100px; height: 100px;"></canvas>
                   </div>
                 </div>
                 <div id="miniInfo" class="mini-info-text">선택 항목 기준 윤곽</div>
@@ -2384,7 +2388,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.9.6 (가운데 창 이전/다음 버튼 콤팩트 통일, 투시변환 시 가운데 창 자동 줌 축소·복원)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.9.7 (가운데 창 투시변환 돋보기 도입, 가운데·미니 돋보기 내 용지 외곽선/모서리/바탕 동시 표출)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -5462,10 +5466,70 @@ const modal = document.getElementById('modalPdfPicker');
       } else {
         selectedCornerKey = null;
         document.querySelectorAll('.corner-pin').forEach(p => p.classList.remove('active'));
+        const loupe = document.getElementById('miniPinLoupe');
+        if (loupe) loupe.style.display = 'none';
+        const viewerLoupe = document.getElementById('viewerPinLoupe');
+        if (viewerLoupe) viewerLoupe.style.display = 'none';
       }
     }
 
-    // 모바일/우측 핀 터치 드래그 시 손가락 위에 뜨는 정밀 확대 돋보기(Loupe)
+    // 돋보기 투명 배경용 체커보드 패턴 렌더링 헬퍼
+    function drawLoupeCheckerboard(ctx, x, y, w, h, size = 6) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x, y, w, h);
+      ctx.clip();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = '#e2e8f0';
+      const startCol = Math.floor(x / size);
+      const endCol = Math.ceil((x + w) / size);
+      const startRow = Math.floor(y / size);
+      const endRow = Math.ceil((y + h) / size);
+      for (let r = startRow; r < endRow; r++) {
+        for (let c = startCol; c < endCol; c++) {
+          if ((r + c) % 2 === 1) {
+            ctx.fillRect(c * size, r * size, size, size);
+          }
+        }
+      }
+      ctx.restore();
+    }
+
+    // 돋보기 공통 정밀 조준 십자선 (Crosshair) 렌더링 헬퍼
+    function drawLoupeCrosshair(lctx, cx, cy, chLen = 14) {
+      // 1. 흰색 외곽 후광 (어두운 이미지 또는 밝은 종이 위에서도 항상 선명)
+      lctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+      lctx.lineWidth = 3.2;
+      lctx.beginPath();
+      lctx.moveTo(cx, cy - chLen); lctx.lineTo(cx, cy + chLen);
+      lctx.moveTo(cx - chLen, cy); lctx.lineTo(cx + chLen, cy);
+      lctx.stroke();
+
+      lctx.beginPath();
+      lctx.arc(cx, cy, 5.5, 0, Math.PI * 2);
+      lctx.stroke();
+
+      // 2. 중심 조준선 및 링 (PixPDF 브랜드 틸 그린)
+      lctx.strokeStyle = '#0f766e';
+      lctx.lineWidth = 1.6;
+      lctx.beginPath();
+      lctx.moveTo(cx, cy - chLen); lctx.lineTo(cx, cy + chLen);
+      lctx.moveTo(cx - chLen, cy); lctx.lineTo(cx + chLen, cy);
+      lctx.stroke();
+
+      lctx.beginPath();
+      lctx.arc(cx, cy, 5.5, 0, Math.PI * 2);
+      lctx.stroke();
+
+      // 3. 중심 정밀 타겟 점
+      lctx.fillStyle = '#0f766e';
+      lctx.beginPath();
+      lctx.arc(cx, cy, 1.8, 0, Math.PI * 2);
+      lctx.fill();
+    }
+
+    // 모바일/우측 미니 프리뷰 투시 핀 드래그 시 정밀 확대 돋보기(Loupe) - 용지 외곽선/모서리 동시 표출
     function updateMiniPinLoupe(pinKey) {
       if (!isDraggingMiniPin || !pinKey) return;
       const loupe = document.getElementById('miniPinLoupe');
@@ -5476,63 +5540,212 @@ const modal = document.getElementById('modalPdfPicker');
       const pinEl = document.getElementById('miniPin' + pinKey.toUpperCase());
       if (!loupe || !loupeCanvas || !miniCanvas || !miniSheet || !stageEl || !pinEl) return;
 
-      loupe.style.display = 'block';
-
       const pinX = parseFloat(pinEl.style.left) || 0;
       const pinY = parseFloat(pinEl.style.top) || 0;
-      const loupeSize = 90;
+      const loupeSize = 100;
 
-      // 핀 바로 위(~60px 위쪽)에 돋보기 배치, 상단 경계 침범 시 아래쪽에 배치
+      // 핀 바로 위에 돋보기 배치 (상단 경계 침범 시 아래쪽에 배치)
       let loupeX = pinX - loupeSize / 2;
-      let loupeY = pinY - loupeSize - 16;
+      let loupeY = pinY - loupeSize - 18;
       if (loupeY < 4) {
-        loupeY = pinY + 24;
+        loupeY = pinY + 22;
       }
       loupeX = Math.max(4, Math.min(stageEl.offsetWidth - loupeSize - 4, loupeX));
 
       loupe.style.left = `${loupeX}px`;
       loupe.style.top = `${loupeY}px`;
+      loupe.style.display = 'block';
 
-      // 돋보기 캔버스에 2.2배 확대 영역 그리기
+      // Retina / HiDPI 버퍼
+      const dpr = Math.max(2, window.devicePixelRatio || 2);
+      const bufSize = Math.round(loupeSize * dpr);
+      if (loupeCanvas.width !== bufSize || loupeCanvas.height !== bufSize) {
+        loupeCanvas.width = bufSize;
+        loupeCanvas.height = bufSize;
+      }
+
       const lctx = loupeCanvas.getContext('2d');
-      lctx.clearRect(0, 0, loupeSize, loupeSize);
+      lctx.setTransform(1, 0, 0, 1, 0, 0);
+      lctx.clearRect(0, 0, bufSize, bufSize);
+      lctx.scale(dpr, dpr);
 
+      // 원형 클리핑
       lctx.save();
+      const cx = loupeSize / 2;
+      const cy = loupeSize / 2;
       lctx.beginPath();
-      lctx.arc(loupeSize / 2, loupeSize / 2, loupeSize / 2 - 1, 0, Math.PI * 2);
+      lctx.arc(cx, cy, cx - 1, 0, Math.PI * 2);
       lctx.clip();
 
-      lctx.fillStyle = '#f1f5f9';
+      // 1. 용지 바깥 회색 스테이지 배경 (Outside Workspace)
+      lctx.fillStyle = '#e2e8f0';
       lctx.fillRect(0, 0, loupeSize, loupeSize);
 
-      // 종이 캔버스 내 해당 핀의 상대 좌표 매핑
-      const scaleToCanvas = miniCanvas.width / miniSheet.offsetWidth;
-      const pinSheetX = pinX - miniSheet.offsetLeft;
-      const pinSheetY = pinY - miniSheet.offsetTop;
-      const srcCenterBitmapX = pinSheetX * scaleToCanvas;
-      const srcCenterBitmapY = pinSheetY * scaleToCanvas;
+      // 2. 종이 용지(Paper) 치수 및 돋보기 내 좌표 계산 (2.4배 확대)
+      const zoom = 2.4;
+      const paperX = miniSheet.offsetLeft;
+      const paperY = miniSheet.offsetTop;
+      const paperW = miniSheet.offsetWidth;
+      const paperH = miniSheet.offsetHeight;
 
-      const zoom = 2.2;
-      const cropW = (loupeSize / zoom) * scaleToCanvas;
-      const cropH = (loupeSize / zoom) * scaleToCanvas;
-      const cropX = srcCenterBitmapX - cropW / 2;
-      const cropY = srcCenterBitmapY - cropH / 2;
+      const pInLoupeX = (paperX - pinX) * zoom + cx;
+      const pInLoupeY = (paperY - pinY) * zoom + cy;
+      const pInLoupeW = paperW * zoom;
+      const pInLoupeH = paperH * zoom;
 
-      lctx.drawImage(miniCanvas, cropX, cropY, cropW, cropH, 0, 0, loupeSize, loupeSize);
+      // 3. 종이 용지 바탕 (그림자 및 흰색/투명 배경)
+      lctx.save();
+      lctx.shadowColor = 'rgba(0, 0, 0, 0.22)';
+      lctx.shadowBlur = Math.round(6 * zoom);
+      lctx.fillStyle = '#ffffff';
+      lctx.fillRect(pInLoupeX, pInLoupeY, pInLoupeW, pInLoupeH);
+      lctx.restore();
 
-      // 정밀 십자선 (Crosshair)
+      const isTrans = miniSheet.classList.contains('checkerboard-bg');
+      if (isTrans) {
+        drawLoupeCheckerboard(lctx, pInLoupeX, pInLoupeY, pInLoupeW, pInLoupeH, 6);
+      }
+
+      // 4. 고화질 메인 캔버스(또는 미니 캔버스)의 이미지 내용물 렌더링
+      const srcCanvas = document.getElementById('mainViewerCanvas') || miniCanvas;
+      if (srcCanvas && srcCanvas.width > 0 && srcCanvas.height > 0) {
+        lctx.drawImage(srcCanvas, 0, 0, srcCanvas.width, srcCanvas.height, pInLoupeX, pInLoupeY, pInLoupeW, pInLoupeH);
+      }
+
+      // 5. [핵심] 종이 용지 외곽 테두리선(Paper Boundary) 및 4개 모서리(Corners) 강조
       lctx.strokeStyle = '#0f766e';
-      lctx.lineWidth = 1.5;
+      lctx.lineWidth = 1.6;
+      lctx.strokeRect(pInLoupeX, pInLoupeY, pInLoupeW, pInLoupeH);
+
+      // 용지 4개 모서리 L자형 직각 가이드
+      const arm = Math.min(12, Math.min(pInLoupeW, pInLoupeH) * 0.2);
+      lctx.strokeStyle = '#047857';
+      lctx.lineWidth = 2.5;
       lctx.beginPath();
-      lctx.moveTo(loupeSize / 2, loupeSize / 2 - 14);
-      lctx.lineTo(loupeSize / 2, loupeSize / 2 + 14);
-      lctx.moveTo(loupeSize / 2 - 14, loupeSize / 2);
-      lctx.lineTo(loupeSize / 2 + 14, loupeSize / 2);
+      // TL
+      lctx.moveTo(pInLoupeX, pInLoupeY + arm); lctx.lineTo(pInLoupeX, pInLoupeY); lctx.lineTo(pInLoupeX + arm, pInLoupeY);
+      // TR
+      lctx.moveTo(pInLoupeX + pInLoupeW - arm, pInLoupeY); lctx.lineTo(pInLoupeX + pInLoupeW, pInLoupeY); lctx.lineTo(pInLoupeX + pInLoupeW, pInLoupeY + arm);
+      // BR
+      lctx.moveTo(pInLoupeX + pInLoupeW, pInLoupeY + pInLoupeH - arm); lctx.lineTo(pInLoupeX + pInLoupeW, pInLoupeY + pInLoupeH); lctx.lineTo(pInLoupeX + pInLoupeW - arm, pInLoupeY + pInLoupeH);
+      // BL
+      lctx.moveTo(pInLoupeX + arm, pInLoupeY + pInLoupeH); lctx.lineTo(pInLoupeX, pInLoupeY + pInLoupeH); lctx.lineTo(pInLoupeX + pInLoupeY + pInLoupeH - arm);
       lctx.stroke();
 
+      // 6. 정밀 조준 십자선
+      drawLoupeCrosshair(lctx, cx, cy, 14);
+
+      lctx.restore();
+    }
+
+    // 중앙 메인 뷰어 투시 핀 드래그 시 정밀 확대 돋보기(Loupe) - 용지 외곽선/모서리 동시 표출
+    function updateViewerPinLoupe(pinKey, mouseX, mouseY) {
+      if (!isPinDragging || isDraggingMiniPin || !pinKey) return;
+      const loupe = document.getElementById('viewerPinLoupe');
+      const loupeCanvas = document.getElementById('viewerLoupeCanvas');
+      const canvas = document.getElementById('mainViewerCanvas');
+      const wrap = document.getElementById('viewerWrap');
+      const viewport = document.getElementById('viewerViewport');
+      const pinEl = document.getElementById('pin' + pinKey.toUpperCase());
+      if (!loupe || !loupeCanvas || !canvas || !wrap || !viewport || !pinEl) return;
+
+      const loupeSize = 110;
+      const vpRect = viewport.getBoundingClientRect();
+      const pinRect = pinEl.getBoundingClientRect();
+      const pinCenterX = pinRect.left + pinRect.width / 2;
+      const pinCenterY = pinRect.top + pinRect.height / 2;
+
+      // 돋보기 위치 계산 (핀 바로 위에 부유, 상단 침범 시 아래에 배치)
+      const relX = pinCenterX - vpRect.left;
+      const relY = pinCenterY - vpRect.top;
+      let loupeX = relX - loupeSize / 2;
+      let loupeY = relY - loupeSize - 22;
+      if (loupeY < 8) {
+        loupeY = relY + 26;
+      }
+      loupeX = Math.max(8, Math.min(vpRect.width - loupeSize - 8, loupeX));
+
+      loupe.style.left = `${loupeX + viewport.scrollLeft}px`;
+      loupe.style.top = `${loupeY + viewport.scrollTop}px`;
+      loupe.style.display = 'block';
+
+      // Retina / HiDPI 버퍼
+      const dpr = Math.max(2, window.devicePixelRatio || 2);
+      const bufSize = Math.round(loupeSize * dpr);
+      if (loupeCanvas.width !== bufSize || loupeCanvas.height !== bufSize) {
+        loupeCanvas.width = bufSize;
+        loupeCanvas.height = bufSize;
+      }
+
+      const lctx = loupeCanvas.getContext('2d');
+      lctx.setTransform(1, 0, 0, 1, 0, 0);
+      lctx.clearRect(0, 0, bufSize, bufSize);
+      lctx.scale(dpr, dpr);
+
+      // 원형 클리핑
+      lctx.save();
+      const cx = loupeSize / 2;
+      const cy = loupeSize / 2;
       lctx.beginPath();
-      lctx.arc(loupeSize / 2, loupeSize / 2, 5, 0, Math.PI * 2);
+      lctx.arc(cx, cy, cx - 1, 0, Math.PI * 2);
+      lctx.clip();
+
+      // 1. 용지 바깥 뷰포트 배경 (Outside Workspace)
+      lctx.fillStyle = '#e2e8f0';
+      lctx.fillRect(0, 0, loupeSize, loupeSize);
+
+      // 2. 메인 뷰어 내 핀 좌표 및 용지 치수 (2.2배 확대)
+      const pinX = parseFloat(pinEl.style.left) || 0;
+      const pinY = parseFloat(pinEl.style.top) || 0;
+      const paperW = canvas.clientWidth || canvas.offsetWidth;
+      const paperH = canvas.clientHeight || canvas.offsetHeight;
+      const zoom = 2.2;
+
+      const pInLoupeX = (0 - pinX) * zoom + cx;
+      const pInLoupeY = (0 - pinY) * zoom + cy;
+      const pInLoupeW = paperW * zoom;
+      const pInLoupeH = paperH * zoom;
+
+      // 3. 종이 용지 바탕 (그림자 및 흰색/투명 배경)
+      lctx.save();
+      lctx.shadowColor = 'rgba(0, 0, 0, 0.22)';
+      lctx.shadowBlur = Math.round(6 * zoom);
+      lctx.fillStyle = '#ffffff';
+      lctx.fillRect(pInLoupeX, pInLoupeY, pInLoupeW, pInLoupeH);
+      lctx.restore();
+
+      const isTrans = wrap.classList.contains('checkerboard-bg');
+      if (isTrans) {
+        drawLoupeCheckerboard(lctx, pInLoupeX, pInLoupeY, pInLoupeW, pInLoupeH, 7);
+      }
+
+      // 4. 고해상도 메인 뷰어 캔버스 내용물 렌더링
+      if (canvas.width > 0 && canvas.height > 0) {
+        lctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, pInLoupeX, pInLoupeY, pInLoupeW, pInLoupeH);
+      }
+
+      // 5. [핵심] 종이 용지 외곽 테두리선(Paper Boundary) 및 4개 모서리(Corners) 강조
+      lctx.strokeStyle = '#0f766e';
+      lctx.lineWidth = 1.6;
+      lctx.strokeRect(pInLoupeX, pInLoupeY, pInLoupeW, pInLoupeH);
+
+      // 용지 4개 모서리 L자형 직각 가이드
+      const arm = Math.min(14, Math.min(pInLoupeW, pInLoupeH) * 0.2);
+      lctx.strokeStyle = '#047857';
+      lctx.lineWidth = 2.5;
+      lctx.beginPath();
+      // TL
+      lctx.moveTo(pInLoupeX, pInLoupeY + arm); lctx.lineTo(pInLoupeX, pInLoupeY); lctx.lineTo(pInLoupeX + arm, pInLoupeY);
+      // TR
+      lctx.moveTo(pInLoupeX + pInLoupeW - arm, pInLoupeY); lctx.lineTo(pInLoupeX + pInLoupeW, pInLoupeY); lctx.lineTo(pInLoupeX + pInLoupeW, pInLoupeY + arm);
+      // BR
+      lctx.moveTo(pInLoupeX + pInLoupeW, pInLoupeY + pInLoupeH - arm); lctx.lineTo(pInLoupeX + pInLoupeW, pInLoupeY + pInLoupeH); lctx.lineTo(pInLoupeX + pInLoupeW - arm, pInLoupeY + pInLoupeH);
+      // BL
+      lctx.moveTo(pInLoupeX + arm, pInLoupeY + pInLoupeH); lctx.lineTo(pInLoupeX, pInLoupeY + pInLoupeH); lctx.lineTo(pInLoupeX, pInLoupeY + pInLoupeH - arm);
       lctx.stroke();
+
+      // 6. 정밀 조준 십자선
+      drawLoupeCrosshair(lctx, cx, cy, 15);
 
       lctx.restore();
     }
@@ -6292,6 +6505,7 @@ const modal = document.getElementById('modalPdfPicker');
           const cornerKey = pinEl.dataset.corner;
           selectCorner(cornerKey);
           isPinDragging = true;
+          isDraggingMiniPin = false;
           activeDraggingPinKey = cornerKey;
           pinDragStartMouseX = e.clientX;
           pinDragStartMouseY = e.clientY;
@@ -6305,6 +6519,7 @@ const modal = document.getElementById('modalPdfPicker');
             x: cfg.corners[cornerKey]?.x || 0,
             y: cfg.corners[cornerKey]?.y || 0
           };
+          updateViewerPinLoupe(cornerKey, e.clientX, e.clientY);
           return;
         }
 
@@ -6392,6 +6607,8 @@ const modal = document.getElementById('modalPdfPicker');
           updateCornerPins();
           if (isDraggingMiniPin) {
             updateMiniPinLoupe(activeDraggingPinKey);
+          } else {
+            updateViewerPinLoupe(activeDraggingPinKey, e.clientX, e.clientY);
           }
           return;
         }
@@ -6442,7 +6659,6 @@ const modal = document.getElementById('modalPdfPicker');
 
         const nextX = Math.max(-50, Math.min(50, Math.round((panStartOffsetX + pctDx) * 10) / 10));
         const nextY = Math.max(-50, Math.min(50, Math.round((panStartOffsetY + pctDy) * 10) / 10));
-
         cfg.offsetX = nextX;
         cfg.offsetY = nextY;
 
@@ -6458,6 +6674,8 @@ const modal = document.getElementById('modalPdfPicker');
           activeDraggingPinKey = null;
           const loupe = document.getElementById('miniPinLoupe');
           if (loupe) loupe.style.display = 'none';
+          const viewerLoupe = document.getElementById('viewerPinLoupe');
+          if (viewerLoupe) viewerLoupe.style.display = 'none';
         }
         if (isPanning) {
           isPanning = false;
@@ -6483,6 +6701,7 @@ const modal = document.getElementById('modalPdfPicker');
           const cornerKey = pinEl.dataset.corner;
           selectCorner(cornerKey);
           isPinDragging = true;
+          isDraggingMiniPin = false;
           activeDraggingPinKey = cornerKey;
           pinDragStartMouseX = e.touches[0].clientX;
           pinDragStartMouseY = e.touches[0].clientY;
@@ -6496,6 +6715,7 @@ const modal = document.getElementById('modalPdfPicker');
             x: cfg.corners[cornerKey]?.x || 0,
             y: cfg.corners[cornerKey]?.y || 0
           };
+          updateViewerPinLoupe(cornerKey, e.touches[0].clientX, e.touches[0].clientY);
           return;
         }
 
@@ -6581,6 +6801,8 @@ const modal = document.getElementById('modalPdfPicker');
           updateCornerPins();
           if (isDraggingMiniPin) {
             updateMiniPinLoupe(activeDraggingPinKey);
+          } else {
+            updateViewerPinLoupe(activeDraggingPinKey, e.touches[0].clientX, e.touches[0].clientY);
           }
           return;
         }
@@ -6645,6 +6867,8 @@ const modal = document.getElementById('modalPdfPicker');
           activeDraggingPinKey = null;
           const loupe = document.getElementById('miniPinLoupe');
           if (loupe) loupe.style.display = 'none';
+          const viewerLoupe = document.getElementById('viewerPinLoupe');
+          if (viewerLoupe) viewerLoupe.style.display = 'none';
         }
         if (isPanning) {
           isPanning = false;
@@ -6663,6 +6887,8 @@ const modal = document.getElementById('modalPdfPicker');
           activeDraggingPinKey = null;
           const loupe = document.getElementById('miniPinLoupe');
           if (loupe) loupe.style.display = 'none';
+          const viewerLoupe = document.getElementById('viewerPinLoupe');
+          if (viewerLoupe) viewerLoupe.style.display = 'none';
         }
         if (isPanning) {
           isPanning = false;
