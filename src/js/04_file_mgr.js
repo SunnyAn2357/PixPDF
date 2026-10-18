@@ -71,6 +71,7 @@
         if (syncHistory && history.state && (history.state.appLayer === 'globalSettings' || history.state.modal === 'globalSettings')) {
           isClosingLayerProgrammatically = true;
           history.back();
+          setTimeout(() => { isClosingLayerProgrammatically = false; }, 300);
         }
       }
     }
@@ -190,6 +191,7 @@
         if (syncHistory && history.state && (history.state.appLayer === 'openFilesManager' || history.state.modal === 'openFilesManager')) {
           isClosingLayerProgrammatically = true;
           history.back();
+          setTimeout(() => { isClosingLayerProgrammatically = false; }, 300);
         }
       }
     }
@@ -611,6 +613,9 @@
       return Array.isArray(docState.items) && docState.items.length > 0;
     }
 
+    // 사용자 제스처 히스토리 무장 플래그 (Chromium History Manipulation Intervention 방어)
+    let hasUserArmedHistory = false;
+
     // 히스토리 앵커 초기화 (뒤로가기 가로채기 기준점)
     function initHistoryAnchor() {
       try {
@@ -618,6 +623,15 @@
           history.replaceState({ pixpdfBase: true }, '');
           history.pushState({ pixpdfRoot: true }, '');
         }
+      } catch (e) {}
+    }
+
+    // 모바일 브라우저 사용자 제스처 히스토리 등록 (터치/클릭 발생 시 브라우저가 인정하는 정당한 이동 앵커 수립)
+    function armUserGestureHistory() {
+      if (hasUserArmedHistory) return;
+      hasUserArmedHistory = true;
+      try {
+        history.pushState({ pixpdfRoot: true, userArmed: true }, '');
       } catch (e) {}
     }
 
@@ -639,6 +653,7 @@
           if (syncHistory && history.state && history.state.appLayer === 'mobileControl') {
             isClosingLayerProgrammatically = true;
             history.back();
+            setTimeout(() => { isClosingLayerProgrammatically = false; }, 300);
           }
         }
       }
@@ -693,6 +708,11 @@
 
       // 강제 레이아웃 리플로우로 애니메이션 및 프로그레스 바 리셋
       void toast.offsetWidth;
+
+      toast.onclick = () => {
+        toast.classList.remove('show');
+        if (toastHideTimer) clearTimeout(toastHideTimer);
+      };
 
       toast.classList.add('show');
       if (toastHideTimer) clearTimeout(toastHideTimer);
@@ -956,6 +976,7 @@
     // 통합 파일 처리기 (PDF & 이미지 구분 없이 섞어서 자유자재로 불러오기 및 삽입)
     async function processFiles(files, customInsertIndex = -1, targetArea = 'center-area') {
       initHistoryAnchor();
+      armUserGestureHistory();
       if (!files || files.length === 0) return;
 
       const pdfFiles = files.filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
@@ -1348,6 +1369,7 @@ const modal = document.getElementById('modalPdfPicker');
         if (syncHistory && history.state && (history.state.appLayer === 'pdfPicker' || history.state.modal === 'pdfPicker')) {
           isClosingLayerProgrammatically = true;
           history.back();
+          setTimeout(() => { isClosingLayerProgrammatically = false; }, 300);
         }
       }
       pickerState.doc = null;

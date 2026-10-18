@@ -50,6 +50,18 @@ if (-not (Test-Path $targetDir)) {
     New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
 }
 
+# 기존 최신 버전 폴더에서 정적 에셋(PWA 아이콘, manifest, sw.js) 자동 복제
+$prevDirs = Get-ChildItem -Path $root -Directory | Where-Object { $_.Name -match '^V\d+\.\d+\.\d+$' -and $_.Name -ne $TargetVersion } | Sort-Object Name -Descending
+if ($prevDirs.Count -gt 0) {
+    $latestPrevDir = $prevDirs[0].FullName
+    Get-ChildItem -Path $latestPrevDir -Exclude "*.html", "src" | ForEach-Object {
+        $dest = Join-Path $targetDir $_.Name
+        if (-not (Test-Path $dest)) {
+            Copy-Item -Path $_.FullName -Destination $dest -Force
+        }
+    }
+}
+
 $targetIndex  = Join-Path $targetDir "index.html"
 $targetPixpdf = Join-Path $targetDir "pixpdf.html"
 $rootPixpdf   = Join-Path $root "pixpdf.html"

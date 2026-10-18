@@ -162,6 +162,8 @@ flowchart TD
 | `executeActionSave` | `07_export.js` | 체크된 항목들을 단일 PDF 또는 ZIP 분할 이미지로 분기 저장 |
 | `executeSaveMergedPdf` | `07_export.js` | 다중 페이지 합성 캔버스를 단일 PDF 파일로 직렬화하여 저장 |
 | `executeSaveSplitImages` | `07_export.js` | 합성 캔버스들을 개별 이미지로 변환 후 ZIP 압축 다운로드 |
+| `armUserGestureHistory` | `04_file_mgr.js` | 첫 터치/클릭 제스처 시 크로미움 뒤로가기 가로채기 앵커 무장 |
+| `showExitToast` | `04_file_mgr.js` | 메인 화면 뒤로가기 1회차 시 2초 카운트다운 더블 탭 종료 토스트 표출 |
 
 ---
 

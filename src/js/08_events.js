@@ -659,7 +659,7 @@
       const menu = document.getElementById('menuDropdown');
       if (menu && menu.classList.contains('show')) {
         closeMenuDropdown();
-        try { history.pushState({ pixpdfRoot: true }, ''); } catch (err) {}
+        try { history.pushState({ pixpdfRoot: true, userArmed: true }, ''); } catch (err) {}
         return;
       }
 
@@ -679,7 +679,7 @@
         // 1번째 누름: 토스트 안내 띄우고 히스토리 가로채기 유지
         lastBackPressTime = now;
         try {
-          history.pushState({ pixpdfRoot: true }, '');
+          history.pushState({ pixpdfRoot: true, userArmed: true }, '');
         } catch (err) {}
         const msg = hasActiveWork()
           ? "저장되지 않은 작업이 있습니다. '뒤로' 버튼을 한 번 더 누르면 종료됩니다."
@@ -706,8 +706,13 @@
 
     // 초기 워크스페이스 상태 초기화 및 히스토리 앵커 수립
     initHistoryAnchor();
-    // 모바일 브라우저의 히스토리 자동 건너뛰기 방어 (사용자 첫 터치/클릭 시 앵커 재수립)
-    window.addEventListener('pointerdown', () => { initHistoryAnchor(); }, { once: true });
+
+    // 모바일 브라우저의 히스토리 자동 건너뛰기(History Manipulation Intervention) 원천 방어:
+    // 사용자의 첫 터치(touchstart/pointerdown), 마우스 클릭, 키 입력 등 실제 사용자 제스처 컨텍스트 안에서 즉시 앵커 무장
+    ['touchstart', 'pointerdown', 'mousedown', 'keydown'].forEach((evtType) => {
+      window.addEventListener(evtType, armUserGestureHistory, { passive: true, capture: true });
+    });
+
     const initFileInput = document.getElementById('fileInput');
     if (initFileInput) initFileInput.value = '';
     const initInsertInput = document.getElementById('insertFileInput');

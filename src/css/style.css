@@ -733,20 +733,21 @@
     /* 앱 전용 프리미엄 플로팅 토스트 메시지 (모바일 뒤로가기 더블 탭 종료 & 카운트다운 게이지) */
     .app-toast {
       position: fixed;
-      bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+      bottom: calc(52px + env(safe-area-inset-bottom, 0px));
       left: 50%;
-      transform: translateX(-50%) translateY(24px) scale(0.92);
-      background: rgba(15, 23, 42, 0.92);
+      transform: translateX(-50%) translateY(20px) scale(0.92);
+      background: rgba(15, 23, 42, 0.96);
       color: #ffffff;
-      padding: 10px 18px 12px 14px;
+      padding: 11px 20px 13px 16px;
       border-radius: 9999px;
-      z-index: 10000;
+      z-index: 999999 !important;
       opacity: 0;
+      visibility: hidden;
       pointer-events: none;
-      box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.55), 0 4px 14px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+      box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.6), 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.22);
       backdrop-filter: blur(16px) saturate(180%);
       -webkit-backdrop-filter: blur(16px) saturate(180%);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.22);
       display: inline-flex;
       align-items: center;
       gap: 10px;
@@ -754,11 +755,13 @@
       width: max-content;
       box-sizing: border-box;
       overflow: hidden;
-      transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1), transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.24s;
     }
     .app-toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0) scale(1);
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: translateX(-50%) translateY(0) scale(1) !important;
+      pointer-events: auto;
     }
     .app-toast .toast-icon-wrap {
       width: 28px;
@@ -772,6 +775,10 @@
       border: 1px solid rgba(45, 212, 191, 0.35);
       color: #2dd4bf;
     }
+    .app-toast.toast-warning {
+      background: rgba(28, 22, 14, 0.96);
+      border-color: rgba(245, 158, 11, 0.5);
+    }
     .app-toast.toast-warning .toast-icon-wrap {
       background: rgba(217, 119, 6, 0.25);
       border: 1px solid rgba(251, 191, 36, 0.5);
@@ -783,20 +790,19 @@
       text-align: left;
       line-height: 1.35;
       min-width: 0;
+      word-break: keep-all;
     }
     .app-toast .toast-title {
       font-size: 12.5px;
       font-weight: 700;
       color: #fde047;
       letter-spacing: -0.2px;
-      white-space: nowrap;
     }
     .app-toast .toast-desc {
       font-size: 13px;
       font-weight: 500;
       color: #f1f5f9;
       letter-spacing: -0.2px;
-      white-space: nowrap;
     }
     /* 2초 카운트다운 타이머 게이지 바 */
     .app-toast .toast-progress {
@@ -821,8 +827,9 @@
     }
     @media (max-width: 360px) {
       .app-toast {
-        padding: 8px 14px 10px 12px;
+        padding: 9px 14px 11px 12px;
         gap: 8px;
+        bottom: calc(44px + env(safe-area-inset-bottom, 0px));
       }
       .app-toast .toast-desc {
         font-size: 12px;

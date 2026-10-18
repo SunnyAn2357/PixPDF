@@ -758,20 +758,21 @@
     /* 앱 전용 프리미엄 플로팅 토스트 메시지 (모바일 뒤로가기 더블 탭 종료 & 카운트다운 게이지) */
     .app-toast {
       position: fixed;
-      bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+      bottom: calc(52px + env(safe-area-inset-bottom, 0px));
       left: 50%;
-      transform: translateX(-50%) translateY(24px) scale(0.92);
-      background: rgba(15, 23, 42, 0.92);
+      transform: translateX(-50%) translateY(20px) scale(0.92);
+      background: rgba(15, 23, 42, 0.96);
       color: #ffffff;
-      padding: 10px 18px 12px 14px;
+      padding: 11px 20px 13px 16px;
       border-radius: 9999px;
-      z-index: 10000;
+      z-index: 999999 !important;
       opacity: 0;
+      visibility: hidden;
       pointer-events: none;
-      box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.55), 0 4px 14px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+      box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.6), 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.22);
       backdrop-filter: blur(16px) saturate(180%);
       -webkit-backdrop-filter: blur(16px) saturate(180%);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.22);
       display: inline-flex;
       align-items: center;
       gap: 10px;
@@ -779,11 +780,13 @@
       width: max-content;
       box-sizing: border-box;
       overflow: hidden;
-      transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1), transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.24s;
     }
     .app-toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0) scale(1);
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: translateX(-50%) translateY(0) scale(1) !important;
+      pointer-events: auto;
     }
     .app-toast .toast-icon-wrap {
       width: 28px;
@@ -797,6 +800,10 @@
       border: 1px solid rgba(45, 212, 191, 0.35);
       color: #2dd4bf;
     }
+    .app-toast.toast-warning {
+      background: rgba(28, 22, 14, 0.96);
+      border-color: rgba(245, 158, 11, 0.5);
+    }
     .app-toast.toast-warning .toast-icon-wrap {
       background: rgba(217, 119, 6, 0.25);
       border: 1px solid rgba(251, 191, 36, 0.5);
@@ -808,20 +815,19 @@
       text-align: left;
       line-height: 1.35;
       min-width: 0;
+      word-break: keep-all;
     }
     .app-toast .toast-title {
       font-size: 12.5px;
       font-weight: 700;
       color: #fde047;
       letter-spacing: -0.2px;
-      white-space: nowrap;
     }
     .app-toast .toast-desc {
       font-size: 13px;
       font-weight: 500;
       color: #f1f5f9;
       letter-spacing: -0.2px;
-      white-space: nowrap;
     }
     /* 2초 카운트다운 타이머 게이지 바 */
     .app-toast .toast-progress {
@@ -846,8 +852,9 @@
     }
     @media (max-width: 360px) {
       .app-toast {
-        padding: 8px 14px 10px 12px;
+        padding: 9px 14px 11px 12px;
         gap: 8px;
+        bottom: calc(44px + env(safe-area-inset-bottom, 0px));
       }
       .app-toast .toast-desc {
         font-size: 12px;
@@ -2396,7 +2403,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.10.1 (이미지 이동 범위 동적 확장: 마지막 1픽셀이 종이 경계에 닿아있는 한 자유로운 패닝 지원)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.10.2 (모바일 뒤로가기 제스처 무장 및 더블 탭 종료 토스트 가시성 보장)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -3481,6 +3488,7 @@
         if (syncHistory && history.state && (history.state.appLayer === 'globalSettings' || history.state.modal === 'globalSettings')) {
           isClosingLayerProgrammatically = true;
           history.back();
+          setTimeout(() => { isClosingLayerProgrammatically = false; }, 300);
         }
       }
     }
@@ -3600,6 +3608,7 @@
         if (syncHistory && history.state && (history.state.appLayer === 'openFilesManager' || history.state.modal === 'openFilesManager')) {
           isClosingLayerProgrammatically = true;
           history.back();
+          setTimeout(() => { isClosingLayerProgrammatically = false; }, 300);
         }
       }
     }
@@ -4021,6 +4030,9 @@
       return Array.isArray(docState.items) && docState.items.length > 0;
     }
 
+    // 사용자 제스처 히스토리 무장 플래그 (Chromium History Manipulation Intervention 방어)
+    let hasUserArmedHistory = false;
+
     // 히스토리 앵커 초기화 (뒤로가기 가로채기 기준점)
     function initHistoryAnchor() {
       try {
@@ -4028,6 +4040,15 @@
           history.replaceState({ pixpdfBase: true }, '');
           history.pushState({ pixpdfRoot: true }, '');
         }
+      } catch (e) {}
+    }
+
+    // 모바일 브라우저 사용자 제스처 히스토리 등록 (터치/클릭 발생 시 브라우저가 인정하는 정당한 이동 앵커 수립)
+    function armUserGestureHistory() {
+      if (hasUserArmedHistory) return;
+      hasUserArmedHistory = true;
+      try {
+        history.pushState({ pixpdfRoot: true, userArmed: true }, '');
       } catch (e) {}
     }
 
@@ -4049,6 +4070,7 @@
           if (syncHistory && history.state && history.state.appLayer === 'mobileControl') {
             isClosingLayerProgrammatically = true;
             history.back();
+            setTimeout(() => { isClosingLayerProgrammatically = false; }, 300);
           }
         }
       }
@@ -4103,6 +4125,11 @@
 
       // 강제 레이아웃 리플로우로 애니메이션 및 프로그레스 바 리셋
       void toast.offsetWidth;
+
+      toast.onclick = () => {
+        toast.classList.remove('show');
+        if (toastHideTimer) clearTimeout(toastHideTimer);
+      };
 
       toast.classList.add('show');
       if (toastHideTimer) clearTimeout(toastHideTimer);
@@ -4366,6 +4393,7 @@
     // 통합 파일 처리기 (PDF & 이미지 구분 없이 섞어서 자유자재로 불러오기 및 삽입)
     async function processFiles(files, customInsertIndex = -1, targetArea = 'center-area') {
       initHistoryAnchor();
+      armUserGestureHistory();
       if (!files || files.length === 0) return;
 
       const pdfFiles = files.filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
@@ -4758,6 +4786,7 @@ const modal = document.getElementById('modalPdfPicker');
         if (syncHistory && history.state && (history.state.appLayer === 'pdfPicker' || history.state.modal === 'pdfPicker')) {
           isClosingLayerProgrammatically = true;
           history.back();
+          setTimeout(() => { isClosingLayerProgrammatically = false; }, 300);
         }
       }
       pickerState.doc = null;
@@ -7136,7 +7165,7 @@ const modal = document.getElementById('modalPdfPicker');
       const menu = document.getElementById('menuDropdown');
       if (menu && menu.classList.contains('show')) {
         closeMenuDropdown();
-        try { history.pushState({ pixpdfRoot: true }, ''); } catch (err) {}
+        try { history.pushState({ pixpdfRoot: true, userArmed: true }, ''); } catch (err) {}
         return;
       }
 
@@ -7156,7 +7185,7 @@ const modal = document.getElementById('modalPdfPicker');
         // 1번째 누름: 토스트 안내 띄우고 히스토리 가로채기 유지
         lastBackPressTime = now;
         try {
-          history.pushState({ pixpdfRoot: true }, '');
+          history.pushState({ pixpdfRoot: true, userArmed: true }, '');
         } catch (err) {}
         const msg = hasActiveWork()
           ? "저장되지 않은 작업이 있습니다. '뒤로' 버튼을 한 번 더 누르면 종료됩니다."
@@ -7183,8 +7212,13 @@ const modal = document.getElementById('modalPdfPicker');
 
     // 초기 워크스페이스 상태 초기화 및 히스토리 앵커 수립
     initHistoryAnchor();
-    // 모바일 브라우저의 히스토리 자동 건너뛰기 방어 (사용자 첫 터치/클릭 시 앵커 재수립)
-    window.addEventListener('pointerdown', () => { initHistoryAnchor(); }, { once: true });
+
+    // 모바일 브라우저의 히스토리 자동 건너뛰기(History Manipulation Intervention) 원천 방어:
+    // 사용자의 첫 터치(touchstart/pointerdown), 마우스 클릭, 키 입력 등 실제 사용자 제스처 컨텍스트 안에서 즉시 앵커 무장
+    ['touchstart', 'pointerdown', 'mousedown', 'keydown'].forEach((evtType) => {
+      window.addEventListener(evtType, armUserGestureHistory, { passive: true, capture: true });
+    });
+
     const initFileInput = document.getElementById('fileInput');
     if (initFileInput) initFileInput.value = '';
     const initInsertInput = document.getElementById('insertFileInput');
