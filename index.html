@@ -1681,15 +1681,16 @@
       border-color: #0f766e;
     }
 
-    /* 왼쪽 창 흐르는 자막 바 (Ticker) */
+    /* 왼쪽 창 흐르는 자막 바 (Ticker) - 다크 틸/슬레이트 프로페셔널 바 */
     .thumb-ticker-bar {
       height: 25px;
-      background: rgba(15, 118, 110, 0.07);
-      border-bottom: 1px solid rgba(15, 118, 110, 0.15);
+      background: linear-gradient(90deg, #042024 0%, #062b2f 100%);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.35);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
       display: flex;
       align-items: center;
       padding: 0 8px;
-      gap: 6px;
+      gap: 7px;
       cursor: pointer;
       user-select: none;
       transition: background 0.15s ease;
@@ -1697,10 +1698,16 @@
       flex-shrink: 0;
     }
     .thumb-ticker-bar:hover {
-      background: rgba(15, 118, 110, 0.14);
+      background: linear-gradient(90deg, #072d32 0%, #0c3e44 100%);
+    }
+    .thumb-ticker-bar:hover .ticker-text {
+      animation-play-state: paused;
     }
     .ticker-icon {
-      font-size: 11px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #2dd4bf;
       flex-shrink: 0;
     }
     .ticker-track {
@@ -1708,22 +1715,22 @@
       overflow: hidden;
       white-space: nowrap;
       position: relative;
+      mask-image: linear-gradient(90deg, transparent 0%, black 8px, black calc(100% - 8px), transparent 100%);
+      -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 8px, black calc(100% - 8px), transparent 100%);
     }
     .ticker-text {
       display: inline-block;
-      font-size: 11px;
-      font-weight: 600;
-      color: #0f766e;
+      white-space: nowrap;
+      font-size: 11.5px;
+      font-weight: 500;
+      color: #5eead4;
+      letter-spacing: -0.2px;
+      padding-left: 100%;
+      animation: tickerMarquee 16s linear infinite;
     }
-    .ticker-badge {
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--primary);
-      background: #ffffff;
-      border: 1px solid rgba(15, 118, 110, 0.25);
-      padding: 1px 5px;
-      border-radius: 4px;
-      flex-shrink: 0;
+    @keyframes tickerMarquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
     }
 
     /* 작업 히스토리 모달 항목 */
@@ -1815,24 +1822,35 @@
         <div style="display:flex; align-items:center; gap:6px; position:relative;">
           <button class="btn-add-thumb" id="btnFileMgrDropdown" onclick="toggleFileMgrDropdown(event)" title="열린 파일 관리 및 새 파일/페이지 삽입">파일 관리 ▾</button>
           <div class="menu-dropdown insert-dropdown" id="menuFileMgrDropdown" style="top:32px; right:0; left:auto; width:165px; z-index:210;">
-            <button class="menu-item" onclick="triggerInsertFileAction(event)" style="padding:9px 12px; font-size:12.5px;">➕ 새 파일 삽입</button>
-            <button class="menu-item" onclick="insertBlankPageAction(event)" style="padding:9px 12px; font-size:12.5px;">📄 빈 페이지 삽입</button>
+            <button class="menu-item" onclick="triggerInsertFileAction(event)" style="padding:9px 12px; font-size:12.5px; display:flex; align-items:center; gap:8px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              <span>새 파일 삽입</span>
+            </button>
+            <button class="menu-item" onclick="insertBlankPageAction(event)" style="padding:9px 12px; font-size:12.5px; display:flex; align-items:center; gap:8px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+              <span>빈 페이지 삽입</span>
+            </button>
             <div style="height:1px; background:var(--border-light); margin:2px 0;"></div>
-            <button class="menu-item" onclick="openOpenFilesManagerModal(event)" style="padding:9px 12px; font-size:12.5px; font-weight:700; color:var(--primary);">📂 열린 파일 관리</button>
-          </div>
-            <button class="menu-item" onclick="triggerInsertFileAction(event)" style="padding:9px 12px; font-size:12.5px;">➕ 새 파일 삽입</button>
-            <button class="menu-item" onclick="insertBlankPageAction(event)" style="padding:9px 12px; font-size:12.5px;">📄 빈 페이지 삽입</button>
+            <button class="menu-item" onclick="openOpenFilesManagerModal(event)" style="padding:9px 12px; font-size:12.5px; display:flex; align-items:center; gap:8px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              <span>열린 파일 관리</span>
+            </button>
           </div>
           <span id="thumbCount">0/0</span>
         </div>
+      </div>
       
       <!-- 흐르는 자막 메시지 바 (클릭 시 히스토리 모달 열림) -->
       <div class="thumb-ticker-bar" id="thumbTickerBar" onclick="openHistoryLogModal()" title="클릭하면 지금까지의 작업 기록(History)을 볼 수 있습니다">
-        <span class="ticker-icon">🔔</span>
+        <span class="ticker-icon" title="작업 알림">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+        </span>
         <div class="ticker-track">
           <span class="ticker-text" id="statusTickerText">준비 완료</span>
         </div>
-        <span class="ticker-badge">기록 📜</span>
       </div>
       <div id="thumbList" class="thumb-list"></div>
     </div>
@@ -1886,6 +1904,9 @@
             <span>⚙️ 페이지 편집 & 저장</span>
             <span id="mobilePageIndicator" style="font-size: 11.5px; color: var(--primary); font-weight: 700; background: var(--primary-subtle); padding: 2px 7px; border-radius: 10px;">- / -</span>
           </div>
+          <button class="mobile-close-btn" onclick="toggleMobileControl(false)">✕ 닫기</button>
+        </div>
+
         <!-- 1. [용지 설정] 카드 박스 (정확히 3줄 압축 배치) -->
         <div class="control-card-box">
           <div class="control-card-header">
@@ -2313,7 +2334,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.8.0 (용지/객체 설정 분류 리뉴얼, 1행 회전 버튼바, 흐르는 자막 및 히스토리 모달, 상호배타 메뉴)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.9.0 (우측 편집창 DOM 복구, 파일관리 정제 SVG 아이콘, 다크 네온 마키 티커, iOS 터치 아이콘 무결성 확보)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -2466,6 +2487,9 @@
       const tickerText = document.getElementById('statusTickerText');
       if (tickerText) {
         tickerText.textContent = text;
+        tickerText.style.animation = 'none';
+        void tickerText.offsetWidth; // reflow to restart marquee
+        tickerText.style.animation = '';
       }
       const st = document.getElementById('statusText');
       if (st) {
