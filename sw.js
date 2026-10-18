@@ -1,5 +1,5 @@
 // PixPDF Service Worker - 100% 로컬 및 오프라인 구동 보장
-const CACHE_NAME = 'pixpdf-cache-v2.5.2';
+const CACHE_NAME = 'pixpdf-cache-v2.6.0';
 
 const PRECACHE_ASSETS = [
   './',
