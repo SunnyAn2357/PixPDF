@@ -61,8 +61,12 @@
             baseScaleH = vp.height;
           } else {
             const rotRad = (rotImg * Math.PI) / 180;
-            const srcRotW = isImgRot90 ? p.height : p.width;
-            const srcRotH = isImgRot90 ? p.width : p.height;
+            const effImg = (typeof getEffectiveImageSource === 'function') ? getEffectiveImageSource(p) : p.imgObj;
+            const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width, height: p.height };
+            origW = effDims.width;
+            origH = effDims.height;
+            const srcRotW = isImgRot90 ? origH : origW;
+            const srcRotH = isImgRot90 ? origW : origH;
             tempCanvas.width = srcRotW;
             tempCanvas.height = srcRotH;
             const tctx = tempCanvas.getContext('2d');
@@ -75,10 +79,8 @@
             }
             tctx.translate(srcRotW / 2, srcRotH / 2);
             tctx.rotate(rotRad);
-            tctx.drawImage(p.imgObj, -p.width / 2, -p.height / 2);
+            tctx.drawImage(effImg, -origW / 2, -origH / 2);
 
-            origW = p.width;
-            origH = p.height;
             baseScaleW = srcRotW;
             baseScaleH = srcRotH;
           }
@@ -92,7 +94,12 @@
           const orientOpt = cfg.orient || 'auto';
           const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
           const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
-          const paper = resolvePaperGeometry(cfg.fit || cfg.pageSize || 'original', isLandscape, refW, refH, cfg.customW, cfg.customH);
+          let sizeKey = cfg.fit || cfg.pageSize || 'original';
+          const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
+          if (isPaperCrop) sizeKey = 'custom';
+          const customW = isPaperCrop ? refW : cfg.customW;
+          const customH = isPaperCrop ? refH : cfg.customH;
+          const paper = resolvePaperGeometry(sizeKey, isLandscape, refW, refH, customW, customH);
 
           // 2단계: 최종 용지 캔버스 생성
           let finalCanvas = document.createElement('canvas');
@@ -275,8 +282,12 @@
             baseScaleH = vp.height;
           } else {
             const rotRad = (rotImg * Math.PI) / 180;
-            const srcRotW = isImgRot90 ? p.height : p.width;
-            const srcRotH = isImgRot90 ? p.width : p.height;
+            const effImg = (typeof getEffectiveImageSource === 'function') ? getEffectiveImageSource(p) : p.imgObj;
+            const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width, height: p.height };
+            origW = effDims.width;
+            origH = effDims.height;
+            const srcRotW = isImgRot90 ? origH : origW;
+            const srcRotH = isImgRot90 ? origW : origH;
             tempCanvas.width = srcRotW;
             tempCanvas.height = srcRotH;
             const tctx = tempCanvas.getContext('2d');
@@ -284,10 +295,8 @@
             tctx.fillRect(0, 0, srcRotW, srcRotH);
             tctx.translate(srcRotW / 2, srcRotH / 2);
             tctx.rotate(rotRad);
-            tctx.drawImage(p.imgObj, -p.width / 2, -p.height / 2);
+            tctx.drawImage(effImg, -origW / 2, -origH / 2);
 
-            origW = p.width;
-            origH = p.height;
             baseScaleW = srcRotW;
             baseScaleH = srcRotH;
           }
@@ -301,7 +310,12 @@
           const orientOpt = cfg.orient || 'auto';
           const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
           const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
-          const paper = resolvePaperGeometry(cfg.fit || cfg.pageSize || 'original', isLandscape, refW, refH, cfg.customW, cfg.customH);
+          let sizeKey = cfg.fit || cfg.pageSize || 'original';
+          const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
+          if (isPaperCrop) sizeKey = 'custom';
+          const customW = isPaperCrop ? refW : cfg.customW;
+          const customH = isPaperCrop ? refH : cfg.customH;
+          const paper = resolvePaperGeometry(sizeKey, isLandscape, refW, refH, customW, customH);
 
           let paperW, paperH;
           if (cfg.fit === 'original' || cfg.pageSize === 'original') {

@@ -30,6 +30,7 @@
   <!-- 숨겨진 공용 파일 인풋 -->
   <input type="file" id="fileInput" style="display:none;" accept="application/pdf,image/*" multiple>
   <input type="file" id="insertFileInput" style="display:none;" accept="application/pdf,image/*" multiple>
+  <input type="file" id="inputPixPdfProject" style="display:none;" accept=".pixpdf,.zip" onchange="handlePixPdfProjectInput(event)">
 
   <!-- 상단 헤더 (단일 1행) -->
   <header>
@@ -48,6 +49,14 @@
         <button class="menu-item" onclick="triggerOpenFileDialog()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
           <span>파일 열기</span>
+        </button>
+        <button class="menu-item" onclick="triggerSaveProject()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          <span>프로젝트 저장 (.pixpdf)</span>
+        </button>
+        <button class="menu-item" onclick="triggerOpenProjectDialog()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><polyline points="9 14 12 17 15 14"></polyline></svg>
+          <span>프로젝트 열기</span>
         </button>
         <button class="menu-item" onclick="openGlobalSettingsModal()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -128,6 +137,52 @@
             <div id="pinTR" class="corner-pin" data-corner="tr" title="우상단 모서리 (드래그)"><span class="pin-label">TR</span></div>
             <div id="pinBR" class="corner-pin" data-corner="br" title="우하단 모서리 (드래그)"><span class="pin-label">BR</span></div>
             <div id="pinBL" class="corner-pin" data-corner="bl" title="좌하단 모서리 (드래그)"><span class="pin-label">BL</span></div>
+          </div>
+          <!-- 크롭(자르기) 오버레이 -->
+          <div id="cropOverlay" class="crop-overlay" style="display: none;">
+            <svg id="cropSvg" class="crop-svg">
+              <defs>
+                <mask id="cropMask">
+                  <rect x="0" y="0" width="100%" height="100%" fill="white" />
+                  <rect id="cropHole" x="0" y="0" width="0" height="0" fill="black" />
+                </mask>
+              </defs>
+              <rect x="0" y="0" width="100%" height="100%" fill="rgba(0, 0, 0, 0.52)" mask="url(#cropMask)" />
+              <rect id="cropBoxBorder" class="crop-box-border" x="0" y="0" width="0" height="0" />
+              <line id="cropGridH1" class="crop-grid-line" x1="0" y1="0" x2="0" y2="0" />
+              <line id="cropGridH2" class="crop-grid-line" x1="0" y1="0" x2="0" y2="0" />
+              <line id="cropGridV1" class="crop-grid-line" x1="0" y1="0" x2="0" y2="0" />
+              <line id="cropGridV2" class="crop-grid-line" x1="0" y1="0" x2="0" y2="0" />
+            </svg>
+            <div id="cropHandleTL" class="crop-handle crop-handle-corner tl" data-handle="tl"></div>
+            <div id="cropHandleTR" class="crop-handle crop-handle-corner tr" data-handle="tr"></div>
+            <div id="cropHandleBR" class="crop-handle crop-handle-corner br" data-handle="br"></div>
+            <div id="cropHandleBL" class="crop-handle crop-handle-corner bl" data-handle="bl"></div>
+            <div id="cropHandleT" class="crop-handle crop-handle-edge t" data-handle="t"></div>
+            <div id="cropHandleR" class="crop-handle crop-handle-edge r" data-handle="r"></div>
+            <div id="cropHandleB" class="crop-handle crop-handle-edge b" data-handle="b"></div>
+            <div id="cropHandleL" class="crop-handle crop-handle-edge l" data-handle="l"></div>
+            <div id="cropDragArea" class="crop-drag-area"></div>
+            <div id="cropFloatingBar" class="crop-floating-bar">
+              <div class="crop-mode-toggle">
+                <button type="button" class="btn-crop-mode active" id="btnCropModeImage" onclick="setCropPaperMode(false)" title="바탕 종이는 유지하고 내용물 이미지만 자릅니다">객체 자르기</button>
+                <button type="button" class="btn-crop-mode" id="btnCropModePaper" onclick="setCropPaperMode(true)" title="자른 크기에 맞춰 종이 규격도 맞춤 조절합니다">종이 연동</button>
+              </div>
+              <div class="crop-action-group">
+                <button type="button" class="btn-crop-act apply" onclick="applyCrop()" title="자르기 적용">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>적용</span>
+                </button>
+                <button type="button" class="btn-crop-act reset" onclick="resetCrop()" title="자르기 초기화 (원본 전체 복원)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
+                  <span>리셋</span>
+                </button>
+                <button type="button" class="btn-crop-act cancel" onclick="cancelCrop()" title="자르기 취소">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  <span>닫기</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
         <!-- 메인 뷰어 투시변환 정밀 확대경 (Loupe) -->
@@ -291,7 +346,15 @@
                   </button>
                   <button type="button" class="btn-edit-tool" title="네 모서리 위치 초기화" onclick="resetCorners()">리셋</button>
                 </div>
-                <!-- 5행: 밝게 / 어둡게 / 리셋 -->
+                <!-- 5행: 자르기 (비파괴 사각형 크롭 & 종이 연동) -->
+                <div class="edit-btn-row">
+                  <button type="button" class="btn-edit-tool" id="btnToggleCrop" style="flex:2; display:flex; align-items:center; justify-content:center; gap:5px;" title="불필요한 영역을 자르거나 종이 규격을 맞춤 조절합니다" onclick="toggleCropMode()">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"></path><path d="M18 22V8a2 2 0 0 0-2-2H2"></path></svg>
+                    <span>자르기</span>
+                  </button>
+                  <button type="button" class="btn-edit-tool" title="자르기 영역 100% 초기화" onclick="resetCropCurrentItem()">리셋</button>
+                </div>
+                <!-- 6행: 밝게 / 어둡게 / 리셋 -->
                 <div class="edit-btn-row">
                   <button type="button" class="btn-edit-tool" title="밝게 (+10%)" onclick="adjustBrightness(10)">밝게</button>
                   <button type="button" class="btn-edit-tool" title="어둡게 (-10%)" onclick="adjustBrightness(-10)">어둡게</button>

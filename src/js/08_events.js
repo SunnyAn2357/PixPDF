@@ -691,6 +691,9 @@
       if (isPerspectiveActive) {
         updateCornerPins();
       }
+      if (typeof isCropActive !== 'undefined' && isCropActive && typeof updateCropOverlayPositions === 'function') {
+        updateCropOverlayPositions();
+      }
     });
 
     // 초기 워크스페이스 상태 초기화 및 히스토리 앵커 수립

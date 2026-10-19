@@ -968,6 +968,15 @@
       armUserGestureHistory();
       if (!files || files.length === 0) return;
 
+      // .pixpdf 프로젝트 파일 드롭/선택 시 프로젝트 자동 복원
+      const pixpdfFile = files.find(f => f.name.toLowerCase().endsWith('.pixpdf'));
+      if (pixpdfFile) {
+        if (typeof openPixPdfProject === 'function') {
+          await openPixPdfProject(pixpdfFile);
+        }
+        return;
+      }
+
       const pdfFiles = files.filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
       const imgFiles = files.filter(f => f.type.startsWith('image/') || /\.(png|jpe?g|webp|bmp|gif|tif|tiff|jfif|ico)$/i.test(f.name));
 

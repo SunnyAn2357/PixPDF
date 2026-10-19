@@ -31,9 +31,11 @@
       const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
       const rotRad = (rotImg * Math.PI) / 180;
 
-      // 1. 이미지 자체 회전 적용 후 치수
-      const origW = item.width || item.imgObj.width;
-      const origH = item.height || item.imgObj.height;
+      // 1. 이미지 자체 회전 적용 후 치수 (비파괴 크롭 반영)
+      const effImgSource = (typeof getEffectiveImageSource === 'function') ? getEffectiveImageSource(item) : item.imgObj;
+      const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(item) : { width: item.width || item.imgObj.width, height: item.height || item.imgObj.height };
+      const origW = effDims.width;
+      const origH = effDims.height;
       const rotImgW = isImgRot90 ? origH : origW;
       const rotImgH = isImgRot90 ? origW : origH;
 
@@ -43,13 +45,17 @@
       const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
       const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
       const marginPx = cfg.margin || 0;
-      const sizeKey = cfg.pageSize || cfg.fit || 'original';
+      let sizeKey = cfg.pageSize || cfg.fit || 'original';
+      const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
+      if (isPaperCrop) sizeKey = 'custom';
 
       // [핵심 무결성] 용지 규격은 페이지 회전(rotPage / isPageRot90)과 방향(orient)에 의해서만 결정되며
       // 내용물인 이미지 자체의 회전(rotImg)에 의해 바탕 용지가 회전되는 일이 원천 차단됩니다.
       const basePaperW = (isPageRot90 ? origH : origW) + marginPx * 2;
       const basePaperH = (isPageRot90 ? origW : origH) + marginPx * 2;
-      const paper = resolvePaperGeometry(sizeKey, isLandscape, basePaperW, basePaperH, cfg.customW, cfg.customH);
+      const customW = isPaperCrop ? basePaperW : cfg.customW;
+      const customH = isPaperCrop ? basePaperH : cfg.customH;
+      const paper = resolvePaperGeometry(sizeKey, isLandscape, basePaperW, basePaperH, customW, customH);
 
       // 3. 대상 캔버스 해상도 결정 (초고해상도 복원)
       let canvasW, canvasH;
@@ -120,7 +126,7 @@
 
       const origDrawW = isImgRot90 ? (baseDrawH * cScale) : (baseDrawW * cScale * scaleX);
       const origDrawH = isImgRot90 ? (baseDrawW * cScale * scaleX) : (baseDrawH * cScale);
-      drawPerspectiveQuad(ctx, item.imgObj, -origDrawW / 2, -origDrawH / 2, origDrawW, origDrawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
+      drawPerspectiveQuad(ctx, effImgSource, -origDrawW / 2, -origDrawH / 2, origDrawW, origDrawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
       ctx.restore();
 
       return paper;

@@ -15,6 +15,9 @@
       drawPaperWithImage(canvas, item, cfg, { isThumbnail: false });
       const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
       if (wrap) wrap.classList.toggle('checkerboard-bg', isTransparent);
+      if (typeof isCropActive !== 'undefined' && isCropActive && typeof updateCropOverlayPositions === 'function') {
+        updateCropOverlayPositions();
+      }
     }
 
     // 2열 메인 뷰어 로드
@@ -53,6 +56,13 @@
       } else {
         const overlay = document.getElementById('perspectiveOverlay');
         if (overlay) overlay.style.display = 'none';
+      }
+
+      if (typeof isCropActive !== 'undefined' && isCropActive) {
+        openCropMode();
+      } else {
+        const cropOverlay = document.getElementById('cropOverlay');
+        if (cropOverlay) cropOverlay.style.display = 'none';
       }
     }
 
