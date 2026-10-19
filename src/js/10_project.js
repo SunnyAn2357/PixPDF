@@ -159,6 +159,14 @@
           docState.globalSettings = { ...docState.globalSettings, ...meta.globalSettings };
         }
 
+        const projectFileId = `proj_${Date.now()}`;
+        docState.openedFiles = [{
+          fileId: projectFileId,
+          name: file.name,
+          type: 'project',
+          totalCount: meta.items.length
+        }];
+
         for (let i = 0; i < meta.items.length; i++) {
           const itemMeta = meta.items[i];
           const mediaEntry = zip.file(itemMeta.mediaFile);
@@ -174,10 +182,10 @@
             img.src = blobUrl;
           });
 
-          // Blob URL은 이미지 로드 후 메모리 누수 방지 해제 (또는 이미지 참조 유지)
           docState.items.push({
             name: itemMeta.name || `페이지_${i + 1}`,
             type: 'image',
+            fileId: projectFileId,
             width: itemMeta.width || img.naturalWidth,
             height: itemMeta.height || img.naturalHeight,
             pageNum: itemMeta.pageNum || (i + 1),
@@ -195,9 +203,17 @@
         const emptyMsg = document.getElementById('viewerEmptyMsg');
         if (emptyMsg) emptyMsg.style.display = 'none';
 
-        if (typeof renderAllThumbnails === 'function') renderAllThumbnails();
-        if (typeof loadMainViewer === 'function') await loadMainViewer(docState.currentIndex);
-        if (typeof updateThumbCounts === 'function') updateThumbCounts();
+        // 1열 썸네일 리스트 렌더링
+        if (typeof renderThumbnailList === 'function') {
+          await renderThumbnailList();
+        }
+        // 2열 메인 뷰어 및 3열 컨트롤 패널 동기화 로드
+        if (typeof loadMainViewer === 'function') {
+          await loadMainViewer(docState.currentIndex);
+        }
+        if (typeof updateThumbCounts === 'function') {
+          updateThumbCounts();
+        }
 
         if (typeof showExitToast === 'function') {
           showExitToast(`프로젝트가 복원되었습니다! (${docState.items.length}개 페이지)`);
