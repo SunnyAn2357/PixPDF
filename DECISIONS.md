@@ -168,3 +168,17 @@
   2. **토스트 플로팅 위치 및 가시성 격상**: 모바일 하단 제스처 바 및 브라우저 하단 툴바에 가려지지 않도록 `bottom: calc(52px + env(safe-area-inset-bottom, 0px))`로 상향 조정하고 `z-index: 999999 !important;`, `visibility: visible !important`, `word-break: keep-all;`을 적용하여 100% 선명한 가독성 확보.
   3. **프로그램적 닫기 락 누수 방어**: `isClosingLayerProgrammatically` 플래그에 300ms 안전 타임아웃을 두어 모달 닫기 중 예기치 못한 상태 잠김 현상을 원천 방어.
 
+---
+
+### ADR-014: 인쇄 미리보기 백지화 해결 및 HTML DOM 트리 격리 무결성
+- **결정 일자**: v2.10.3 (2026-10-19)
+- **배경 및 원인**:
+  - 브라우저 인쇄 대화상자 호출 시 미리보기 영역이 아무런 내용 없이 100% 하얀 빈 페이지(백지)로 출력되는 문제 발생.
+  - **원인 1 (`display: none` 모달 내부 함몰)**: `src/template.html`의 `modalOpenFilesManager` 모달 태그가 닫히지 않아(`</div>` 누락), `#printContainer`와 `#appToast`가 `display: none`인 모달의 자식 요소로 갇힘. 조상 요소가 `display: none`이면 `@media print`에서 `display: block !important`를 주더라도 브라우저 인쇄 렌더러가 완전히 무시함.
+  - **원인 2 (1초 조기 파괴 타이머 버그)**: `window.print()` 호출 직후 `setTimeout(..., 1000)`으로 `printContainer.innerHTML = ''`를 실행하여, 사용자가 크롬 인쇄 미리보기를 열어보는 도중에 인쇄 DOM이 이미 소멸되어 백지로 렌더링됨.
+  - **원인 3 (크로미움 오프스크린 캔버스 인쇄 누락)**: 크로미움 인쇄 엔진은 화면에 실제로 그려지지 않은 숨김 상태의 `<canvas>` 요소를 인쇄 버퍼로 래스터라이징하지 못하는 특성이 있음.
+- **확정 규칙**:
+  1. **HTML DOM 최상위 트리 보장**: `#printContainer`와 `#appToast`는 어떠한 모달이나 패널 내부에도 포함되지 않고 `<body>`의 직속 최상위 자식으로 완벽히 독립 격리함.
+  2. **`afterprint` 이벤트 기반 안전 정리**: 1초 조기 파괴 `setTimeout`을 완전 폐지하고, 브라우저 표준 `window.addEventListener('afterprint', cleanupPrint, { once: true })`를 통해 사용자가 인쇄창을 닫은 후에만 안전하게 인쇄 메모리를 해제함.
+  3. **래스터 이미지(`<img>`) 변환 렌더링**: 최종 합성 캔버스를 `toDataURL('image/png')` 기반의 `<img>` 요소로 변환하고 `onload` 완료를 대기한 후 인쇄창을 호출하여 100% 선명하고 무결한 인쇄 출력 보장.
+

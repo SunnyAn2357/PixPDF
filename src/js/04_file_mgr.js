@@ -558,27 +558,44 @@
             pageItem.style.width = pgW + 'mm';
             pageItem.style.height = pgH + 'mm';
             pageItem.style.overflow = 'hidden';
-            finalCanvas.style.width = '100%';
-            finalCanvas.style.height = '100%';
-            finalCanvas.style.maxWidth = 'none';
-            finalCanvas.style.maxHeight = 'none';
+
+            // 크로미움 브라우저 인쇄 엔진 무결성을 위한 래스터 이미지(img) 변환 삽입
+            const printImg = document.createElement('img');
+            printImg.className = 'print-page-image';
+            printImg.src = finalCanvas.toDataURL('image/png');
+            printImg.style.width = '100%';
+            printImg.style.height = '100%';
+            printImg.style.objectFit = 'contain';
+            printImg.style.display = 'block';
+
+            await new Promise((res) => {
+              if (printImg.complete) res();
+              else {
+                printImg.onload = res;
+                printImg.onerror = res;
+              }
+            });
+
+            pageItem.appendChild(printImg);
           }
-          finalCanvas.className = 'print-page-canvas';
-          pageItem.appendChild(finalCanvas);
+          finalCanvas.width = 0; finalCanvas.height = 0;
           printContainer.appendChild(pageItem);
         }
 
         updateStatusMsg('인쇄 대화상자 호출 중...');
-        await new Promise(r => setTimeout(r, 100)); // DOM 렌더링 완료 대기
+        await new Promise(r => setTimeout(r, 200)); // DOM 렌더링 및 이미지 정착 완료 대기
 
-        window.print();
-
-        // 인쇄창이 닫힌 후 메모리 해제
-        setTimeout(() => {
+        const cleanupPrint = () => {
           printContainer.innerHTML = '';
           printStyleEl.textContent = '';
           updateStatusMsg('준비 완료');
-        }, 1000);
+        };
+        // 인쇄창이 닫히는 순간(인쇄 또는 취소 클릭) 정확히 메모리 해제
+        window.addEventListener('afterprint', cleanupPrint, { once: true });
+        // afterprint 이벤트 미지원 구형 브라우저 대비 충분히 긴(1분) 안전 백업 타임아웃
+        setTimeout(cleanupPrint, 60000);
+
+        window.print();
 
       } catch (err) {
         console.error(err);
