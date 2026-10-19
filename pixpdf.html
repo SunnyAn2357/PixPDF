@@ -1997,7 +1997,7 @@
         </button>
         <button class="menu-item" onclick="triggerSaveProject()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-          <span>프로젝트 저장 (.pixpdf)</span>
+          <span>프로젝트 저장</span>
         </button>
         <button class="menu-item" onclick="triggerOpenProjectDialog()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><polyline points="9 14 12 17 15 14"></polyline></svg>
@@ -2574,7 +2574,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.11.2 (3개 창 자르기 실시간 즉시 동기화, 인쇄/PDF/Img 저장 파이프라인 일체화 및 모바일 비활성화)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.11.3 (프로젝트 저장 메뉴 텍스트 정돈 및 프로젝트 열기 시 1열 썸네일 리스트 렌더링 무결성 복원)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -7919,6 +7919,14 @@ const modal = document.getElementById('modalPdfPicker');
           docState.globalSettings = { ...docState.globalSettings, ...meta.globalSettings };
         }
 
+        const projectFileId = `proj_${Date.now()}`;
+        docState.openedFiles = [{
+          fileId: projectFileId,
+          name: file.name,
+          type: 'project',
+          totalCount: meta.items.length
+        }];
+
         for (let i = 0; i < meta.items.length; i++) {
           const itemMeta = meta.items[i];
           const mediaEntry = zip.file(itemMeta.mediaFile);
@@ -7934,10 +7942,10 @@ const modal = document.getElementById('modalPdfPicker');
             img.src = blobUrl;
           });
 
-          // Blob URL은 이미지 로드 후 메모리 누수 방지 해제 (또는 이미지 참조 유지)
           docState.items.push({
             name: itemMeta.name || `페이지_${i + 1}`,
             type: 'image',
+            fileId: projectFileId,
             width: itemMeta.width || img.naturalWidth,
             height: itemMeta.height || img.naturalHeight,
             pageNum: itemMeta.pageNum || (i + 1),
@@ -7955,9 +7963,17 @@ const modal = document.getElementById('modalPdfPicker');
         const emptyMsg = document.getElementById('viewerEmptyMsg');
         if (emptyMsg) emptyMsg.style.display = 'none';
 
-        if (typeof renderAllThumbnails === 'function') renderAllThumbnails();
-        if (typeof loadMainViewer === 'function') await loadMainViewer(docState.currentIndex);
-        if (typeof updateThumbCounts === 'function') updateThumbCounts();
+        // 1열 썸네일 리스트 렌더링
+        if (typeof renderThumbnailList === 'function') {
+          await renderThumbnailList();
+        }
+        // 2열 메인 뷰어 및 3열 컨트롤 패널 동기화 로드
+        if (typeof loadMainViewer === 'function') {
+          await loadMainViewer(docState.currentIndex);
+        }
+        if (typeof updateThumbCounts === 'function') {
+          updateThumbCounts();
+        }
 
         if (typeof showExitToast === 'function') {
           showExitToast(`프로젝트가 복원되었습니다! (${docState.items.length}개 페이지)`);
