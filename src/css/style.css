@@ -1775,10 +1775,12 @@
     .crop-overlay {
       position: absolute;
       inset: 0;
-      pointer-events: none;
+      pointer-events: auto;
+      cursor: default;
       z-index: 15;
       user-select: none;
       overflow: hidden;
+      touch-action: none;
     }
     .crop-svg {
       position: absolute;
@@ -1796,6 +1798,19 @@
       stroke: rgba(255, 255, 255, 0.4);
       stroke-width: 0.8px;
       stroke-dasharray: 4 3;
+    }
+
+    /* 자르기 영역 전체 이동(Move) 조작 영역 */
+    .crop-box-area {
+      position: absolute;
+      pointer-events: auto;
+      cursor: grab;
+      z-index: 18;
+      background: transparent;
+      touch-action: none;
+    }
+    .crop-box-area:active {
+      cursor: grabbing;
     }
 
     /* 자르기 핸들 기본 및 터치 히트박스 확장 */

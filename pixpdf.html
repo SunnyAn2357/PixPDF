@@ -1800,10 +1800,12 @@
     .crop-overlay {
       position: absolute;
       inset: 0;
-      pointer-events: none;
+      pointer-events: auto;
+      cursor: default;
       z-index: 15;
       user-select: none;
       overflow: hidden;
+      touch-action: none;
     }
     .crop-svg {
       position: absolute;
@@ -1821,6 +1823,19 @@
       stroke: rgba(255, 255, 255, 0.4);
       stroke-width: 0.8px;
       stroke-dasharray: 4 3;
+    }
+
+    /* 자르기 영역 전체 이동(Move) 조작 영역 */
+    .crop-box-area {
+      position: absolute;
+      pointer-events: auto;
+      cursor: grab;
+      z-index: 18;
+      background: transparent;
+      touch-action: none;
+    }
+    .crop-box-area:active {
+      cursor: grabbing;
     }
 
     /* 자르기 핸들 기본 및 터치 히트박스 확장 */
@@ -2110,6 +2125,8 @@
               <line id="cropGridV1" class="crop-grid-line" x1="0" y1="0" x2="0" y2="0" />
               <line id="cropGridV2" class="crop-grid-line" x1="0" y1="0" x2="0" y2="0" />
             </svg>
+            <!-- 자르기 영역 전체 이동(Move) 조작 영역 -->
+            <div id="cropBoxArea" class="crop-box-area" data-handle="move" title="자르기 영역 이동 (드래그)"></div>
             <!-- 세련된 프로페셔널 L자형 코너 브래킷 및 엣지 바 -->
             <div id="cropHandleTL" class="crop-handle crop-bracket tl" data-handle="tl"></div>
             <div id="cropHandleTR" class="crop-handle crop-bracket tr" data-handle="tr"></div>
@@ -2574,7 +2591,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.11.5 (비파괴 자르기 재진입 시 무손실 원본 복원 및 핸들 위치 정합성 보장)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.11.6 (자르기 영역 전체 이동(Move) 지원 및 이미지/종이 본체 완전 고정)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -7484,13 +7501,21 @@ const modal = document.getElementById('modalPdfPicker');
         cropHole.setAttribute('height', String(boxH));
       }
 
-      // 2. 테두리 사각형
+      // 2. 테두리 사각형 및 영역 이동 조작부
       const cropBorder = document.getElementById('cropBoxBorder');
       if (cropBorder) {
         cropBorder.setAttribute('x', String(boxX));
         cropBorder.setAttribute('y', String(boxY));
         cropBorder.setAttribute('width', String(boxW));
         cropBorder.setAttribute('height', String(boxH));
+      }
+
+      const boxArea = document.getElementById('cropBoxArea');
+      if (boxArea) {
+        boxArea.style.left = `${boxX}px`;
+        boxArea.style.top = `${boxY}px`;
+        boxArea.style.width = `${boxW}px`;
+        boxArea.style.height = `${boxH}px`;
       }
 
       // 3. 3x3 격자 가이드선
@@ -7530,7 +7555,7 @@ const modal = document.getElementById('modalPdfPicker');
       if (hL) { hL.style.left = `${boxX}px`; hL.style.top = `${boxY + boxH / 2}px`; }
     }
 
-    // 마우스 및 터치 드래그 상호작용 등록 (8개 핸들 조절 전용, 이미지/박스 전체 흔들림 원천 차단)
+    // 마우스 및 터치 드래그 상호작용 등록 (8개 핸들 조절 및 영역 전체 이동 지원, 이미지/종이 본체는 완전 고정)
     let cropEventsBound = false;
     function initCropDragEvents() {
       if (cropEventsBound) return;
@@ -7541,7 +7566,7 @@ const modal = document.getElementById('modalPdfPicker');
 
       overlay.addEventListener('pointerdown', (e) => {
         if (!isCropActive) return;
-        const target = e.target.closest('.crop-handle');
+        const target = e.target.closest('.crop-handle, .crop-box-area');
         if (!target) return;
 
         e.preventDefault();
@@ -7560,6 +7585,11 @@ const modal = document.getElementById('modalPdfPicker');
           origBox: { ...cropBox },
           imgRect: rect
         };
+
+        if (handleType === 'move') {
+          target.style.cursor = 'grabbing';
+          overlay.style.cursor = 'grabbing';
+        }
 
         window.addEventListener('pointermove', onCropPointerMove);
         window.addEventListener('pointerup', onCropPointerUp);
@@ -7581,22 +7611,31 @@ const modal = document.getElementById('modalPdfPicker');
       let newW = origBox.w;
       let newH = origBox.h;
 
-      // 좌/우 조절
-      if (handle.includes('l')) {
-        const maxLeft = origBox.x + origBox.w - minDim;
-        newX = Math.max(0, Math.min(maxLeft, origBox.x + dxNorm));
-        newW = origBox.w + (origBox.x - newX);
-      } else if (handle.includes('r')) {
-        newW = Math.max(minDim, Math.min(1 - origBox.x, origBox.w + dxNorm));
-      }
+      if (handle === 'move') {
+        // [자르기 영역 전체 이동]: 크기는 보존한 채 위치만 이동 (0.0 ~ 1.0 이미지 경계 내 완벽 클램핑)
+        const maxX = Math.max(0, 1.0 - origBox.w);
+        const maxY = Math.max(0, 1.0 - origBox.h);
+        newX = Math.max(0, Math.min(maxX, origBox.x + dxNorm));
+        newY = Math.max(0, Math.min(maxY, origBox.y + dyNorm));
+      } else {
+        // [핸들별 크기 조절]
+        // 좌/우 조절
+        if (handle.includes('l')) {
+          const maxLeft = origBox.x + origBox.w - minDim;
+          newX = Math.max(0, Math.min(maxLeft, origBox.x + dxNorm));
+          newW = origBox.w + (origBox.x - newX);
+        } else if (handle.includes('r')) {
+          newW = Math.max(minDim, Math.min(1 - origBox.x, origBox.w + dxNorm));
+        }
 
-      // 상/하 조절
-      if (handle.includes('t')) {
-        const maxTop = origBox.y + origBox.h - minDim;
-        newY = Math.max(0, Math.min(maxTop, origBox.y + dyNorm));
-        newH = origBox.h + (origBox.y - newY);
-      } else if (handle.includes('b')) {
-        newH = Math.max(minDim, Math.min(1 - origBox.y, origBox.h + dyNorm));
+        // 상/하 조절
+        if (handle.includes('t')) {
+          const maxTop = origBox.y + origBox.h - minDim;
+          newY = Math.max(0, Math.min(maxTop, origBox.y + dyNorm));
+          newH = origBox.h + (origBox.y - newY);
+        } else if (handle.includes('b')) {
+          newH = Math.max(minDim, Math.min(1 - origBox.y, origBox.h + dyNorm));
+        }
       }
 
       cropBox = { x: newX, y: newY, w: newW, h: newH };
@@ -7606,6 +7645,11 @@ const modal = document.getElementById('modalPdfPicker');
     function onCropPointerUp() {
       if (!activeCropDrag) return;
       activeCropDrag = null;
+      const overlay = document.getElementById('cropOverlay');
+      if (overlay) overlay.style.cursor = 'default';
+      const boxArea = document.getElementById('cropBoxArea');
+      if (boxArea) boxArea.style.cursor = 'grab';
+
       window.removeEventListener('pointermove', onCropPointerMove);
       window.removeEventListener('pointerup', onCropPointerUp);
       window.removeEventListener('pointercancel', onCropPointerUp);
@@ -7809,7 +7853,7 @@ const modal = document.getElementById('modalPdfPicker');
         const zip = new JSZip();
 
         const projectMeta = {
-          version: '2.11.5',
+          version: '2.11.6',
           appName: 'PixPDF',
           createdAt: new Date().toISOString(),
           fileName: docState.fileName || 'PixPDF_Project',

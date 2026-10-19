@@ -173,13 +173,21 @@
         cropHole.setAttribute('height', String(boxH));
       }
 
-      // 2. 테두리 사각형
+      // 2. 테두리 사각형 및 영역 이동 조작부
       const cropBorder = document.getElementById('cropBoxBorder');
       if (cropBorder) {
         cropBorder.setAttribute('x', String(boxX));
         cropBorder.setAttribute('y', String(boxY));
         cropBorder.setAttribute('width', String(boxW));
         cropBorder.setAttribute('height', String(boxH));
+      }
+
+      const boxArea = document.getElementById('cropBoxArea');
+      if (boxArea) {
+        boxArea.style.left = `${boxX}px`;
+        boxArea.style.top = `${boxY}px`;
+        boxArea.style.width = `${boxW}px`;
+        boxArea.style.height = `${boxH}px`;
       }
 
       // 3. 3x3 격자 가이드선
@@ -219,7 +227,7 @@
       if (hL) { hL.style.left = `${boxX}px`; hL.style.top = `${boxY + boxH / 2}px`; }
     }
 
-    // 마우스 및 터치 드래그 상호작용 등록 (8개 핸들 조절 전용, 이미지/박스 전체 흔들림 원천 차단)
+    // 마우스 및 터치 드래그 상호작용 등록 (8개 핸들 조절 및 영역 전체 이동 지원, 이미지/종이 본체는 완전 고정)
     let cropEventsBound = false;
     function initCropDragEvents() {
       if (cropEventsBound) return;
@@ -230,7 +238,7 @@
 
       overlay.addEventListener('pointerdown', (e) => {
         if (!isCropActive) return;
-        const target = e.target.closest('.crop-handle');
+        const target = e.target.closest('.crop-handle, .crop-box-area');
         if (!target) return;
 
         e.preventDefault();
@@ -249,6 +257,11 @@
           origBox: { ...cropBox },
           imgRect: rect
         };
+
+        if (handleType === 'move') {
+          target.style.cursor = 'grabbing';
+          overlay.style.cursor = 'grabbing';
+        }
 
         window.addEventListener('pointermove', onCropPointerMove);
         window.addEventListener('pointerup', onCropPointerUp);
@@ -270,22 +283,31 @@
       let newW = origBox.w;
       let newH = origBox.h;
 
-      // 좌/우 조절
-      if (handle.includes('l')) {
-        const maxLeft = origBox.x + origBox.w - minDim;
-        newX = Math.max(0, Math.min(maxLeft, origBox.x + dxNorm));
-        newW = origBox.w + (origBox.x - newX);
-      } else if (handle.includes('r')) {
-        newW = Math.max(minDim, Math.min(1 - origBox.x, origBox.w + dxNorm));
-      }
+      if (handle === 'move') {
+        // [자르기 영역 전체 이동]: 크기는 보존한 채 위치만 이동 (0.0 ~ 1.0 이미지 경계 내 완벽 클램핑)
+        const maxX = Math.max(0, 1.0 - origBox.w);
+        const maxY = Math.max(0, 1.0 - origBox.h);
+        newX = Math.max(0, Math.min(maxX, origBox.x + dxNorm));
+        newY = Math.max(0, Math.min(maxY, origBox.y + dyNorm));
+      } else {
+        // [핸들별 크기 조절]
+        // 좌/우 조절
+        if (handle.includes('l')) {
+          const maxLeft = origBox.x + origBox.w - minDim;
+          newX = Math.max(0, Math.min(maxLeft, origBox.x + dxNorm));
+          newW = origBox.w + (origBox.x - newX);
+        } else if (handle.includes('r')) {
+          newW = Math.max(minDim, Math.min(1 - origBox.x, origBox.w + dxNorm));
+        }
 
-      // 상/하 조절
-      if (handle.includes('t')) {
-        const maxTop = origBox.y + origBox.h - minDim;
-        newY = Math.max(0, Math.min(maxTop, origBox.y + dyNorm));
-        newH = origBox.h + (origBox.y - newY);
-      } else if (handle.includes('b')) {
-        newH = Math.max(minDim, Math.min(1 - origBox.y, origBox.h + dyNorm));
+        // 상/하 조절
+        if (handle.includes('t')) {
+          const maxTop = origBox.y + origBox.h - minDim;
+          newY = Math.max(0, Math.min(maxTop, origBox.y + dyNorm));
+          newH = origBox.h + (origBox.y - newY);
+        } else if (handle.includes('b')) {
+          newH = Math.max(minDim, Math.min(1 - origBox.y, origBox.h + dyNorm));
+        }
       }
 
       cropBox = { x: newX, y: newY, w: newW, h: newH };
@@ -295,6 +317,11 @@
     function onCropPointerUp() {
       if (!activeCropDrag) return;
       activeCropDrag = null;
+      const overlay = document.getElementById('cropOverlay');
+      if (overlay) overlay.style.cursor = 'default';
+      const boxArea = document.getElementById('cropBoxArea');
+      if (boxArea) boxArea.style.cursor = 'grab';
+
       window.removeEventListener('pointermove', onCropPointerMove);
       window.removeEventListener('pointerup', onCropPointerUp);
       window.removeEventListener('pointercancel', onCropPointerUp);
