@@ -16,10 +16,14 @@
 
       const btnSavePdf = document.getElementById('btnSavePdf');
       const btnSaveImg = document.getElementById('btnSaveImg');
+      const btnAbort = document.getElementById('btnAbort');
+      const progWrap = document.getElementById('progWrap');
+      const progFill = document.getElementById('progFill');
+
       if (btnSavePdf) btnSavePdf.disabled = true;
       if (btnSaveImg) btnSaveImg.disabled = true;
-      document.getElementById('btnAbort').style.display = 'inline-block';
-      document.getElementById('progWrap').style.display = 'block';
+      if (btnAbort) btnAbort.style.display = 'inline-block';
+      if (progWrap) progWrap.style.display = 'block';
       isAborted = false;
       const exportBlobs = [];
 
@@ -37,7 +41,7 @@
           const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
 
           const pct = Math.round(((idx + 1) / selectedIndices.length) * 100);
-          document.getElementById('progFill').style.width = `${pct}%`;
+          if (progFill) progFill.style.width = `${pct}%`;
           updateStatusMsg(`이미지 변환 중: [${idx + 1} / ${selectedIndices.length}] (${pct}%)...`);
 
           await new Promise(r => setTimeout(r, 0));
@@ -206,7 +210,8 @@
         updateStatusMsg(`오류: ${err.message}`);
       } finally {
         updateThumbCounts();
-        document.getElementById('btnAbort').style.display = 'none';
+        if (btnAbort) btnAbort.style.display = 'none';
+        if (progWrap) progWrap.style.display = 'none';
       }
     }
 
@@ -219,16 +224,24 @@
 
       const btnSavePdf = document.getElementById('btnSavePdf');
       const btnSaveImg = document.getElementById('btnSaveImg');
+      const btnAbort = document.getElementById('btnAbort');
+      const progWrap = document.getElementById('progWrap');
+      const progFill = document.getElementById('progFill');
+
       if (btnSavePdf) btnSavePdf.disabled = true;
       if (btnSaveImg) btnSaveImg.disabled = true;
-      document.getElementById('btnAbort').style.display = 'inline-block';
-      document.getElementById('progWrap').style.display = 'block';
+      if (btnAbort) btnAbort.style.display = 'inline-block';
+      if (progWrap) progWrap.style.display = 'block';
       isAborted = false;
 
-      const { jsPDF } = window.jspdf;
-      let newPdfDoc = null;
-
       try {
+        const jspdfModule = window.jspdf;
+        if (!jspdfModule || !jspdfModule.jsPDF) {
+          throw new Error('jsPDF 라이브러리를 로드할 수 없습니다.');
+        }
+        const { jsPDF } = jspdfModule;
+        let newPdfDoc = null;
+
         for (let idx = 0; idx < selectedIndices.length; idx++) {
           if (isAborted) {
             updateStatusMsg('PDF 생성이 중단되었습니다.');
@@ -242,7 +255,7 @@
           const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
 
           const pct = Math.round(((idx + 1) / selectedIndices.length) * 100);
-          document.getElementById('progFill').style.width = `${pct}%`;
+          if (progFill) progFill.style.width = `${pct}%`;
           updateStatusMsg(`PDF 생성 중: [${idx + 1} / ${selectedIndices.length}] (${pct}%)...`);
 
           await new Promise(r => setTimeout(r, 0));
@@ -368,11 +381,13 @@
         updateStatusMsg(`PDF 생성 오류: ${err.message}`);
       } finally {
         updateThumbCounts();
-        document.getElementById('btnAbort').style.display = 'none';
+        if (btnAbort) btnAbort.style.display = 'none';
+        if (progWrap) progWrap.style.display = 'none';
       }
     }
 
     function abortAction() {
       isAborted = true;
-      document.getElementById('btnAbort').disabled = true;
+      const btnAbort = document.getElementById('btnAbort');
+      if (btnAbort) btnAbort.disabled = true;
     }

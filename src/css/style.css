@@ -731,31 +731,32 @@
     .btn-abort { background: var(--danger); font-size: 13px; padding: 7px; min-height: 34px; }
 
     /* 앱 전용 프리미엄 플로팅 토스트 메시지 (모바일 뒤로가기 더블 탭 종료 & 카운트다운 게이지) */
+    /* 앱 전용 플로팅 토스트 메시지 (단정하고 모던한 미니멀 디자인) */
     .app-toast {
       position: fixed;
       bottom: calc(52px + env(safe-area-inset-bottom, 0px));
       left: 50%;
-      transform: translateX(-50%) translateY(20px) scale(0.92);
-      background: rgba(15, 23, 42, 0.96);
+      transform: translateX(-50%) translateY(16px) scale(0.96);
+      background: rgba(15, 23, 42, 0.92);
       color: #ffffff;
-      padding: 11px 20px 13px 16px;
+      padding: 9px 18px 9px 14px;
       border-radius: 9999px;
       z-index: 999999 !important;
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
-      box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.6), 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.22);
-      backdrop-filter: blur(16px) saturate(180%);
-      -webkit-backdrop-filter: blur(16px) saturate(180%);
-      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.16);
       display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 9px;
       max-width: calc(100vw - 32px);
       width: max-content;
       box-sizing: border-box;
       overflow: hidden;
-      transition: opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1), transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.24s;
+      transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.2s;
     }
     .app-toast.show {
       opacity: 1 !important;
@@ -764,78 +765,31 @@
       pointer-events: auto;
     }
     .app-toast .toast-icon-wrap {
-      width: 28px;
-      height: 28px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      background: rgba(13, 148, 136, 0.22);
-      border: 1px solid rgba(45, 212, 191, 0.35);
-      color: #2dd4bf;
+      background: rgba(255, 255, 255, 0.12);
+      color: #cbd5e1;
     }
-    .app-toast.toast-warning {
-      background: rgba(28, 22, 14, 0.96);
-      border-color: rgba(245, 158, 11, 0.5);
-    }
-    .app-toast.toast-warning .toast-icon-wrap {
-      background: rgba(217, 119, 6, 0.25);
-      border: 1px solid rgba(251, 191, 36, 0.5);
-      color: #fbbf24;
-    }
-    .app-toast .toast-body {
-      display: flex;
-      flex-direction: column;
-      text-align: left;
-      line-height: 1.35;
-      min-width: 0;
-      word-break: keep-all;
-    }
-    .app-toast .toast-title {
-      font-size: 12.5px;
-      font-weight: 700;
-      color: #fde047;
-      letter-spacing: -0.2px;
-    }
-    .app-toast .toast-desc {
+    .app-toast .toast-text {
       font-size: 13px;
       font-weight: 500;
-      color: #f1f5f9;
+      color: #f8fafc;
       letter-spacing: -0.2px;
-    }
-    /* 2초 카운트다운 타이머 게이지 바 */
-    .app-toast .toast-progress {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      height: 3px;
-      width: 100%;
-      background: linear-gradient(90deg, #0d9488, #2dd4bf);
-      border-radius: 0 0 9999px 9999px;
-      opacity: 0.9;
-    }
-    .app-toast.toast-warning .toast-progress {
-      background: linear-gradient(90deg, #d97706, #fbbf24);
-    }
-    .app-toast.show .toast-progress {
-      animation: toastProgressCountdown 2s linear forwards;
-    }
-    @keyframes toastProgressCountdown {
-      from { width: 100%; }
-      to { width: 0%; }
+      white-space: nowrap;
     }
     @media (max-width: 360px) {
       .app-toast {
-        padding: 9px 14px 11px 12px;
-        gap: 8px;
+        padding: 8px 14px 8px 11px;
         bottom: calc(44px + env(safe-area-inset-bottom, 0px));
+        gap: 7px;
       }
-      .app-toast .toast-desc {
+      .app-toast .toast-text {
         font-size: 12px;
-      }
-      .app-toast .toast-title {
-        font-size: 11.5px;
       }
     }
 

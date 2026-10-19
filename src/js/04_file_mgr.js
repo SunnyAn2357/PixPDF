@@ -678,52 +678,32 @@
 
     // 앱 종료 및 더블 탭 안내 토스트 제어
     let isAppExiting = false;
-    let lastBackPressTime = 0;
     let toastHideTimer = null;
 
-    function showExitToast(msg) {
+    // 현재 종료 안내 토스트가 화면에 노출 중인지 여부 확인 (토스트가 뜬 동안에만 뒤로가기 시 종료)
+    function isExitToastVisible() {
+      const toast = document.getElementById('appToast');
+      return !!(toast && toast.classList.contains('show'));
+    }
+
+    // 단정하고 심플한 단일 문구 토스트 표출
+    function showExitToast(actionText = "'뒤로' 버튼을 한 번 더 누르면 종료됩니다") {
       const toast = document.getElementById('appToast');
       if (!toast) return;
 
-      const isWarning = msg.includes('저장되지 않은');
-      const isEsc = msg.includes('ESC');
-      const actionText = isEsc ? 'ESC 키를 한 번 더 누르면 종료됩니다' : "'뒤로' 버튼을 한 번 더 누르면 종료됩니다";
+      toast.classList.remove('show');
+      toast.innerHTML = `
+        <div class="toast-icon-wrap" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </div>
+        <span class="toast-text">${actionText}</span>
+      `;
 
-      toast.classList.remove('show', 'toast-warning');
-
-      if (isWarning) {
-        toast.classList.add('toast-warning');
-        toast.innerHTML = `
-          <div class="toast-icon-wrap" aria-hidden="true">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-          </div>
-          <div class="toast-body">
-            <span class="toast-title">저장되지 않은 작업이 있습니다</span>
-            <span class="toast-desc">${actionText}</span>
-          </div>
-          <div class="toast-progress"></div>
-        `;
-      } else {
-        toast.innerHTML = `
-          <div class="toast-icon-wrap" aria-hidden="true">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-          </div>
-          <div class="toast-body">
-            <span class="toast-desc">${actionText}</span>
-          </div>
-          <div class="toast-progress"></div>
-        `;
-      }
-
-      // 강제 레이아웃 리플로우로 애니메이션 및 프로그레스 바 리셋
+      // 강제 레이아웃 리플로우로 애니메이션 리셋
       void toast.offsetWidth;
 
       toast.onclick = () => {
@@ -733,9 +713,10 @@
 
       toast.classList.add('show');
       if (toastHideTimer) clearTimeout(toastHideTimer);
+      // 토스트가 화면에 떠 있는 동안(2.5초)에만 뒤로가기 시 종료, 시간이 지나 사라지면 다시 1회차 상태로 안전 복귀
       toastHideTimer = setTimeout(() => {
         toast.classList.remove('show');
-      }, 2000);
+      }, 2500);
     }
 
     function exitApp() {

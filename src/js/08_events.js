@@ -596,16 +596,11 @@
           return;
         }
 
-        // 모든 레이어가 닫힌 메인 화면 상태에서 ESC: 2초 내 2회 입력 시 종료
-        const now = Date.now();
-        if (now - lastBackPressTime < 2000) {
+        // 모든 레이어가 닫힌 메인 화면 상태에서 ESC: 토스트가 뜬 동안에만 종료
+        if (isExitToastVisible()) {
           exitApp();
         } else {
-          lastBackPressTime = now;
-          const msg = hasActiveWork()
-            ? "저장되지 않은 작업이 있습니다. ESC 키를 한 번 더 누르면 종료됩니다."
-            : "ESC 키를 한 번 더 누르면 종료됩니다.";
-          showExitToast(msg);
+          showExitToast("ESC 키를 한 번 더 누르면 종료됩니다");
         }
         return;
       }
@@ -670,21 +665,17 @@
         return;
       }
 
-      // 5. 모든 레이어가 닫힌 메인 화면 상태에서 뒤로가기가 발생한 경우: 2초 내 2회 터치 시 앱 종료
-      const now = Date.now();
-      if (now - lastBackPressTime < 2000) {
-        // 2초 내 2번째 누름: 컨펌 팝업 없이 즉시 종료
+      // 5. 모든 레이어가 닫힌 메인 화면 상태에서 뒤로가기가 발생한 경우: 토스트가 뜬 동안에만 종료
+      if (isExitToastVisible()) {
+        // 토스트가 화면에 떠 있는 동안 다시 뒤로가기를 누른 경우 -> 즉시 종료
         exitApp();
       } else {
-        // 1번째 누름: 토스트 안내 띄우고 히스토리 가로채기 유지
-        lastBackPressTime = now;
+        // 토스트가 없거나 이미 사라진 상태에서 누른 경우:
+        // 토스트 안내를 띄우고 히스토리 가로채기 앵커 재수립
         try {
           history.pushState({ pixpdfRoot: true, userArmed: true }, '');
         } catch (err) {}
-        const msg = hasActiveWork()
-          ? "저장되지 않은 작업이 있습니다. '뒤로' 버튼을 한 번 더 누르면 종료됩니다."
-          : "'뒤로' 버튼을 한 번 더 누르면 종료됩니다.";
-        showExitToast(msg);
+        showExitToast("'뒤로' 버튼을 한 번 더 누르면 종료됩니다");
       }
     });
 
