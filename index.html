@@ -1695,7 +1695,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
+      gap: 6px;
       padding: 5px 8px;
       background: var(--bg-card-sub, #f8fafc);
       border: 1px solid var(--border-light, #e2e8f0);
@@ -1713,8 +1713,8 @@
       display: flex;
       align-items: center;
       gap: 5px;
-      flex: 1;
-      justify-content: flex-end;
+      margin: 0 auto;
+      flex-shrink: 0;
     }
     .btn-rot-paper {
       height: 23px;
@@ -1743,9 +1743,9 @@
       font-size: 11.5px;
       font-weight: 700;
       color: var(--primary);
-      min-width: 22px;
+      min-width: 24px;
       text-align: right;
-      padding-left: 2px;
+      flex-shrink: 0;
     }
 
     /* 가운데 창 메인 뷰어 줌 버튼 & 배율 표시 */
@@ -1778,6 +1778,7 @@
       justify-content: center;
       min-width: 38px;
       padding: 0 4px;
+      margin-left: 8px;
       font-size: 12px;
       font-weight: 700;
       color: var(--primary);
@@ -2006,8 +2007,8 @@
                 <button type="button" class="btn-rot-paper" title="종이 반시계 방향 90도 회전" onclick="rotatePageByDelta(-90)">⟲ -90°</button>
                 <button type="button" class="btn-rot-paper" title="종이 0도 정방향 초기화" onclick="rotatePageTo(0)">0°</button>
                 <button type="button" class="btn-rot-paper" title="종이 시계 방향 90도 회전" onclick="rotatePageByDelta(90)">⟳ +90°</button>
-                <span id="lblPageRotVal" class="paper-rot-val">0°</span>
               </div>
+              <span id="lblPageRotVal" class="paper-rot-val">0°</span>
             </div>
           </div>
         </div>
@@ -2359,7 +2360,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.10.5 (메뉴 중복 항목 정리 및 PC 환경 ESC 앱 종료 방지)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.10.6 (중앙 뷰어 줌/배율 여백 분리 및 용지 회전 버튼군 중앙 정렬)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
