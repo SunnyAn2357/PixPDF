@@ -1841,10 +1841,6 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
           <span>인쇄</span>
         </button>
-        <button class="menu-item" onclick="triggerConvertAction()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-          <span>변환</span>
-        </button>
         <button class="menu-item danger" onclick="triggerCloseDocument()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           <span>문서 닫기</span>
@@ -2363,7 +2359,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.10.4 (PDF/Img 저장 예외 방어 및 복구, 미니멀 종료 토스트 디자인 & 활성 상태 기반 2회 터치 종료)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.10.5 (메뉴 중복 항목 정리 및 PC 환경 ESC 앱 종료 방지)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -3979,15 +3975,6 @@
         alert(`인쇄 처리 중 오류: ${err.message}`);
         printContainer.innerHTML = '';
         updateStatusMsg('인쇄 오류 발생');
-      }
-    }
-
-    function triggerConvertAction() {
-      closeMenuDropdown();
-      if (window.innerWidth <= 860) {
-        toggleMobileControl(true);
-      } else {
-        executeActionSave('pdf');
       }
     }
 
@@ -7075,11 +7062,9 @@ const modal = document.getElementById('modalPdfPicker');
           return;
         }
 
-        // 모든 레이어가 닫힌 메인 화면 상태에서 ESC: 토스트가 뜬 동안에만 종료
-        if (isExitToastVisible()) {
-          exitApp();
-        } else {
-          showExitToast("ESC 키를 한 번 더 누르면 종료됩니다");
+        // 모든 레이어가 닫힌 메인 화면에서는 포커스 해제만 수행 (PC 환경에서는 ESC 키로 앱을 종료하지 않음)
+        if (document.activeElement && typeof document.activeElement.blur === 'function') {
+          document.activeElement.blur();
         }
         return;
       }
