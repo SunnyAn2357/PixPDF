@@ -48,10 +48,12 @@
           let blob = null;
           if (item.imgObj instanceof HTMLCanvasElement) {
             blob = await new Promise(r => item.imgObj.toBlob(r, 'image/png'));
-          } else if (item.imgObj instanceof HTMLImageElement) {
+          } else if (item.imgObj) {
             const tempC = document.createElement('canvas');
-            tempC.width = item.imgObj.naturalWidth || item.width || 800;
-            tempC.height = item.imgObj.naturalHeight || item.height || 600;
+            const w = item.imgObj.naturalWidth || item.imgObj.width || item.width || 800;
+            const h = item.imgObj.naturalHeight || item.imgObj.height || item.height || 600;
+            tempC.width = w;
+            tempC.height = h;
             const tctx = tempC.getContext('2d');
             tctx.drawImage(item.imgObj, 0, 0);
             blob = await new Promise(r => tempC.toBlob(r, 'image/png'));
@@ -171,25 +173,36 @@
           const itemMeta = meta.items[i];
           const mediaEntry = zip.file(itemMeta.mediaFile);
           if (!mediaEntry) continue;
-
           const imgBlob = await mediaEntry.async('blob');
-          const blobUrl = URL.createObjectURL(imgBlob);
 
-          const img = new Image();
-          await new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-            img.src = blobUrl;
-          });
+          let imgObj = null;
+          if (typeof createImageBitmap === 'function') {
+            try {
+              imgObj = await createImageBitmap(imgBlob);
+            } catch (e) {
+              imgObj = null;
+            }
+          }
+          if (!imgObj) {
+            const blobUrl = URL.createObjectURL(imgBlob);
+            const img = new Image();
+            await new Promise((resolve, reject) => {
+              img.onload = resolve;
+              img.onerror = reject;
+              img.src = blobUrl;
+            });
+            imgObj = img;
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+          }
 
           docState.items.push({
             name: itemMeta.name || `페이지_${i + 1}`,
             type: 'image',
             fileId: projectFileId,
-            width: itemMeta.width || img.naturalWidth,
-            height: itemMeta.height || img.naturalHeight,
+            width: itemMeta.width || imgObj.width || (imgObj.naturalWidth || 800),
+            height: itemMeta.height || imgObj.height || (imgObj.naturalHeight || 600),
             pageNum: itemMeta.pageNum || (i + 1),
-            imgObj: img,
+            imgObj: imgObj,
             settings: itemMeta.settings || {}
           });
 
@@ -197,22 +210,22 @@
           docState.checkList.push(isChecked);
         }
 
+        if (docState.items.length === 0) {
+          if (typeof showExitToast === 'function') showExitToast('프로젝트 내 복원 가능한 페이지가 없습니다.');
+          return;
+        }
+
         docState.currentIndex = Math.max(0, Math.min(meta.currentIndex || 0, docState.items.length - 1));
 
-        // UI 및 3개 창 갱신
-        const emptyMsg = document.getElementById('viewerEmptyMsg');
-        if (emptyMsg) emptyMsg.style.display = 'none';
-
-        // 1열 썸네일 리스트 렌더링
-        if (typeof renderThumbnailList === 'function') {
-          await renderThumbnailList();
-        }
-        // 2열 메인 뷰어 및 3열 컨트롤 패널 동기화 로드
-        if (typeof loadMainViewer === 'function') {
-          await loadMainViewer(docState.currentIndex);
-        }
-        if (typeof updateThumbCounts === 'function') {
-          updateThumbCounts();
+        // UI 및 3개 창 전체 동기화 갱신
+        if (typeof refreshWorkspaceDisplay === 'function') {
+          await refreshWorkspaceDisplay();
+        } else {
+          const emptyMsg = document.getElementById('viewerEmptyMsg');
+          if (emptyMsg) emptyMsg.style.display = 'none';
+          if (typeof renderThumbnailList === 'function') await renderThumbnailList();
+          if (typeof loadMainViewer === 'function') await loadMainViewer(docState.currentIndex);
+          if (typeof updateThumbCounts === 'function') updateThumbCounts();
         }
 
         if (typeof showExitToast === 'function') {

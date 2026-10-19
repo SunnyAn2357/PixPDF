@@ -449,8 +449,7 @@
           const p = docState.items[pageIndex];
           if (!p) continue;
           const cfg = getEffectiveItemSettings(pageIndex);
-          const cScale = cfg.contentScale || 1.0;
-          const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
+          const { isPageRot90 } = getResolvedRotations(cfg);
 
           if (p.type === 'pdf' && !p.imgObj) {
             await ensureItemCanvas(p);
@@ -459,7 +458,6 @@
           const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width || p.imgObj.width, height: p.height || p.imgObj.height };
           const origW = effDims.width;
           const origH = effDims.height;
-          const { isPageRot90 } = getResolvedRotations(cfg);
 
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;

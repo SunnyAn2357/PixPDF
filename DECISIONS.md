@@ -303,3 +303,20 @@
   2. **프로젝트 열기 시 1열 썸네일 리스트 렌더링 복원 (`renderThumbnailList`)**:
      - `openPixPdfProject()`에서 `await renderThumbnailList()`를 호출하도록 수정하여 프로젝트를 열었을 때 1열 카드 목록 전체가 즉시 정상 렌더링되도록 복원.
      - `docState.openedFiles`에 프로젝트 파일 식별 정보(`projectFileId`)를 등록하여 "열린 파일 관리" 모달에서도 프로젝트 내 페이지들이 정상 집계되도록 무결성 확보.
+
+---
+
+### ADR-022: 스크립트 파싱 SyntaxError 전면 해소 및 .pixpdf 프로젝트 직렬화 무결성 보장
+- **결정 일자**: v2.11.4 (2026-10-20)
+- **배경 및 원인**:
+  - **이슈 1 (스크립트 파싱 SyntaxError로 인한 UI 먹통)**: v2.11.3 내보내기 리팩토링 중 `04_file_mgr.js` 및 `07_export.js`에서 `const { isPageRot90 }` 변수가 블록 내 중복 선언되고, `09_crop.js`의 `applyCrop`, `resetCropCurrentItem` 함수 내 `await` 구문이 일반 함수에 포함되어 브라우저 스크립트 파싱 단계에서 `SyntaxError`가 발생함. 이로 인해 브라우저의 전체 이벤트 핸들러가 바인딩되지 않아 버튼, 햄버거 메뉴, 드래그앤드롭이 일체 반응하지 않는 현상 발생.
+  - **이슈 2 (프로젝트 저장 시 ImageBitmap 미디어 누락 및 복원 시 3창 동기화 결함)**: `10_project.js`에서 프로젝트 파일(*.pixpdf) 저장 시 `item.imgObj`가 브라우저 고속 래스터 객체인 `ImageBitmap`일 때 이를 캔버스로 변환하여 Blob화하는 분기가 누락되어, 프로젝트 파일 내부의 `media/` 폴더에 이미지가 저장되지 않는 치명적 결함 발생. 그 결과 프로젝트를 다시 열었을 때 1열 목록이 비어버리고 메인 뷰어는 이전 화면이 잔상처럼 남아 있던 문제 발생.
+- **확정 규칙**:
+  1. **스크립트 문법 무결성 전면 복구 및 자동 검증 파이프라인**:
+     - `04_file_mgr.js`, `07_export.js`의 중복 선언을 즉시 제거하고 `09_crop.js`의 `applyCrop`과 `resetCropCurrentItem`을 `async` 함수로 전환.
+     - 모든 JS 소스는 `node -c` 문법 검사를 100% 통과(오류 0건)한 후 빌드(`build.ps1`)에 병합되도록 검증 강화.
+  2. **프로젝트 저장 시 ImageBitmap 포함 전 규격 래스터 무손실 직렬화**:
+     - `triggerSaveProject()`에서 `item.imgObj`가 `HTMLCanvasElement`, `ImageBitmap`, `HTMLImageElement` 등 어떤 형태이든 크기(`width/height/naturalWidth`)를 정밀 추출하여 임시 캔버스 경유 무손실 PNG Blob으로 완벽 변환 후 ZIP 내 `media/`에 저장.
+  3. **프로젝트 복원 시 고속 디코딩 및 좌/중/우 3개 창 완전 동기화**:
+     - `openPixPdfProject()`에서 `createImageBitmap`을 1순위로 활용하여 초고속 비동기 디코딩 수행.
+     - 복원 완료 후 `refreshWorkspaceDisplay()`를 호출하여 좌측 1열 썸네일 카드, 가운데 2열 메인 뷰어 캔버스, 우측 3열 미니 시트 및 제어 패널, 상단 카운트/버튼 상태가 일괄 동기화되도록 보장.

@@ -37,8 +37,7 @@
           const pageIndex = selectedIndices[idx];
           const p = docState.items[pageIndex];
           const cfg = getEffectiveItemSettings(pageIndex);
-          const cScale = cfg.contentScale || 1.0;
-          const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
+          const { isPageRot90 } = getResolvedRotations(cfg);
 
           const pct = Math.round(((idx + 1) / selectedIndices.length) * 100);
           if (progFill) progFill.style.width = `${pct}%`;
@@ -53,7 +52,6 @@
           const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width || p.imgObj.width, height: p.height || p.imgObj.height };
           const origW = effDims.width;
           const origH = effDims.height;
-          const { isPageRot90 } = getResolvedRotations(cfg);
 
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
@@ -189,8 +187,7 @@
           const pageIndex = selectedIndices[idx];
           const p = docState.items[pageIndex];
           const cfg = getEffectiveItemSettings(pageIndex);
-          const cScale = cfg.contentScale || 1.0;
-          const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
+          const { isPageRot90 } = getResolvedRotations(cfg);
 
           const pct = Math.round(((idx + 1) / selectedIndices.length) * 100);
           if (progFill) progFill.style.width = `${pct}%`;
@@ -205,7 +202,6 @@
           const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width || p.imgObj.width, height: p.height || p.imgObj.height };
           const origW = effDims.width;
           const origH = effDims.height;
-          const { isPageRot90 } = getResolvedRotations(cfg);
 
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;

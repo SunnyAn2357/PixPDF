@@ -289,7 +289,7 @@
     }
 
     // [적용] 버튼: 비파괴 설정 저장 및 캔버스 렌더링 동기화
-    function applyCrop() {
+    async function applyCrop() {
       const item = docState.items[docState.currentIndex];
       if (!item) return;
 
@@ -343,7 +343,7 @@
     }
 
     // [리셋] 버튼 (우측 패널에서 현재 항목의 크롭 100% 완전 초기화)
-    function resetCropCurrentItem() {
+    async function resetCropCurrentItem() {
       const item = docState.items[docState.currentIndex];
       if (!item) return;
 
