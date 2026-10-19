@@ -596,11 +596,9 @@
           return;
         }
 
-        // 모든 레이어가 닫힌 메인 화면 상태에서 ESC: 토스트가 뜬 동안에만 종료
-        if (isExitToastVisible()) {
-          exitApp();
-        } else {
-          showExitToast("ESC 키를 한 번 더 누르면 종료됩니다");
+        // 모든 레이어가 닫힌 메인 화면에서는 포커스 해제만 수행 (PC 환경에서는 ESC 키로 앱을 종료하지 않음)
+        if (document.activeElement && typeof document.activeElement.blur === 'function') {
+          document.activeElement.blur();
         }
         return;
       }

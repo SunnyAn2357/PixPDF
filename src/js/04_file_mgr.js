@@ -605,15 +605,6 @@
       }
     }
 
-    function triggerConvertAction() {
-      closeMenuDropdown();
-      if (window.innerWidth <= 860) {
-        toggleMobileControl(true);
-      } else {
-        executeActionSave('pdf');
-      }
-    }
-
     // 문서 닫기 (현재 열린 모든 이미지 및 PDF 닫기)
     function triggerCloseDocument() {
       closeMenuDropdown();
