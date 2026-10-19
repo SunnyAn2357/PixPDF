@@ -2574,7 +2574,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.11.3 (프로젝트 저장 메뉴 텍스트 정돈 및 프로젝트 열기 시 1열 썸네일 리스트 렌더링 무결성 복원)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.11.4 (스크립트 파싱 문법 무결성 복구 및 즉각 반응성 정상화)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -4046,8 +4046,7 @@
           const p = docState.items[pageIndex];
           if (!p) continue;
           const cfg = getEffectiveItemSettings(pageIndex);
-          const cScale = cfg.contentScale || 1.0;
-          const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
+          const { isPageRot90 } = getResolvedRotations(cfg);
 
           if (p.type === 'pdf' && !p.imgObj) {
             await ensureItemCanvas(p);
@@ -4056,7 +4055,6 @@
           const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width || p.imgObj.width, height: p.height || p.imgObj.height };
           const origW = effDims.width;
           const origH = effDims.height;
-          const { isPageRot90 } = getResolvedRotations(cfg);
 
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
@@ -6335,8 +6333,7 @@ const modal = document.getElementById('modalPdfPicker');
           const pageIndex = selectedIndices[idx];
           const p = docState.items[pageIndex];
           const cfg = getEffectiveItemSettings(pageIndex);
-          const cScale = cfg.contentScale || 1.0;
-          const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
+          const { isPageRot90 } = getResolvedRotations(cfg);
 
           const pct = Math.round(((idx + 1) / selectedIndices.length) * 100);
           if (progFill) progFill.style.width = `${pct}%`;
@@ -6351,7 +6348,6 @@ const modal = document.getElementById('modalPdfPicker');
           const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width || p.imgObj.width, height: p.height || p.imgObj.height };
           const origW = effDims.width;
           const origH = effDims.height;
-          const { isPageRot90 } = getResolvedRotations(cfg);
 
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
@@ -6487,8 +6483,7 @@ const modal = document.getElementById('modalPdfPicker');
           const pageIndex = selectedIndices[idx];
           const p = docState.items[pageIndex];
           const cfg = getEffectiveItemSettings(pageIndex);
-          const cScale = cfg.contentScale || 1.0;
-          const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
+          const { isPageRot90 } = getResolvedRotations(cfg);
 
           const pct = Math.round(((idx + 1) / selectedIndices.length) * 100);
           if (progFill) progFill.style.width = `${pct}%`;
@@ -6503,7 +6498,6 @@ const modal = document.getElementById('modalPdfPicker');
           const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width || p.imgObj.width, height: p.height || p.imgObj.height };
           const origW = effDims.width;
           const origH = effDims.height;
-          const { isPageRot90 } = getResolvedRotations(cfg);
 
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
@@ -7601,7 +7595,7 @@ const modal = document.getElementById('modalPdfPicker');
     }
 
     // [적용] 버튼: 비파괴 설정 저장 및 캔버스 렌더링 동기화
-    function applyCrop() {
+    async function applyCrop() {
       const item = docState.items[docState.currentIndex];
       if (!item) return;
 
@@ -7655,7 +7649,7 @@ const modal = document.getElementById('modalPdfPicker');
     }
 
     // [리셋] 버튼 (우측 패널에서 현재 항목의 크롭 100% 완전 초기화)
-    function resetCropCurrentItem() {
+    async function resetCropCurrentItem() {
       const item = docState.items[docState.currentIndex];
       if (!item) return;
 
@@ -7808,10 +7802,12 @@ const modal = document.getElementById('modalPdfPicker');
           let blob = null;
           if (item.imgObj instanceof HTMLCanvasElement) {
             blob = await new Promise(r => item.imgObj.toBlob(r, 'image/png'));
-          } else if (item.imgObj instanceof HTMLImageElement) {
+          } else if (item.imgObj) {
             const tempC = document.createElement('canvas');
-            tempC.width = item.imgObj.naturalWidth || item.width || 800;
-            tempC.height = item.imgObj.naturalHeight || item.height || 600;
+            const w = item.imgObj.naturalWidth || item.imgObj.width || item.width || 800;
+            const h = item.imgObj.naturalHeight || item.imgObj.height || item.height || 600;
+            tempC.width = w;
+            tempC.height = h;
             const tctx = tempC.getContext('2d');
             tctx.drawImage(item.imgObj, 0, 0);
             blob = await new Promise(r => tempC.toBlob(r, 'image/png'));
@@ -7931,25 +7927,36 @@ const modal = document.getElementById('modalPdfPicker');
           const itemMeta = meta.items[i];
           const mediaEntry = zip.file(itemMeta.mediaFile);
           if (!mediaEntry) continue;
-
           const imgBlob = await mediaEntry.async('blob');
-          const blobUrl = URL.createObjectURL(imgBlob);
 
-          const img = new Image();
-          await new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-            img.src = blobUrl;
-          });
+          let imgObj = null;
+          if (typeof createImageBitmap === 'function') {
+            try {
+              imgObj = await createImageBitmap(imgBlob);
+            } catch (e) {
+              imgObj = null;
+            }
+          }
+          if (!imgObj) {
+            const blobUrl = URL.createObjectURL(imgBlob);
+            const img = new Image();
+            await new Promise((resolve, reject) => {
+              img.onload = resolve;
+              img.onerror = reject;
+              img.src = blobUrl;
+            });
+            imgObj = img;
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+          }
 
           docState.items.push({
             name: itemMeta.name || `페이지_${i + 1}`,
             type: 'image',
             fileId: projectFileId,
-            width: itemMeta.width || img.naturalWidth,
-            height: itemMeta.height || img.naturalHeight,
+            width: itemMeta.width || imgObj.width || (imgObj.naturalWidth || 800),
+            height: itemMeta.height || imgObj.height || (imgObj.naturalHeight || 600),
             pageNum: itemMeta.pageNum || (i + 1),
-            imgObj: img,
+            imgObj: imgObj,
             settings: itemMeta.settings || {}
           });
 
@@ -7957,22 +7964,22 @@ const modal = document.getElementById('modalPdfPicker');
           docState.checkList.push(isChecked);
         }
 
+        if (docState.items.length === 0) {
+          if (typeof showExitToast === 'function') showExitToast('프로젝트 내 복원 가능한 페이지가 없습니다.');
+          return;
+        }
+
         docState.currentIndex = Math.max(0, Math.min(meta.currentIndex || 0, docState.items.length - 1));
 
-        // UI 및 3개 창 갱신
-        const emptyMsg = document.getElementById('viewerEmptyMsg');
-        if (emptyMsg) emptyMsg.style.display = 'none';
-
-        // 1열 썸네일 리스트 렌더링
-        if (typeof renderThumbnailList === 'function') {
-          await renderThumbnailList();
-        }
-        // 2열 메인 뷰어 및 3열 컨트롤 패널 동기화 로드
-        if (typeof loadMainViewer === 'function') {
-          await loadMainViewer(docState.currentIndex);
-        }
-        if (typeof updateThumbCounts === 'function') {
-          updateThumbCounts();
+        // UI 및 3개 창 전체 동기화 갱신
+        if (typeof refreshWorkspaceDisplay === 'function') {
+          await refreshWorkspaceDisplay();
+        } else {
+          const emptyMsg = document.getElementById('viewerEmptyMsg');
+          if (emptyMsg) emptyMsg.style.display = 'none';
+          if (typeof renderThumbnailList === 'function') await renderThumbnailList();
+          if (typeof loadMainViewer === 'function') await loadMainViewer(docState.currentIndex);
+          if (typeof updateThumbCounts === 'function') updateThumbCounts();
         }
 
         if (typeof showExitToast === 'function') {
