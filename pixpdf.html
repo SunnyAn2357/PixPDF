@@ -1234,6 +1234,16 @@
         flex-direction: column !important;
         justify-content: flex-start !important;
       }
+      /* 모바일 환경에서는 자르기 비활성화 (PC 전용 기능) */
+      #btnToggleCrop,
+      #btnResetCropCurrent {
+        opacity: 0.35 !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+      }
+      #viewerCropToolbar {
+        display: none !important;
+      }
       .dpad-wrap {
         margin-top: 6px !important; /* 메뉴 버튼 바로 아래 밀착 배치 (빈 공간 제거) */
         padding-top: 0 !important;
@@ -2278,7 +2288,7 @@
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"></path><path d="M18 22V8a2 2 0 0 0-2-2H2"></path></svg>
                     <span>자르기</span>
                   </button>
-                  <button type="button" class="btn-edit-tool" title="자르기 영역 100% 초기화" onclick="resetCropCurrentItem()">리셋</button>
+                  <button type="button" class="btn-edit-tool" id="btnResetCropCurrent" title="자르기 영역 100% 초기화" onclick="resetCropCurrentItem()">리셋</button>
                 </div>
                 <!-- 6행: 밝게 / 어둡게 / 리셋 -->
                 <div class="edit-btn-row">
@@ -2564,7 +2574,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.11.1 (자르기 핸들 및 중앙 툴바 개선, 투시변환 상호배타 및 캔버스 고정)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.11.2 (3개 창 자르기 실시간 즉시 동기화, 인쇄/PDF/Img 저장 파이프라인 일체화 및 모바일 비활성화)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -3159,9 +3169,12 @@
       const customH = isPaperCrop ? basePaperH : cfg.customH;
       const paper = resolvePaperGeometry(sizeKey, isLandscape, basePaperW, basePaperH, customW, customH);
 
-      // 3. 대상 캔버스 해상도 결정 (초고해상도 복원)
+      // 3. 대상 캔버스 해상도 결정 (초고해상도 복원 및 내보내기/인쇄 전용 크기 완벽 지원)
       let canvasW, canvasH;
-      if (options.isThumbnail) {
+      if (options.targetWidth && options.targetHeight) {
+        canvasW = Math.round(options.targetWidth);
+        canvasH = Math.round(options.targetHeight);
+      } else if (options.isThumbnail) {
         // [모바일 및 고해상도 지원] 왼쪽 썸네일 카드가 모바일 및 고해상도 디스플레이에서 글자까지 또렷이 식별되도록 초고화질(800px) 해상도 보장
         const baseW = 800;
         canvasW = baseW;
@@ -4036,56 +4049,38 @@
           const cScale = cfg.contentScale || 1.0;
           const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
 
-          const tempCanvas = document.createElement('canvas');
-          let origW = 0, origH = 0;
-          let baseScaleW = 0, baseScaleH = 0;
-
-          if (p.type === 'pdf') {
-            const page = await p.doc.getPage(p.pageNum);
-            const vp = await renderPdfPageToCanvas(page, 3.0, rotImg, tempCanvas);
-
-            const origVp = page.getViewport({ scale: 1.0, rotation: 0 });
-            origW = origVp.width;
-            origH = origVp.height;
-            baseScaleW = vp.width;
-            baseScaleH = vp.height;
-          } else {
-            const rotRad = (rotImg * Math.PI) / 180;
-            const srcRotW = isImgRot90 ? p.height : p.width;
-            const srcRotH = isImgRot90 ? p.width : p.height;
-            tempCanvas.width = srcRotW;
-            tempCanvas.height = srcRotH;
-            const tctx = tempCanvas.getContext('2d');
-            tctx.fillStyle = '#ffffff';
-            tctx.fillRect(0, 0, srcRotW, srcRotH);
-            tctx.translate(srcRotW / 2, srcRotH / 2);
-            tctx.rotate(rotRad);
-            tctx.drawImage(p.imgObj, -p.width / 2, -p.height / 2);
-
-            origW = p.width;
-            origH = p.height;
-            baseScaleW = srcRotW;
-            baseScaleH = srcRotH;
+          if (p.type === 'pdf' && !p.imgObj) {
+            await ensureItemCanvas(p);
           }
 
-          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
+          const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width || p.imgObj.width, height: p.height || p.imgObj.height };
+          const origW = effDims.width;
+          const origH = effDims.height;
+          const { isPageRot90 } = getResolvedRotations(cfg);
+
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
-          const scaleMul = (p.type === 'pdf') ? 3.0 : imgF;
+          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
+          const scaleMul = (p.type === 'pdf') ? 2.5 : imgF;
           const refW = baseOrigW * scaleMul, refH = baseOrigH * scaleMul;
           const isOrigLandscape = origW > origH;
           const orientOpt = cfg.orient || 'auto';
           const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
           const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
-          const paper = resolvePaperGeometry(cfg.fit || cfg.pageSize || 'original', isLandscape, refW, refH, cfg.customW, cfg.customH);
+          let sizeKey = cfg.fit || cfg.pageSize || 'original';
+          const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
+          if (isPaperCrop) sizeKey = 'custom';
+          const customW = isPaperCrop ? refW : cfg.customW;
+          const customH = isPaperCrop ? refH : cfg.customH;
+          const paper = resolvePaperGeometry(sizeKey, isLandscape, refW, refH, customW, customH);
 
           let paperW, paperH;
           if (cfg.fit === 'original' || cfg.pageSize === 'original') {
-            paperW = baseOrigW * scaleMul;
-            paperH = baseOrigH * scaleMul;
-          } else if (cfg.fit === 'custom' || cfg.pageSize === 'custom') {
-            paperW = paper.widthPx;
-            paperH = paper.heightPx;
+            paperW = isPaperCrop ? Math.round(paper.widthPx) : Math.round(baseOrigW * scaleMul);
+            paperH = isPaperCrop ? Math.round(paper.heightPx) : Math.round(baseOrigH * scaleMul);
+          } else if (cfg.fit === 'custom' || cfg.pageSize === 'custom' || isPaperCrop) {
+            paperW = Math.round(paper.widthPx);
+            paperH = Math.round(paper.heightPx);
           } else {
             if (paper.isLandscape) {
               paperW = Math.max(refW, Math.round(refH * paper.ratio));
@@ -4097,36 +4092,7 @@
           }
 
           let finalCanvas = document.createElement('canvas');
-          let fctx = finalCanvas.getContext('2d');
-          finalCanvas.width = paperW;
-          finalCanvas.height = paperH;
-          fctx.fillStyle = '#ffffff';
-          fctx.fillRect(0, 0, paperW, paperH);
-
-          const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
-          const brightness = cfg.brightness !== undefined ? cfg.brightness : 100;
-          const contrast = cfg.contrast !== undefined ? cfg.contrast : 100;
-          const offsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
-          const offsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
-
-          const baseScale = Math.min(paperW / baseScaleW, paperH / baseScaleH);
-          const drawW = baseScaleW * baseScale * cScale * scaleX;
-          const drawH = baseScaleH * baseScale * cScale;
-          const shiftX = paperW * (offsetX / 100);
-          const shiftY = paperH * (offsetY / 100);
-          const posX = (paperW - drawW) / 2 + shiftX;
-          const posY = (paperH - drawH) / 2 + shiftY;
-
-          fctx.save();
-          fctx.beginPath();
-          fctx.rect(0, 0, paperW, paperH);
-          fctx.clip();
-          if (brightness !== 100 || contrast !== 100) {
-            fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
-          }
-          drawPerspectiveQuad(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
-          fctx.restore();
-          tempCanvas.width = 0; tempCanvas.height = 0;
+          drawPaperWithImage(finalCanvas, p, cfg, { targetWidth: paperW, targetHeight: paperH });
 
           const pageItem = document.createElement('div');
           pageItem.className = 'print-page-item';
@@ -4869,6 +4835,24 @@
     }
     const renderPdfThumbnailList = renderThumbnailList;
     const renderImageThumbnailList = renderThumbnailList;
+
+    // [단일 카드 즉시 동기화] 특정 페이지의 썸네일 캔버스만 초고속 즉시 재렌더링
+    async function renderSingleThumbnailCard(idx) {
+      const item = docState.items[idx];
+      if (!item) return;
+      const thumbCanvas = document.getElementById(`thumb-canvas-${idx}`);
+      if (!thumbCanvas) return;
+      const cfg = getEffectiveItemSettings(idx);
+      if (item.type === 'pdf' && !item.imgObj) {
+        await ensureItemCanvas(item);
+      }
+      drawPaperWithImage(thumbCanvas, item, cfg, { isThumbnail: true });
+      const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
+      const wrap = thumbCanvas.parentElement;
+      if (wrap) wrap.classList.toggle('checkerboard-bg', isTransparent);
+      updateViewerEdits(idx);
+    }
+    const renderThumbnailCard = renderSingleThumbnailCard;
 
     async function moveItemOrder(index, delta) {
       const target = index + delta;
@@ -6211,16 +6195,22 @@ const modal = document.getElementById('modalPdfPicker');
       const marginPx = cfg.margin || 0;
 
       const item = docState.items[curIdx];
-      const origW = item ? (item.width || (item.imgObj ? item.imgObj.width : 1200)) : 1200;
-      const origH = item ? (item.height || (item.imgObj ? item.imgObj.height : 1600)) : 1600;
+      const effDims = (typeof getEffectiveImageDimensions === 'function' && item) ? getEffectiveImageDimensions(item) : { width: item ? (item.width || 1200) : 1200, height: item ? (item.height || 1600) : 1600 };
+      const origW = effDims.width;
+      const origH = effDims.height;
+
+      const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
+      if (isPaperCrop) fitKey = 'custom';
 
       const basePaperW = (isPageRot90 ? origH : origW) + marginPx * 2;
       const basePaperH = (isPageRot90 ? origW : origH) + marginPx * 2;
+      const customW = isPaperCrop ? basePaperW : cfg.customW;
+      const customH = isPaperCrop ? basePaperH : cfg.customH;
       const isOrigLandscape = origW > origH;
       const orientOpt = cfg.orient || 'auto';
       const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
       const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
-      const paper = resolvePaperGeometry(fitKey, isLandscape, basePaperW, basePaperH, cfg.customW, cfg.customH);
+      const paper = resolvePaperGeometry(fitKey, isLandscape, basePaperW, basePaperH, customW, customH);
 
       // 미리보기 박스(maxBoxW x maxBoxH) 안에 들어갈 시트 크기 계산
       let sheetW, sheetH;
@@ -6249,6 +6239,9 @@ const modal = document.getElementById('modalPdfPicker');
       const line2Parts = [];
       line2Parts.push(`크기${Math.round(cScale * 100)}%`);
       if (scaleX !== 1.0) line2Parts.push(`가로${Math.round(scaleX * 100)}%`);
+      if (cfg.crop) {
+        line2Parts.push(cfg.crop.cropPaper ? '종이자르기✂️' : '자르기✂️');
+      }
       if (cfg.trapExp && (cfg.trapExp.top || cfg.trapExp.bot)) {
         if (cfg.trapExp.top) line2Parts.push(`대두+${cfg.trapExp.top}px`);
         if (cfg.trapExp.bot) line2Parts.push(`소두+${cfg.trapExp.bot}px`);
@@ -6351,48 +6344,18 @@ const modal = document.getElementById('modalPdfPicker');
 
           await new Promise(r => setTimeout(r, 0));
 
-          const tempCanvas = document.createElement('canvas');
-          let origW = 0, origH = 0;
-          let baseScaleW = 0, baseScaleH = 0;
-
-          if (p.type === 'pdf') {
-            const page = await p.doc.getPage(p.pageNum);
-            const vp = await renderPdfPageToCanvas(page, cfg.scale, rotImg, tempCanvas);
-
-            const origVp = page.getViewport({ scale: 1.0, rotation: 0 });
-            origW = origVp.width;
-            origH = origVp.height;
-            baseScaleW = vp.width;
-            baseScaleH = vp.height;
-          } else {
-            const rotRad = (rotImg * Math.PI) / 180;
-            const effImg = (typeof getEffectiveImageSource === 'function') ? getEffectiveImageSource(p) : p.imgObj;
-            const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width, height: p.height };
-            origW = effDims.width;
-            origH = effDims.height;
-            const srcRotW = isImgRot90 ? origH : origW;
-            const srcRotH = isImgRot90 ? origW : origH;
-            tempCanvas.width = srcRotW;
-            tempCanvas.height = srcRotH;
-            const tctx = tempCanvas.getContext('2d');
-            const isTransparent = (cfg.format === 'png') && (cfg.transparentBg !== false);
-            if (isTransparent) {
-              tctx.clearRect(0, 0, srcRotW, srcRotH);
-            } else {
-              tctx.fillStyle = '#ffffff';
-              tctx.fillRect(0, 0, srcRotW, srcRotH);
-            }
-            tctx.translate(srcRotW / 2, srcRotH / 2);
-            tctx.rotate(rotRad);
-            tctx.drawImage(effImg, -origW / 2, -origH / 2);
-
-            baseScaleW = srcRotW;
-            baseScaleH = srcRotH;
+          if (p.type === 'pdf' && !p.imgObj) {
+            await ensureItemCanvas(p);
           }
 
-          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
+          const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width || p.imgObj.width, height: p.height || p.imgObj.height };
+          const origW = effDims.width;
+          const origH = effDims.height;
+          const { isPageRot90 } = getResolvedRotations(cfg);
+
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
+          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
           const scaleMul = (p.type === 'pdf') ? cfg.scale : imgF;
           const refW = baseOrigW * scaleMul, refH = baseOrigH * scaleMul;
           const isOrigLandscape = origW > origH;
@@ -6406,17 +6369,13 @@ const modal = document.getElementById('modalPdfPicker');
           const customH = isPaperCrop ? refH : cfg.customH;
           const paper = resolvePaperGeometry(sizeKey, isLandscape, refW, refH, customW, customH);
 
-          // 2단계: 최종 용지 캔버스 생성
-          let finalCanvas = document.createElement('canvas');
-          let fctx = finalCanvas.getContext('2d');
-
           let paperW, paperH;
           if (cfg.fit === 'original' || cfg.pageSize === 'original') {
-            paperW = baseOrigW * scaleMul;
-            paperH = baseOrigH * scaleMul;
-          } else if (cfg.fit === 'custom' || cfg.pageSize === 'custom') {
-            paperW = paper.widthPx;
-            paperH = paper.heightPx;
+            paperW = isPaperCrop ? Math.round(paper.widthPx) : Math.round(baseOrigW * scaleMul);
+            paperH = isPaperCrop ? Math.round(paper.heightPx) : Math.round(baseOrigH * scaleMul);
+          } else if (cfg.fit === 'custom' || cfg.pageSize === 'custom' || isPaperCrop) {
+            paperW = Math.round(paper.widthPx);
+            paperH = Math.round(paper.heightPx);
           } else {
             if (paper.isLandscape) {
               paperW = Math.max(refW, Math.round(refH * paper.ratio));
@@ -6427,43 +6386,8 @@ const modal = document.getElementById('modalPdfPicker');
             }
           }
 
-          finalCanvas.width = paperW;
-          finalCanvas.height = paperH;
-
-          // 용지 배경 채우기 (흰색 또는 PNG 투명 처리)
-          const isTransparent = (cfg.format === 'png') && (cfg.transparentBg !== false);
-          if (isTransparent) {
-            fctx.clearRect(0, 0, paperW, paperH);
-          } else {
-            fctx.fillStyle = '#ffffff';
-            fctx.fillRect(0, 0, paperW, paperH);
-          }
-
-          const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
-          const brightness = cfg.brightness !== undefined ? cfg.brightness : 100;
-          const contrast = cfg.contrast !== undefined ? cfg.contrast : 100;
-          const offsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
-          const offsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
-
-          // 내용물 맞춤 크기 계산
-          const baseScale = Math.min(paperW / baseScaleW, paperH / baseScaleH);
-          const drawW = baseScaleW * baseScale * cScale * scaleX;
-          const drawH = baseScaleH * baseScale * cScale;
-          const shiftX = paperW * (offsetX / 100);
-          const shiftY = paperH * (offsetY / 100);
-          const posX = (paperW - drawW) / 2 + shiftX;
-          const posY = (paperH - drawH) / 2 + shiftY;
-
-          fctx.save();
-          fctx.beginPath();
-          fctx.rect(0, 0, paperW, paperH);
-          fctx.clip();
-          if (brightness !== 100 || contrast !== 100) {
-            fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
-          }
-          drawPerspectiveQuad(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
-          fctx.restore();
-          tempCanvas.width = 0; tempCanvas.height = 0;
+          let finalCanvas = document.createElement('canvas');
+          drawPaperWithImage(finalCanvas, p, cfg, { targetWidth: paperW, targetHeight: paperH });
 
           let blob;
           const fmt = cfg.format || 'png';
@@ -6572,44 +6496,19 @@ const modal = document.getElementById('modalPdfPicker');
 
           await new Promise(r => setTimeout(r, 0));
 
-          const tempCanvas = document.createElement('canvas');
-          let origW = 0, origH = 0;
-          let baseScaleW = 0, baseScaleH = 0;
-
-          if (p.type === 'pdf') {
-            const page = await p.doc.getPage(p.pageNum);
-            const vp = await renderPdfPageToCanvas(page, 3.0, rotImg, tempCanvas);
-
-            const origVp = page.getViewport({ scale: 1.0, rotation: 0 });
-            origW = origVp.width;
-            origH = origVp.height;
-            baseScaleW = vp.width;
-            baseScaleH = vp.height;
-          } else {
-            const rotRad = (rotImg * Math.PI) / 180;
-            const effImg = (typeof getEffectiveImageSource === 'function') ? getEffectiveImageSource(p) : p.imgObj;
-            const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width, height: p.height };
-            origW = effDims.width;
-            origH = effDims.height;
-            const srcRotW = isImgRot90 ? origH : origW;
-            const srcRotH = isImgRot90 ? origW : origH;
-            tempCanvas.width = srcRotW;
-            tempCanvas.height = srcRotH;
-            const tctx = tempCanvas.getContext('2d');
-            tctx.fillStyle = '#ffffff';
-            tctx.fillRect(0, 0, srcRotW, srcRotH);
-            tctx.translate(srcRotW / 2, srcRotH / 2);
-            tctx.rotate(rotRad);
-            tctx.drawImage(effImg, -origW / 2, -origH / 2);
-
-            baseScaleW = srcRotW;
-            baseScaleH = srcRotH;
+          if (p.type === 'pdf' && !p.imgObj) {
+            await ensureItemCanvas(p);
           }
 
-          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
+          const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width || p.imgObj.width, height: p.height || p.imgObj.height };
+          const origW = effDims.width;
+          const origH = effDims.height;
+          const { isPageRot90 } = getResolvedRotations(cfg);
+
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
-          const scaleMul = (p.type === 'pdf') ? 3.0 : imgF;
+          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
+          const scaleMul = (p.type === 'pdf') ? 2.5 : imgF;
           const refW = baseOrigW * scaleMul, refH = baseOrigH * scaleMul;
           const isOrigLandscape = origW > origH;
           const orientOpt = cfg.orient || 'auto';
@@ -6624,11 +6523,11 @@ const modal = document.getElementById('modalPdfPicker');
 
           let paperW, paperH;
           if (cfg.fit === 'original' || cfg.pageSize === 'original') {
-            paperW = baseOrigW * scaleMul;
-            paperH = baseOrigH * scaleMul;
-          } else if (cfg.fit === 'custom' || cfg.pageSize === 'custom') {
-            paperW = paper.widthPx;
-            paperH = paper.heightPx;
+            paperW = isPaperCrop ? Math.round(paper.widthPx) : Math.round(baseOrigW * scaleMul);
+            paperH = isPaperCrop ? Math.round(paper.heightPx) : Math.round(baseOrigH * scaleMul);
+          } else if (cfg.fit === 'custom' || cfg.pageSize === 'custom' || isPaperCrop) {
+            paperW = Math.round(paper.widthPx);
+            paperH = Math.round(paper.heightPx);
           } else {
             if (paper.isLandscape) {
               paperW = Math.max(refW, Math.round(refH * paper.ratio));
@@ -6640,36 +6539,7 @@ const modal = document.getElementById('modalPdfPicker');
           }
 
           let finalCanvas = document.createElement('canvas');
-          let fctx = finalCanvas.getContext('2d');
-          finalCanvas.width = paperW;
-          finalCanvas.height = paperH;
-          fctx.fillStyle = '#ffffff';
-          fctx.fillRect(0, 0, paperW, paperH);
-
-          const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
-          const brightness = cfg.brightness !== undefined ? cfg.brightness : 100;
-          const contrast = cfg.contrast !== undefined ? cfg.contrast : 100;
-          const offsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
-          const offsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
-
-          const baseScale = Math.min(paperW / baseScaleW, paperH / baseScaleH);
-          const drawW = baseScaleW * baseScale * cScale * scaleX;
-          const drawH = baseScaleH * baseScale * cScale;
-          const shiftX = paperW * (offsetX / 100);
-          const shiftY = paperH * (offsetY / 100);
-          const posX = (paperW - drawW) / 2 + shiftX;
-          const posY = (paperH - drawH) / 2 + shiftY;
-
-          fctx.save();
-          fctx.beginPath();
-          fctx.rect(0, 0, paperW, paperH);
-          fctx.clip();
-          if (brightness !== 100 || contrast !== 100) {
-            fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
-          }
-          drawPerspectiveQuad(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
-          fctx.restore();
-          tempCanvas.width = 0; tempCanvas.height = 0;
+          drawPaperWithImage(finalCanvas, p, cfg, { targetWidth: paperW, targetHeight: paperH });
 
           // 무손실 PNG 데이터 추출
           const imgDataUrl = finalCanvas.toDataURL('image/png');
@@ -7452,6 +7322,10 @@ const modal = document.getElementById('modalPdfPicker');
 
     // 크롭 모드 토글 (우측 패널 [자르기] 버튼 등에서 호출)
     function toggleCropMode() {
+      if (window.innerWidth <= 860) {
+        if (typeof showExitToast === 'function') showExitToast('자르기 기능은 PC 환경에서 지원됩니다.');
+        return;
+      }
       if (docState.items.length === 0) {
         if (typeof showExitToast === 'function') showExitToast('불러온 문서가 없습니다.');
         return;
@@ -7467,6 +7341,7 @@ const modal = document.getElementById('modalPdfPicker');
     }
 
     function openCropMode() {
+      if (window.innerWidth <= 860) return;
       const item = docState.items[docState.currentIndex];
       if (!item) return;
 
@@ -7755,10 +7630,19 @@ const modal = document.getElementById('modalPdfPicker');
 
       cancelCrop();
 
-      // 3개 창 렌더링 즉시 동기화
-      if (typeof renderViewerPage === 'function') renderViewerPage();
-      if (typeof renderThumbnailCard === 'function') renderThumbnailCard(docState.currentIndex);
-      if (typeof renderMiniPreview === 'function') renderMiniPreview();
+      // 3개 창 렌더링 즉시 동기화:
+      // 1. 가운데 2열 메인 뷰어 캔버스
+      if (typeof renderMainViewerCanvas === 'function') {
+        await renderMainViewerCanvas(docState.currentIndex);
+      }
+      // 2. 왼쪽 1열 썸네일 카드 캔버스
+      if (typeof renderSingleThumbnailCard === 'function') {
+        await renderSingleThumbnailCard(docState.currentIndex);
+      }
+      // 3. 우측(PC 기준 좌측 미리보기 창) 객체 설정 내 미니 프리뷰
+      if (typeof updateMiniPreview === 'function') {
+        updateMiniPreview();
+      }
 
       const msg = cropPaperMode ? '종이 연동 자르기가 적용되었습니다.' : '객체 자르기가 적용되었습니다.';
       if (typeof showExitToast === 'function') showExitToast(msg);
@@ -7790,9 +7674,19 @@ const modal = document.getElementById('modalPdfPicker');
         cancelCrop();
       }
 
-      if (typeof renderViewerPage === 'function') renderViewerPage();
-      if (typeof renderThumbnailCard === 'function') renderThumbnailCard(docState.currentIndex);
-      if (typeof renderMiniPreview === 'function') renderMiniPreview();
+      // 3개 창 렌더링 즉시 동기화:
+      // 1. 가운데 2열 메인 뷰어 캔버스
+      if (typeof renderMainViewerCanvas === 'function') {
+        await renderMainViewerCanvas(docState.currentIndex);
+      }
+      // 2. 왼쪽 1열 썸네일 카드 캔버스
+      if (typeof renderSingleThumbnailCard === 'function') {
+        await renderSingleThumbnailCard(docState.currentIndex);
+      }
+      // 3. 우측(PC 기준 좌측 미리보기 창) 객체 설정 내 미니 프리뷰
+      if (typeof updateMiniPreview === 'function') {
+        updateMiniPreview();
+      }
 
       if (typeof showExitToast === 'function') showExitToast('자르기 영역이 초기화되었습니다.');
     }
@@ -7851,6 +7745,13 @@ const modal = document.getElementById('modalPdfPicker');
         height: Math.max(10, Math.round(origH * (crop.h || 1)))
       };
     }
+
+    // 창 크기가 모바일(860px 이하)로 축소될 경우 열려 있던 자르기 모드 자동 해제
+    window.addEventListener('resize', () => {
+      if (window.innerWidth <= 860 && isCropActive) {
+        cancelCrop();
+      }
+    });
 
 
     // ==========================================================================
