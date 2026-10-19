@@ -3,8 +3,8 @@
       const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
       const rotRad = (rotImg * Math.PI) / 180;
 
-      const origW = item.width || item.imgObj.width;
-      const origH = item.height || item.imgObj.height;
+      const origW = item.width || item.imgObj.naturalWidth || item.imgObj.width;
+      const origH = item.height || item.imgObj.naturalHeight || item.imgObj.height;
       const rotImgW = isImgRot90 ? origH : origW;
       const rotImgH = isImgRot90 ? origW : origH;
 

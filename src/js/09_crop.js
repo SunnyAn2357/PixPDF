@@ -9,7 +9,7 @@
     let activeCropDrag = null; // { handle, startX, startY, origBox, imgRect }
 
     // 크롭 모드 토글 (우측 패널 [자르기] 버튼 등에서 호출)
-    function toggleCropMode() {
+    async function toggleCropMode() {
       if (window.innerWidth <= 860) {
         if (typeof showExitToast === 'function') showExitToast('자르기 기능은 PC 환경에서 지원됩니다.');
         return;
@@ -22,13 +22,13 @@
       if (!overlay) return;
 
       if (isCropActive) {
-        cancelCrop();
+        await cancelCrop();
       } else {
-        openCropMode();
+        await openCropMode();
       }
     }
 
-    function openCropMode() {
+    async function openCropMode() {
       if (window.innerWidth <= 860) return;
       const item = docState.items[docState.currentIndex];
       if (!item) return;
@@ -41,12 +41,6 @@
       }
 
       isCropActive = true;
-      const overlay = document.getElementById('cropOverlay');
-      if (overlay) overlay.style.display = 'block';
-
-      // 2열 중앙 툴바 표시
-      const cropToolbar = document.getElementById('viewerCropToolbar');
-      if (cropToolbar) cropToolbar.style.display = 'flex';
 
       // 기존 설정 복원 또는 객체 가장 바깥 100% 가이드 박스로 초기화
       const settings = item.settings || {};
@@ -63,6 +57,18 @@
         cropPaperMode = false;
       }
 
+      // [핵심] 자르기 모드 시작 시 메인 뷰어 캔버스를 원본 전체 이미지로 즉시 렌더링
+      if (typeof renderMainViewerCanvas === 'function') {
+        await renderMainViewerCanvas(curIdx);
+      }
+
+      const overlay = document.getElementById('cropOverlay');
+      if (overlay) overlay.style.display = 'block';
+
+      // 2열 중앙 툴바 표시
+      const cropToolbar = document.getElementById('viewerCropToolbar');
+      if (cropToolbar) cropToolbar.style.display = 'flex';
+
       updateCropPaperModeUI();
       updateCropOverlayPositions();
       initCropDragEvents();
@@ -71,7 +77,8 @@
       if (btnCrop) btnCrop.classList.add('active');
     }
 
-    function cancelCrop() {
+    async function cancelCrop() {
+      if (!isCropActive) return;
       isCropActive = false;
       const overlay = document.getElementById('cropOverlay');
       if (overlay) overlay.style.display = 'none';
@@ -82,6 +89,11 @@
 
       const btnCrop = document.getElementById('btnToggleCrop');
       if (btnCrop) btnCrop.classList.remove('active');
+
+      // 취소 시: 기존 저장된 크롭 상태(또는 미크롭 상태)로 메인 뷰어 복구
+      if (typeof renderMainViewerCanvas === 'function') {
+        await renderMainViewerCanvas(docState.currentIndex);
+      }
     }
 
     function setCropPaperMode(isPaper) {
@@ -316,7 +328,14 @@
         item._croppedCanvas = null;
       }
 
-      cancelCrop();
+      // 크롭 모드 비활성화 및 UI 닫기
+      isCropActive = false;
+      const overlay = document.getElementById('cropOverlay');
+      if (overlay) overlay.style.display = 'none';
+      const cropToolbar = document.getElementById('viewerCropToolbar');
+      if (cropToolbar) cropToolbar.style.display = 'none';
+      const btnCrop = document.getElementById('btnToggleCrop');
+      if (btnCrop) btnCrop.classList.remove('active');
 
       // 3개 창 렌더링 즉시 동기화:
       // 1. 가운데 2열 메인 뷰어 캔버스
@@ -358,8 +377,13 @@
 
       if (isCropActive) {
         cropBox = { x: 0, y: 0, w: 1, h: 1 };
-        updateCropOverlayPositions();
-        cancelCrop();
+        isCropActive = false;
+        const overlay = document.getElementById('cropOverlay');
+        if (overlay) overlay.style.display = 'none';
+        const cropToolbar = document.getElementById('viewerCropToolbar');
+        if (cropToolbar) cropToolbar.style.display = 'none';
+        const btnCrop = document.getElementById('btnToggleCrop');
+        if (btnCrop) btnCrop.classList.remove('active');
       }
 
       // 3개 창 렌더링 즉시 동기화:
@@ -434,9 +458,11 @@
       };
     }
 
-    // 창 크기가 모바일(860px 이하)로 축소될 경우 열려 있던 자르기 모드 자동 해제
+    // 창 크기가 모바일(860px 이하)로 축소될 경우 열려 있던 자르기 모드 자동 해제, 데스크톱 창 크기 변경 시 오버레이 위치 즉시 재계산
     window.addEventListener('resize', () => {
       if (window.innerWidth <= 860 && isCropActive) {
         cancelCrop();
+      } else if (isCropActive) {
+        updateCropOverlayPositions();
       }
     });

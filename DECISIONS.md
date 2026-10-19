@@ -320,3 +320,22 @@
   3. **프로젝트 복원 시 고속 디코딩 및 좌/중/우 3개 창 완전 동기화**:
      - `openPixPdfProject()`에서 `createImageBitmap`을 1순위로 활용하여 초고속 비동기 디코딩 수행.
      - 복원 완료 후 `refreshWorkspaceDisplay()`를 호출하여 좌측 1열 썸네일 카드, 가운데 2열 메인 뷰어 캔버스, 우측 3열 미니 시트 및 제어 패널, 상단 카운트/버튼 상태가 일괄 동기화되도록 보장.
+
+---
+
+### ADR-023: 비파괴 자르기 재진입 시 100% 무손실 원본 복구 및 핸들 위치 정합성 보장
+- **결정 일자**: v2.11.5 (2026-10-20)
+- **배경 및 원인**:
+  - 이미 자르기가 적용된 이미지에서 다시 [자르기]를 눌렀을 때, 원본 전체 이미지가 뷰어에 복구되면서 기존에 잘랐던 영역 위에 핸들이 표시되는 것이 아니라, 이미 잘려진 이미지 위에 다시 자르기 핸들이 생겨 잘린 이미지를 중복해서 더 작게 자르는 치명적 퇴행 발생.
+  - 원인은 `drawPaperWithImage`가 자르기 모드(`isCropActive`) 여부와 무관하게 항상 `getEffectiveImageSource(item)`(캐시된 잘린 캔버스)와 `isPaperCrop`을 적용하여 뷰어를 그리고 있었고, `openCropMode()` 진입 시 메인 뷰어 캔버스를 원본 전체 이미지로 재렌더링하는 절차가 누락되어 있었기 때문.
+- **확정 규칙**:
+  1. **자르기 모드 진입 시 뷰어 원본 100% 무손실 복구 렌더링 (`isViewerCropActive`)**:
+     - `drawPaperWithImage`에서 `isCropActive && canvas.id === 'mainViewerCanvas'`인 경우, `effImgSource = item.imgObj`, `effDims = { width: item.width, height: item.height }`, `isPaperCrop = false`로 강제 적용.
+     - `openCropMode()` 진입 즉시 `await renderMainViewerCanvas(curIdx)`를 호출하여 메인 뷰어 캔버스에 100% 무손실 원본 전체 이미지와 원래 바탕 용지를 즉시 표출.
+  2. **기존 자르기 영역 및 핸들 위치의 정밀 오버레이**:
+     - `item.settings.crop`에 저장된 이전 크롭 비율(`x, y, w, h`)을 원본 전체 이미지의 스크린 사각형(`getCropImageScreenRect()`)에 1:1 매핑하여 8개 조절 핸들과 SVG 마스크 구멍을 배치.
+     - 잘려 나갔던 바깥 영역은 반투명 딤(Dim)으로 원본 모습을 온전히 보여주고, 남겨진 영역의 경계에 핸들을 정확히 배치하여 사용자가 언제든지 핸들을 바깥으로 드래그하여 원본을 다시 복구(확장)하거나 미세 조정할 수 있도록 완전 보장.
+  3. **취소·리셋·적용의 무결한 뷰어 상태 전이**:
+     - [취소](또는 자르기 토글 해제, ESC) 시: `isCropActive = false` 후 `renderMainViewerCanvas()`를 재호출하여 이전 저장된 크롭 상태로 뷰어 즉각 복구.
+     - [적용] 시: 새 크롭 영역을 저장하고 `isCropActive = false` 후 좌측 썸네일, 가운데 뷰어, 우측 미니 프리뷰를 잘라낸 최신 상태로 일괄 동기화.
+     - [자르기 리셋] 시: `item.settings.crop = null` 처리 후 좌/중/우 3개 창 전체를 100% 원본으로 깨끗이 복원.

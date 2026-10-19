@@ -59,10 +59,12 @@
       }
 
       if (typeof isCropActive !== 'undefined' && isCropActive) {
-        openCropMode();
+        if (typeof openCropMode === 'function') await openCropMode();
       } else {
         const cropOverlay = document.getElementById('cropOverlay');
         if (cropOverlay) cropOverlay.style.display = 'none';
+        const cropToolbar = document.getElementById('viewerCropToolbar');
+        if (cropToolbar) cropToolbar.style.display = 'none';
       }
     }
 

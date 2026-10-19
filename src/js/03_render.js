@@ -32,8 +32,11 @@
       const rotRad = (rotImg * Math.PI) / 180;
 
       // 1. 이미지 자체 회전 적용 후 치수 (비파괴 크롭 반영)
-      const effImgSource = (typeof getEffectiveImageSource === 'function') ? getEffectiveImageSource(item) : item.imgObj;
-      const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(item) : { width: item.width || item.imgObj.width, height: item.height || item.imgObj.height };
+      // [핵심] 중앙 메인 뷰어에서 자르기 모드(isCropActive)가 켜져 있을 때는 원본 전체 이미지를 표시하여
+      // 이전에 잘랐던 핸들 위치를 원본 상에서 자유롭게 재조정(확장/축소)할 수 있도록 보장
+      const isViewerCropActive = (typeof isCropActive !== 'undefined' && isCropActive && canvas.id === 'mainViewerCanvas');
+      const effImgSource = (!isViewerCropActive && typeof getEffectiveImageSource === 'function') ? getEffectiveImageSource(item) : item.imgObj;
+      const effDims = (!isViewerCropActive && typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(item) : { width: item.width || item.imgObj.naturalWidth || item.imgObj.width, height: item.height || item.imgObj.naturalHeight || item.imgObj.height };
       const origW = effDims.width;
       const origH = effDims.height;
       const rotImgW = isImgRot90 ? origH : origW;
@@ -46,7 +49,7 @@
       const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
       const marginPx = cfg.margin || 0;
       let sizeKey = cfg.pageSize || cfg.fit || 'original';
-      const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
+      const isPaperCrop = Boolean(!isViewerCropActive && cfg.crop && cfg.crop.cropPaper);
       if (isPaperCrop) sizeKey = 'custom';
 
       // [핵심 무결성] 용지 규격은 페이지 회전(rotPage / isPageRot90)과 방향(orient)에 의해서만 결정되며
