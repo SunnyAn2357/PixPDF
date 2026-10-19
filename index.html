@@ -1805,126 +1805,135 @@
     .crop-box-border {
       fill: none;
       stroke: #0d9488;
-      stroke-width: 2px;
+      stroke-width: 1px;
     }
     .crop-grid-line {
-      stroke: rgba(255, 255, 255, 0.45);
-      stroke-width: 1px;
+      stroke: rgba(255, 255, 255, 0.4);
+      stroke-width: 0.8px;
       stroke-dasharray: 4 3;
     }
+
+    /* 자르기 핸들 기본 및 터치 히트박스 확장 */
     .crop-handle {
       position: absolute;
-      width: 14px;
-      height: 14px;
-      background: #ffffff;
-      border: 2px solid #0d9488;
+      pointer-events: auto;
+      z-index: 20;
+    }
+    .crop-handle::after {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      cursor: inherit;
+    }
+
+    /* 세련된 프로페셔널 L자형 코너 브래킷 (16x16px, 두께 3px, Teal 테마 및 미세 그림자) */
+    .crop-bracket {
+      width: 16px;
+      height: 16px;
+      box-sizing: border-box;
+      border-color: #0d9488;
+      border-style: solid;
+      border-width: 0;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+      transition: border-color 0.12s ease;
+    }
+    .crop-bracket:hover {
+      border-color: #14b8a6;
+    }
+    .crop-bracket.tl {
+      border-top-width: 3px;
+      border-left-width: 3px;
+      transform: translate(-1px, -1px);
+      cursor: nwse-resize;
+    }
+    .crop-bracket.tr {
+      border-top-width: 3px;
+      border-right-width: 3px;
+      transform: translate(calc(-100% + 1px), -1px);
+      cursor: nesw-resize;
+    }
+    .crop-bracket.br {
+      border-bottom-width: 3px;
+      border-right-width: 3px;
+      transform: translate(calc(-100% + 1px), calc(-100% + 1px));
+      cursor: nwse-resize;
+    }
+    .crop-bracket.bl {
+      border-bottom-width: 3px;
+      border-left-width: 3px;
+      transform: translate(-1px, calc(-100% + 1px));
+      cursor: nesw-resize;
+    }
+
+    /* 세련된 슬림 엣지 바 (두께 3px, 길이 22px) */
+    .crop-bar {
+      background: #0d9488;
       border-radius: 2px;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
-      pointer-events: auto;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
       transform: translate(-50%, -50%);
-      z-index: 18;
-      transition: background 0.1s ease;
+      transition: background 0.12s ease;
     }
-    .crop-handle:hover {
-      background: #0f766e;
+    .crop-bar:hover {
+      background: #14b8a6;
     }
-    .crop-handle.tl, .crop-handle.br { cursor: nwse-resize; }
-    .crop-handle.tr, .crop-handle.bl { cursor: nesw-resize; }
-    .crop-handle.t, .crop-handle.b { cursor: ns-resize; border-radius: 6px; width: 22px; height: 10px; }
-    .crop-handle.l, .crop-handle.r { cursor: ew-resize; border-radius: 6px; width: 10px; height: 22px; }
-
-    .crop-drag-area {
-      position: absolute;
-      cursor: move;
-      pointer-events: auto;
-      z-index: 16;
-      background: transparent;
+    .crop-bar.t, .crop-bar.b {
+      width: 22px;
+      height: 3px;
+      cursor: ns-resize;
+    }
+    .crop-bar.l, .crop-bar.r {
+      width: 3px;
+      height: 22px;
+      cursor: ew-resize;
     }
 
-    .crop-floating-bar {
-      position: absolute;
-      bottom: 22px;
-      left: 50%;
-      transform: translateX(-50%);
+    /* 2열 툴바 중앙에 단정하게 배치되는 자르기 제어 바 */
+    .viewer-crop-toolbar {
       display: flex;
       align-items: center;
-      gap: 10px;
-      background: rgba(15, 23, 42, 0.92);
-      backdrop-filter: blur(8px);
-      padding: 6px 12px;
-      border-radius: 30px;
-      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.38);
-      pointer-events: auto;
-      z-index: 22;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      gap: 6px;
+      background: rgba(241, 245, 249, 0.9);
+      padding: 2px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
     }
-    .crop-mode-toggle {
+    .crop-toolbar-group {
       display: flex;
       align-items: center;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 20px;
-      padding: 2px;
       gap: 2px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      padding: 2px;
     }
-    .btn-crop-mode {
-      height: 26px;
-      padding: 0 10px;
-      font-size: 11.5px;
-      font-weight: 600;
-      background: transparent;
-      color: #94a3b8;
-      border: none;
-      border-radius: 16px;
+    .crop-pill {
+      border: none !important;
+      background: transparent !important;
+      color: var(--text-sub) !important;
+      font-size: 11px !important;
+      font-weight: 600 !important;
+      padding: 2px 7px !important;
+      height: 22px !important;
+      border-radius: 3px !important;
       cursor: pointer;
-      transition: all 0.15s ease;
-      white-space: nowrap;
+      transition: all 0.12s ease;
     }
-    .btn-crop-mode.active {
-      background: var(--primary, #0d9488);
-      color: #ffffff;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    .crop-pill:hover {
+      color: var(--text-main) !important;
     }
-    .crop-action-group {
-      display: flex;
-      align-items: center;
-      gap: 5px;
+    .crop-pill.active {
+      background: #ffffff !important;
+      color: var(--primary) !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+      font-weight: 700 !important;
     }
-    .btn-crop-act {
-      height: 26px;
-      padding: 0 10px;
-      font-size: 11.5px;
-      font-weight: 600;
-      border-radius: 16px;
-      border: 1px solid transparent;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      white-space: nowrap;
-      transition: all 0.15s ease;
+    .btn-crop-apply {
+      background: var(--primary) !important;
+      color: #ffffff !important;
+      border-color: var(--primary) !important;
+      font-weight: 700 !important;
     }
-    .btn-crop-act.apply {
-      background: #10b981;
-      color: #ffffff;
-    }
-    .btn-crop-act.apply:hover {
-      background: #059669;
-    }
-    .btn-crop-act.reset {
-      background: rgba(255, 255, 255, 0.15);
-      color: #f1f5f9;
-    }
-    .btn-crop-act.reset:hover {
-      background: rgba(255, 255, 255, 0.25);
-    }
-    .btn-crop-act.cancel {
-      background: rgba(239, 68, 68, 0.2);
-      color: #fca5a5;
-      border-color: rgba(239, 68, 68, 0.35);
-    }
-    .btn-crop-act.cancel:hover {
-      background: #ef4444;
-      color: #ffffff;
+    .btn-crop-apply:hover {
+      background: #0f766e !important;
     }
 
     /* 데스크톱 크기 축소 시 가운데 창 가변 & 우측창 고정 (861px 이상 데스크톱 전용) */
@@ -2045,6 +2054,17 @@
           <span id="viewerPageIndicator" style="font-size: 12px; font-weight: 700; color: var(--text-main); min-width: 44px; text-align: center;">- / -</span>
           <button type="button" class="btn-tool-sm" id="btnNextPage" title="다음 페이지 (→ 또는 휠 아래)" onclick="navigateViewer(1)">다음 ▶</button>
         </div>
+        <!-- 중앙: 단정한 자르기 툴바 (자르기 활성화 시에만 툴바 중앙에 자연스럽게 표시) -->
+        <div id="viewerCropToolbar" class="viewer-crop-toolbar" style="display: none;">
+          <div class="crop-toolbar-group">
+            <button type="button" class="btn-tool-sm crop-pill active" id="btnCropModeImage" onclick="setCropPaperMode(false)" title="종이는 유지하고 이미지만 자릅니다">객체 자르기</button>
+            <button type="button" class="btn-tool-sm crop-pill" id="btnCropModePaper" onclick="setCropPaperMode(true)" title="자른 크기에 맞춰 종이 규격도 맞춤 조절합니다">종이 연동</button>
+          </div>
+          <div style="width: 1px; height: 16px; background: var(--border); margin: 0 4px;"></div>
+          <button type="button" class="btn-tool-sm btn-crop-apply" onclick="applyCrop()" title="자르기 적용">적용</button>
+          <button type="button" class="btn-tool-sm" onclick="resetCrop()" title="자르기 영역 100% 초기화">리셋</button>
+          <button type="button" class="btn-tool-sm" onclick="cancelCrop()" title="자르기 취소">닫기</button>
+        </div>
         <div class="viewer-actions viewer-zoom-group">
           <button type="button" class="btn-tool-sm" title="화면 확대 (Ctrl+휠 위)" onclick="adjustZoom(0.15)">확대</button>
           <button type="button" class="btn-tool-sm" title="화면 축소 (Ctrl+휠 아래)" onclick="adjustZoom(-0.15)">축소</button>
@@ -2073,42 +2093,22 @@
                   <rect id="cropHole" x="0" y="0" width="0" height="0" fill="black" />
                 </mask>
               </defs>
-              <rect x="0" y="0" width="100%" height="100%" fill="rgba(0, 0, 0, 0.52)" mask="url(#cropMask)" />
+              <rect x="0" y="0" width="100%" height="100%" fill="rgba(0, 0, 0, 0.45)" mask="url(#cropMask)" />
               <rect id="cropBoxBorder" class="crop-box-border" x="0" y="0" width="0" height="0" />
               <line id="cropGridH1" class="crop-grid-line" x1="0" y1="0" x2="0" y2="0" />
               <line id="cropGridH2" class="crop-grid-line" x1="0" y1="0" x2="0" y2="0" />
               <line id="cropGridV1" class="crop-grid-line" x1="0" y1="0" x2="0" y2="0" />
               <line id="cropGridV2" class="crop-grid-line" x1="0" y1="0" x2="0" y2="0" />
             </svg>
-            <div id="cropHandleTL" class="crop-handle crop-handle-corner tl" data-handle="tl"></div>
-            <div id="cropHandleTR" class="crop-handle crop-handle-corner tr" data-handle="tr"></div>
-            <div id="cropHandleBR" class="crop-handle crop-handle-corner br" data-handle="br"></div>
-            <div id="cropHandleBL" class="crop-handle crop-handle-corner bl" data-handle="bl"></div>
-            <div id="cropHandleT" class="crop-handle crop-handle-edge t" data-handle="t"></div>
-            <div id="cropHandleR" class="crop-handle crop-handle-edge r" data-handle="r"></div>
-            <div id="cropHandleB" class="crop-handle crop-handle-edge b" data-handle="b"></div>
-            <div id="cropHandleL" class="crop-handle crop-handle-edge l" data-handle="l"></div>
-            <div id="cropDragArea" class="crop-drag-area"></div>
-            <div id="cropFloatingBar" class="crop-floating-bar">
-              <div class="crop-mode-toggle">
-                <button type="button" class="btn-crop-mode active" id="btnCropModeImage" onclick="setCropPaperMode(false)" title="바탕 종이는 유지하고 내용물 이미지만 자릅니다">객체 자르기</button>
-                <button type="button" class="btn-crop-mode" id="btnCropModePaper" onclick="setCropPaperMode(true)" title="자른 크기에 맞춰 종이 규격도 맞춤 조절합니다">종이 연동</button>
-              </div>
-              <div class="crop-action-group">
-                <button type="button" class="btn-crop-act apply" onclick="applyCrop()" title="자르기 적용">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                  <span>적용</span>
-                </button>
-                <button type="button" class="btn-crop-act reset" onclick="resetCrop()" title="자르기 초기화 (원본 전체 복원)">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
-                  <span>리셋</span>
-                </button>
-                <button type="button" class="btn-crop-act cancel" onclick="cancelCrop()" title="자르기 취소">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                  <span>닫기</span>
-                </button>
-              </div>
-            </div>
+            <!-- 세련된 프로페셔널 L자형 코너 브래킷 및 엣지 바 -->
+            <div id="cropHandleTL" class="crop-handle crop-bracket tl" data-handle="tl"></div>
+            <div id="cropHandleTR" class="crop-handle crop-bracket tr" data-handle="tr"></div>
+            <div id="cropHandleBR" class="crop-handle crop-bracket br" data-handle="br"></div>
+            <div id="cropHandleBL" class="crop-handle crop-bracket bl" data-handle="bl"></div>
+            <div id="cropHandleT" class="crop-handle crop-bar t" data-handle="t"></div>
+            <div id="cropHandleR" class="crop-handle crop-bar r" data-handle="r"></div>
+            <div id="cropHandleB" class="crop-handle crop-bar b" data-handle="b"></div>
+            <div id="cropHandleL" class="crop-handle crop-bar l" data-handle="l"></div>
           </div>
         </div>
         <!-- 메인 뷰어 투시변환 정밀 확대경 (Loupe) -->
@@ -2564,7 +2564,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.11.0 (비파괴 사각형 크롭 및 .pixpdf 프로젝트 저장/복원 엔진 탑재)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.11.1 (자르기 핸들 및 중앙 툴바 개선, 투시변환 상호배타 및 캔버스 고정)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -6081,6 +6081,14 @@ const modal = document.getElementById('modalPdfPicker');
       if (!item) return;
       const cfg = getEffectiveItemSettings(curIdx);
       cfg.isPerspectiveActive = !cfg.isPerspectiveActive;
+
+      // 투시 변환이 켜질 때, 자르기 모드가 켜져 있다면 상호 배타적으로 즉시 취소
+      if (cfg.isPerspectiveActive) {
+        if (typeof isCropActive !== 'undefined' && isCropActive) {
+          if (typeof cancelCrop === 'function') cancelCrop();
+        }
+      }
+
       syncPerspectiveUI(cfg.isPerspectiveActive);
       updateMiniPreview();
       updateCornerPins();
@@ -6890,7 +6898,10 @@ const modal = document.getElementById('modalPdfPicker');
           return;
         }
 
-        // 2. 일반 이미지 캔버스 패닝 (전체 이동)
+        // 2. 자르기(크롭) 모드 중에는 캔버스 패닝(이미지 위치 이동) 차단
+        if (typeof isCropActive !== 'undefined' && isCropActive) return;
+
+        // 3. 일반 이미지 캔버스 패닝 (전체 이동)
         e.preventDefault();
         isPanning = true;
         panStartX = e.clientX;
@@ -7089,6 +7100,9 @@ const modal = document.getElementById('modalPdfPicker');
           updateViewerPinLoupe(cornerKey, e.touches[0].clientX, e.touches[0].clientY);
           return;
         }
+
+        // 자르기(크롭) 모드 중에는 터치 패닝(이미지 위치 이동) 차단
+        if (typeof isCropActive !== 'undefined' && isCropActive) return;
 
         if (e.touches.length !== 1) return;
 
@@ -7432,9 +7446,9 @@ const modal = document.getElementById('modalPdfPicker');
     // ==========================================================================
 
     let isCropActive = false;
-    let cropBox = { x: 0.05, y: 0.05, w: 0.9, h: 0.9 }; // 0.0 ~ 1.0 비율 좌표
+    let cropBox = { x: 0, y: 0, w: 1, h: 1 }; // 0.0 ~ 1.0 비율 좌표 (기본은 객체 가장 바깥)
     let cropPaperMode = false; // false: 객체 자르기, true: 종이 연동 자르기
-    let activeCropDrag = null; // { type, handle, startX, startY, origBox, imgRect }
+    let activeCropDrag = null; // { handle, startX, startY, origBox, imgRect }
 
     // 크롭 모드 토글 (우측 패널 [자르기] 버튼 등에서 호출)
     function toggleCropMode() {
@@ -7448,10 +7462,6 @@ const modal = document.getElementById('modalPdfPicker');
       if (isCropActive) {
         cancelCrop();
       } else {
-        // 투시변환이 열려 있다면 충돌 방지를 위해 먼저 닫기
-        if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) {
-          if (typeof togglePerspectiveMode === 'function') togglePerspectiveMode();
-        }
         openCropMode();
       }
     }
@@ -7460,11 +7470,22 @@ const modal = document.getElementById('modalPdfPicker');
       const item = docState.items[docState.currentIndex];
       if (!item) return;
 
+      // 투시변환이 켜져 있다면 충돌 방지를 위해 먼저 닫기 (상호 배타)
+      const curIdx = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(curIdx);
+      if (cfg && cfg.isPerspectiveActive) {
+        if (typeof togglePerspectiveMode === 'function') togglePerspectiveMode();
+      }
+
       isCropActive = true;
       const overlay = document.getElementById('cropOverlay');
       if (overlay) overlay.style.display = 'block';
 
-      // 기존 설정 복원 또는 기본 90% 가이드 박스로 초기화
+      // 2열 중앙 툴바 표시
+      const cropToolbar = document.getElementById('viewerCropToolbar');
+      if (cropToolbar) cropToolbar.style.display = 'flex';
+
+      // 기존 설정 복원 또는 객체 가장 바깥 100% 가이드 박스로 초기화
       const settings = item.settings || {};
       if (settings.crop) {
         cropBox = {
@@ -7475,7 +7496,7 @@ const modal = document.getElementById('modalPdfPicker');
         };
         cropPaperMode = Boolean(settings.crop.cropPaper);
       } else {
-        cropBox = { x: 0.05, y: 0.05, w: 0.9, h: 0.9 };
+        cropBox = { x: 0, y: 0, w: 1, h: 1 };
         cropPaperMode = false;
       }
 
@@ -7491,6 +7512,10 @@ const modal = document.getElementById('modalPdfPicker');
       isCropActive = false;
       const overlay = document.getElementById('cropOverlay');
       if (overlay) overlay.style.display = 'none';
+
+      // 2열 중앙 툴바 숨김
+      const cropToolbar = document.getElementById('viewerCropToolbar');
+      if (cropToolbar) cropToolbar.style.display = 'none';
 
       const btnCrop = document.getElementById('btnToggleCrop');
       if (btnCrop) btnCrop.classList.remove('active');
@@ -7617,18 +7642,9 @@ const modal = document.getElementById('modalPdfPicker');
       if (hR) { hR.style.left = `${boxX + boxW}px`; hR.style.top = `${boxY + boxH / 2}px`; }
       if (hB) { hB.style.left = `${boxX + boxW / 2}px`; hB.style.top = `${boxY + boxH}px`; }
       if (hL) { hL.style.left = `${boxX}px`; hL.style.top = `${boxY + boxH / 2}px`; }
-
-      // 5. 중앙 이동 드래그 영역
-      const dragArea = document.getElementById('cropDragArea');
-      if (dragArea) {
-        dragArea.style.left = `${boxX}px`;
-        dragArea.style.top = `${boxY}px`;
-        dragArea.style.width = `${boxW}px`;
-        dragArea.style.height = `${boxH}px`;
-      }
     }
 
-    // 마우스 및 터치 드래그 상호작용 등록
+    // 마우스 및 터치 드래그 상호작용 등록 (8개 핸들 조절 전용, 이미지/박스 전체 흔들림 원천 차단)
     let cropEventsBound = false;
     function initCropDragEvents() {
       if (cropEventsBound) return;
@@ -7639,7 +7655,7 @@ const modal = document.getElementById('modalPdfPicker');
 
       overlay.addEventListener('pointerdown', (e) => {
         if (!isCropActive) return;
-        const target = e.target.closest('.crop-handle, .crop-drag-area');
+        const target = e.target.closest('.crop-handle');
         if (!target) return;
 
         e.preventDefault();
@@ -7648,8 +7664,8 @@ const modal = document.getElementById('modalPdfPicker');
         const rect = getCropImageScreenRect();
         if (!rect) return;
 
-        const isHandle = target.classList.contains('crop-handle');
-        const handleType = isHandle ? target.getAttribute('data-handle') : 'move';
+        const handleType = target.getAttribute('data-handle');
+        if (!handleType) return;
 
         activeCropDrag = {
           handle: handleType,
@@ -7679,27 +7695,22 @@ const modal = document.getElementById('modalPdfPicker');
       let newW = origBox.w;
       let newH = origBox.h;
 
-      if (handle === 'move') {
-        newX = Math.max(0, Math.min(1 - origBox.w, origBox.x + dxNorm));
-        newY = Math.max(0, Math.min(1 - origBox.h, origBox.y + dyNorm));
-      } else {
-        // 좌/우 조절
-        if (handle.includes('l')) {
-          const maxLeft = origBox.x + origBox.w - minDim;
-          newX = Math.max(0, Math.min(maxLeft, origBox.x + dxNorm));
-          newW = origBox.w + (origBox.x - newX);
-        } else if (handle.includes('r')) {
-          newW = Math.max(minDim, Math.min(1 - origBox.x, origBox.w + dxNorm));
-        }
+      // 좌/우 조절
+      if (handle.includes('l')) {
+        const maxLeft = origBox.x + origBox.w - minDim;
+        newX = Math.max(0, Math.min(maxLeft, origBox.x + dxNorm));
+        newW = origBox.w + (origBox.x - newX);
+      } else if (handle.includes('r')) {
+        newW = Math.max(minDim, Math.min(1 - origBox.x, origBox.w + dxNorm));
+      }
 
-        // 상/하 조절
-        if (handle.includes('t')) {
-          const maxTop = origBox.y + origBox.h - minDim;
-          newY = Math.max(0, Math.min(maxTop, origBox.y + dyNorm));
-          newH = origBox.h + (origBox.y - newY);
-        } else if (handle.includes('b')) {
-          newH = Math.max(minDim, Math.min(1 - origBox.y, origBox.h + dyNorm));
-        }
+      // 상/하 조절
+      if (handle.includes('t')) {
+        const maxTop = origBox.y + origBox.h - minDim;
+        newY = Math.max(0, Math.min(maxTop, origBox.y + dyNorm));
+        newH = origBox.h + (origBox.y - newY);
+      } else if (handle.includes('b')) {
+        newH = Math.max(minDim, Math.min(1 - origBox.y, origBox.h + dyNorm));
       }
 
       cropBox = { x: newX, y: newY, w: newW, h: newH };

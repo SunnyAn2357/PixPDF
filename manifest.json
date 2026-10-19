@@ -1,5 +1,5 @@
 {
-  "name": "PixPDF",
+  "name": "PixPDF - PDF & 이미지 양방향 변환 및 편집기",
   "short_name": "PixPDF",
   "description": "100% 브라우저 메모리 내에서 안전하게 구동되는 PDF ↔ 다중 이미지 양방향 변환 및 간편 편집기",
   "start_url": "./index.html",
