@@ -180,7 +180,10 @@
           return;
         }
 
-        // 2. 일반 이미지 캔버스 패닝 (전체 이동)
+        // 2. 자르기(크롭) 모드 중에는 캔버스 패닝(이미지 위치 이동) 차단
+        if (typeof isCropActive !== 'undefined' && isCropActive) return;
+
+        // 3. 일반 이미지 캔버스 패닝 (전체 이동)
         e.preventDefault();
         isPanning = true;
         panStartX = e.clientX;
@@ -379,6 +382,9 @@
           updateViewerPinLoupe(cornerKey, e.touches[0].clientX, e.touches[0].clientY);
           return;
         }
+
+        // 자르기(크롭) 모드 중에는 터치 패닝(이미지 위치 이동) 차단
+        if (typeof isCropActive !== 'undefined' && isCropActive) return;
 
         if (e.touches.length !== 1) return;
 

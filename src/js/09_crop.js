@@ -4,9 +4,9 @@
     // ==========================================================================
 
     let isCropActive = false;
-    let cropBox = { x: 0.05, y: 0.05, w: 0.9, h: 0.9 }; // 0.0 ~ 1.0 비율 좌표
+    let cropBox = { x: 0, y: 0, w: 1, h: 1 }; // 0.0 ~ 1.0 비율 좌표 (기본은 객체 가장 바깥)
     let cropPaperMode = false; // false: 객체 자르기, true: 종이 연동 자르기
-    let activeCropDrag = null; // { type, handle, startX, startY, origBox, imgRect }
+    let activeCropDrag = null; // { handle, startX, startY, origBox, imgRect }
 
     // 크롭 모드 토글 (우측 패널 [자르기] 버튼 등에서 호출)
     function toggleCropMode() {
@@ -20,10 +20,6 @@
       if (isCropActive) {
         cancelCrop();
       } else {
-        // 투시변환이 열려 있다면 충돌 방지를 위해 먼저 닫기
-        if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) {
-          if (typeof togglePerspectiveMode === 'function') togglePerspectiveMode();
-        }
         openCropMode();
       }
     }
@@ -32,11 +28,22 @@
       const item = docState.items[docState.currentIndex];
       if (!item) return;
 
+      // 투시변환이 켜져 있다면 충돌 방지를 위해 먼저 닫기 (상호 배타)
+      const curIdx = docState.currentIndex;
+      const cfg = getEffectiveItemSettings(curIdx);
+      if (cfg && cfg.isPerspectiveActive) {
+        if (typeof togglePerspectiveMode === 'function') togglePerspectiveMode();
+      }
+
       isCropActive = true;
       const overlay = document.getElementById('cropOverlay');
       if (overlay) overlay.style.display = 'block';
 
-      // 기존 설정 복원 또는 기본 90% 가이드 박스로 초기화
+      // 2열 중앙 툴바 표시
+      const cropToolbar = document.getElementById('viewerCropToolbar');
+      if (cropToolbar) cropToolbar.style.display = 'flex';
+
+      // 기존 설정 복원 또는 객체 가장 바깥 100% 가이드 박스로 초기화
       const settings = item.settings || {};
       if (settings.crop) {
         cropBox = {
@@ -47,7 +54,7 @@
         };
         cropPaperMode = Boolean(settings.crop.cropPaper);
       } else {
-        cropBox = { x: 0.05, y: 0.05, w: 0.9, h: 0.9 };
+        cropBox = { x: 0, y: 0, w: 1, h: 1 };
         cropPaperMode = false;
       }
 
@@ -63,6 +70,10 @@
       isCropActive = false;
       const overlay = document.getElementById('cropOverlay');
       if (overlay) overlay.style.display = 'none';
+
+      // 2열 중앙 툴바 숨김
+      const cropToolbar = document.getElementById('viewerCropToolbar');
+      if (cropToolbar) cropToolbar.style.display = 'none';
 
       const btnCrop = document.getElementById('btnToggleCrop');
       if (btnCrop) btnCrop.classList.remove('active');
@@ -189,18 +200,9 @@
       if (hR) { hR.style.left = `${boxX + boxW}px`; hR.style.top = `${boxY + boxH / 2}px`; }
       if (hB) { hB.style.left = `${boxX + boxW / 2}px`; hB.style.top = `${boxY + boxH}px`; }
       if (hL) { hL.style.left = `${boxX}px`; hL.style.top = `${boxY + boxH / 2}px`; }
-
-      // 5. 중앙 이동 드래그 영역
-      const dragArea = document.getElementById('cropDragArea');
-      if (dragArea) {
-        dragArea.style.left = `${boxX}px`;
-        dragArea.style.top = `${boxY}px`;
-        dragArea.style.width = `${boxW}px`;
-        dragArea.style.height = `${boxH}px`;
-      }
     }
 
-    // 마우스 및 터치 드래그 상호작용 등록
+    // 마우스 및 터치 드래그 상호작용 등록 (8개 핸들 조절 전용, 이미지/박스 전체 흔들림 원천 차단)
     let cropEventsBound = false;
     function initCropDragEvents() {
       if (cropEventsBound) return;
@@ -211,7 +213,7 @@
 
       overlay.addEventListener('pointerdown', (e) => {
         if (!isCropActive) return;
-        const target = e.target.closest('.crop-handle, .crop-drag-area');
+        const target = e.target.closest('.crop-handle');
         if (!target) return;
 
         e.preventDefault();
@@ -220,8 +222,8 @@
         const rect = getCropImageScreenRect();
         if (!rect) return;
 
-        const isHandle = target.classList.contains('crop-handle');
-        const handleType = isHandle ? target.getAttribute('data-handle') : 'move';
+        const handleType = target.getAttribute('data-handle');
+        if (!handleType) return;
 
         activeCropDrag = {
           handle: handleType,
@@ -251,27 +253,22 @@
       let newW = origBox.w;
       let newH = origBox.h;
 
-      if (handle === 'move') {
-        newX = Math.max(0, Math.min(1 - origBox.w, origBox.x + dxNorm));
-        newY = Math.max(0, Math.min(1 - origBox.h, origBox.y + dyNorm));
-      } else {
-        // 좌/우 조절
-        if (handle.includes('l')) {
-          const maxLeft = origBox.x + origBox.w - minDim;
-          newX = Math.max(0, Math.min(maxLeft, origBox.x + dxNorm));
-          newW = origBox.w + (origBox.x - newX);
-        } else if (handle.includes('r')) {
-          newW = Math.max(minDim, Math.min(1 - origBox.x, origBox.w + dxNorm));
-        }
+      // 좌/우 조절
+      if (handle.includes('l')) {
+        const maxLeft = origBox.x + origBox.w - minDim;
+        newX = Math.max(0, Math.min(maxLeft, origBox.x + dxNorm));
+        newW = origBox.w + (origBox.x - newX);
+      } else if (handle.includes('r')) {
+        newW = Math.max(minDim, Math.min(1 - origBox.x, origBox.w + dxNorm));
+      }
 
-        // 상/하 조절
-        if (handle.includes('t')) {
-          const maxTop = origBox.y + origBox.h - minDim;
-          newY = Math.max(0, Math.min(maxTop, origBox.y + dyNorm));
-          newH = origBox.h + (origBox.y - newY);
-        } else if (handle.includes('b')) {
-          newH = Math.max(minDim, Math.min(1 - origBox.y, origBox.h + dyNorm));
-        }
+      // 상/하 조절
+      if (handle.includes('t')) {
+        const maxTop = origBox.y + origBox.h - minDim;
+        newY = Math.max(0, Math.min(maxTop, origBox.y + dyNorm));
+        newH = origBox.h + (origBox.y - newY);
+      } else if (handle.includes('b')) {
+        newH = Math.max(minDim, Math.min(1 - origBox.y, origBox.h + dyNorm));
       }
 
       cropBox = { x: newX, y: newY, w: newW, h: newH };

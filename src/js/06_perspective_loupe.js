@@ -576,6 +576,14 @@
       if (!item) return;
       const cfg = getEffectiveItemSettings(curIdx);
       cfg.isPerspectiveActive = !cfg.isPerspectiveActive;
+
+      // 투시 변환이 켜질 때, 자르기 모드가 켜져 있다면 상호 배타적으로 즉시 취소
+      if (cfg.isPerspectiveActive) {
+        if (typeof isCropActive !== 'undefined' && isCropActive) {
+          if (typeof cancelCrop === 'function') cancelCrop();
+        }
+      }
+
       syncPerspectiveUI(cfg.isPerspectiveActive);
       updateMiniPreview();
       updateCornerPins();

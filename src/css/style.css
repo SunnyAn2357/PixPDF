@@ -1780,126 +1780,135 @@
     .crop-box-border {
       fill: none;
       stroke: #0d9488;
-      stroke-width: 2px;
+      stroke-width: 1px;
     }
     .crop-grid-line {
-      stroke: rgba(255, 255, 255, 0.45);
-      stroke-width: 1px;
+      stroke: rgba(255, 255, 255, 0.4);
+      stroke-width: 0.8px;
       stroke-dasharray: 4 3;
     }
+
+    /* 자르기 핸들 기본 및 터치 히트박스 확장 */
     .crop-handle {
       position: absolute;
-      width: 14px;
-      height: 14px;
-      background: #ffffff;
-      border: 2px solid #0d9488;
+      pointer-events: auto;
+      z-index: 20;
+    }
+    .crop-handle::after {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      cursor: inherit;
+    }
+
+    /* 세련된 프로페셔널 L자형 코너 브래킷 (16x16px, 두께 3px, Teal 테마 및 미세 그림자) */
+    .crop-bracket {
+      width: 16px;
+      height: 16px;
+      box-sizing: border-box;
+      border-color: #0d9488;
+      border-style: solid;
+      border-width: 0;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+      transition: border-color 0.12s ease;
+    }
+    .crop-bracket:hover {
+      border-color: #14b8a6;
+    }
+    .crop-bracket.tl {
+      border-top-width: 3px;
+      border-left-width: 3px;
+      transform: translate(-1px, -1px);
+      cursor: nwse-resize;
+    }
+    .crop-bracket.tr {
+      border-top-width: 3px;
+      border-right-width: 3px;
+      transform: translate(calc(-100% + 1px), -1px);
+      cursor: nesw-resize;
+    }
+    .crop-bracket.br {
+      border-bottom-width: 3px;
+      border-right-width: 3px;
+      transform: translate(calc(-100% + 1px), calc(-100% + 1px));
+      cursor: nwse-resize;
+    }
+    .crop-bracket.bl {
+      border-bottom-width: 3px;
+      border-left-width: 3px;
+      transform: translate(-1px, calc(-100% + 1px));
+      cursor: nesw-resize;
+    }
+
+    /* 세련된 슬림 엣지 바 (두께 3px, 길이 22px) */
+    .crop-bar {
+      background: #0d9488;
       border-radius: 2px;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
-      pointer-events: auto;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
       transform: translate(-50%, -50%);
-      z-index: 18;
-      transition: background 0.1s ease;
+      transition: background 0.12s ease;
     }
-    .crop-handle:hover {
-      background: #0f766e;
+    .crop-bar:hover {
+      background: #14b8a6;
     }
-    .crop-handle.tl, .crop-handle.br { cursor: nwse-resize; }
-    .crop-handle.tr, .crop-handle.bl { cursor: nesw-resize; }
-    .crop-handle.t, .crop-handle.b { cursor: ns-resize; border-radius: 6px; width: 22px; height: 10px; }
-    .crop-handle.l, .crop-handle.r { cursor: ew-resize; border-radius: 6px; width: 10px; height: 22px; }
-
-    .crop-drag-area {
-      position: absolute;
-      cursor: move;
-      pointer-events: auto;
-      z-index: 16;
-      background: transparent;
+    .crop-bar.t, .crop-bar.b {
+      width: 22px;
+      height: 3px;
+      cursor: ns-resize;
+    }
+    .crop-bar.l, .crop-bar.r {
+      width: 3px;
+      height: 22px;
+      cursor: ew-resize;
     }
 
-    .crop-floating-bar {
-      position: absolute;
-      bottom: 22px;
-      left: 50%;
-      transform: translateX(-50%);
+    /* 2열 툴바 중앙에 단정하게 배치되는 자르기 제어 바 */
+    .viewer-crop-toolbar {
       display: flex;
       align-items: center;
-      gap: 10px;
-      background: rgba(15, 23, 42, 0.92);
-      backdrop-filter: blur(8px);
-      padding: 6px 12px;
-      border-radius: 30px;
-      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.38);
-      pointer-events: auto;
-      z-index: 22;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      gap: 6px;
+      background: rgba(241, 245, 249, 0.9);
+      padding: 2px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
     }
-    .crop-mode-toggle {
+    .crop-toolbar-group {
       display: flex;
       align-items: center;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 20px;
-      padding: 2px;
       gap: 2px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      padding: 2px;
     }
-    .btn-crop-mode {
-      height: 26px;
-      padding: 0 10px;
-      font-size: 11.5px;
-      font-weight: 600;
-      background: transparent;
-      color: #94a3b8;
-      border: none;
-      border-radius: 16px;
+    .crop-pill {
+      border: none !important;
+      background: transparent !important;
+      color: var(--text-sub) !important;
+      font-size: 11px !important;
+      font-weight: 600 !important;
+      padding: 2px 7px !important;
+      height: 22px !important;
+      border-radius: 3px !important;
       cursor: pointer;
-      transition: all 0.15s ease;
-      white-space: nowrap;
+      transition: all 0.12s ease;
     }
-    .btn-crop-mode.active {
-      background: var(--primary, #0d9488);
-      color: #ffffff;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    .crop-pill:hover {
+      color: var(--text-main) !important;
     }
-    .crop-action-group {
-      display: flex;
-      align-items: center;
-      gap: 5px;
+    .crop-pill.active {
+      background: #ffffff !important;
+      color: var(--primary) !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+      font-weight: 700 !important;
     }
-    .btn-crop-act {
-      height: 26px;
-      padding: 0 10px;
-      font-size: 11.5px;
-      font-weight: 600;
-      border-radius: 16px;
-      border: 1px solid transparent;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      white-space: nowrap;
-      transition: all 0.15s ease;
+    .btn-crop-apply {
+      background: var(--primary) !important;
+      color: #ffffff !important;
+      border-color: var(--primary) !important;
+      font-weight: 700 !important;
     }
-    .btn-crop-act.apply {
-      background: #10b981;
-      color: #ffffff;
-    }
-    .btn-crop-act.apply:hover {
-      background: #059669;
-    }
-    .btn-crop-act.reset {
-      background: rgba(255, 255, 255, 0.15);
-      color: #f1f5f9;
-    }
-    .btn-crop-act.reset:hover {
-      background: rgba(255, 255, 255, 0.25);
-    }
-    .btn-crop-act.cancel {
-      background: rgba(239, 68, 68, 0.2);
-      color: #fca5a5;
-      border-color: rgba(239, 68, 68, 0.35);
-    }
-    .btn-crop-act.cancel:hover {
-      background: #ef4444;
-      color: #ffffff;
+    .btn-crop-apply:hover {
+      background: #0f766e !important;
     }
 
     /* 데스크톱 크기 축소 시 가운데 창 가변 & 우측창 고정 (861px 이상 데스크톱 전용) */
