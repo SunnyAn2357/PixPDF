@@ -46,48 +46,18 @@
 
           await new Promise(r => setTimeout(r, 0));
 
-          const tempCanvas = document.createElement('canvas');
-          let origW = 0, origH = 0;
-          let baseScaleW = 0, baseScaleH = 0;
-
-          if (p.type === 'pdf') {
-            const page = await p.doc.getPage(p.pageNum);
-            const vp = await renderPdfPageToCanvas(page, cfg.scale, rotImg, tempCanvas);
-
-            const origVp = page.getViewport({ scale: 1.0, rotation: 0 });
-            origW = origVp.width;
-            origH = origVp.height;
-            baseScaleW = vp.width;
-            baseScaleH = vp.height;
-          } else {
-            const rotRad = (rotImg * Math.PI) / 180;
-            const effImg = (typeof getEffectiveImageSource === 'function') ? getEffectiveImageSource(p) : p.imgObj;
-            const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width, height: p.height };
-            origW = effDims.width;
-            origH = effDims.height;
-            const srcRotW = isImgRot90 ? origH : origW;
-            const srcRotH = isImgRot90 ? origW : origH;
-            tempCanvas.width = srcRotW;
-            tempCanvas.height = srcRotH;
-            const tctx = tempCanvas.getContext('2d');
-            const isTransparent = (cfg.format === 'png') && (cfg.transparentBg !== false);
-            if (isTransparent) {
-              tctx.clearRect(0, 0, srcRotW, srcRotH);
-            } else {
-              tctx.fillStyle = '#ffffff';
-              tctx.fillRect(0, 0, srcRotW, srcRotH);
-            }
-            tctx.translate(srcRotW / 2, srcRotH / 2);
-            tctx.rotate(rotRad);
-            tctx.drawImage(effImg, -origW / 2, -origH / 2);
-
-            baseScaleW = srcRotW;
-            baseScaleH = srcRotH;
+          if (p.type === 'pdf' && !p.imgObj) {
+            await ensureItemCanvas(p);
           }
 
-          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
+          const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width || p.imgObj.width, height: p.height || p.imgObj.height };
+          const origW = effDims.width;
+          const origH = effDims.height;
+          const { isPageRot90 } = getResolvedRotations(cfg);
+
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
+          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
           const scaleMul = (p.type === 'pdf') ? cfg.scale : imgF;
           const refW = baseOrigW * scaleMul, refH = baseOrigH * scaleMul;
           const isOrigLandscape = origW > origH;
@@ -101,17 +71,13 @@
           const customH = isPaperCrop ? refH : cfg.customH;
           const paper = resolvePaperGeometry(sizeKey, isLandscape, refW, refH, customW, customH);
 
-          // 2단계: 최종 용지 캔버스 생성
-          let finalCanvas = document.createElement('canvas');
-          let fctx = finalCanvas.getContext('2d');
-
           let paperW, paperH;
           if (cfg.fit === 'original' || cfg.pageSize === 'original') {
-            paperW = baseOrigW * scaleMul;
-            paperH = baseOrigH * scaleMul;
-          } else if (cfg.fit === 'custom' || cfg.pageSize === 'custom') {
-            paperW = paper.widthPx;
-            paperH = paper.heightPx;
+            paperW = isPaperCrop ? Math.round(paper.widthPx) : Math.round(baseOrigW * scaleMul);
+            paperH = isPaperCrop ? Math.round(paper.heightPx) : Math.round(baseOrigH * scaleMul);
+          } else if (cfg.fit === 'custom' || cfg.pageSize === 'custom' || isPaperCrop) {
+            paperW = Math.round(paper.widthPx);
+            paperH = Math.round(paper.heightPx);
           } else {
             if (paper.isLandscape) {
               paperW = Math.max(refW, Math.round(refH * paper.ratio));
@@ -122,43 +88,8 @@
             }
           }
 
-          finalCanvas.width = paperW;
-          finalCanvas.height = paperH;
-
-          // 용지 배경 채우기 (흰색 또는 PNG 투명 처리)
-          const isTransparent = (cfg.format === 'png') && (cfg.transparentBg !== false);
-          if (isTransparent) {
-            fctx.clearRect(0, 0, paperW, paperH);
-          } else {
-            fctx.fillStyle = '#ffffff';
-            fctx.fillRect(0, 0, paperW, paperH);
-          }
-
-          const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
-          const brightness = cfg.brightness !== undefined ? cfg.brightness : 100;
-          const contrast = cfg.contrast !== undefined ? cfg.contrast : 100;
-          const offsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
-          const offsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
-
-          // 내용물 맞춤 크기 계산
-          const baseScale = Math.min(paperW / baseScaleW, paperH / baseScaleH);
-          const drawW = baseScaleW * baseScale * cScale * scaleX;
-          const drawH = baseScaleH * baseScale * cScale;
-          const shiftX = paperW * (offsetX / 100);
-          const shiftY = paperH * (offsetY / 100);
-          const posX = (paperW - drawW) / 2 + shiftX;
-          const posY = (paperH - drawH) / 2 + shiftY;
-
-          fctx.save();
-          fctx.beginPath();
-          fctx.rect(0, 0, paperW, paperH);
-          fctx.clip();
-          if (brightness !== 100 || contrast !== 100) {
-            fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
-          }
-          drawPerspectiveQuad(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
-          fctx.restore();
-          tempCanvas.width = 0; tempCanvas.height = 0;
+          let finalCanvas = document.createElement('canvas');
+          drawPaperWithImage(finalCanvas, p, cfg, { targetWidth: paperW, targetHeight: paperH });
 
           let blob;
           const fmt = cfg.format || 'png';
@@ -267,44 +198,19 @@
 
           await new Promise(r => setTimeout(r, 0));
 
-          const tempCanvas = document.createElement('canvas');
-          let origW = 0, origH = 0;
-          let baseScaleW = 0, baseScaleH = 0;
-
-          if (p.type === 'pdf') {
-            const page = await p.doc.getPage(p.pageNum);
-            const vp = await renderPdfPageToCanvas(page, 3.0, rotImg, tempCanvas);
-
-            const origVp = page.getViewport({ scale: 1.0, rotation: 0 });
-            origW = origVp.width;
-            origH = origVp.height;
-            baseScaleW = vp.width;
-            baseScaleH = vp.height;
-          } else {
-            const rotRad = (rotImg * Math.PI) / 180;
-            const effImg = (typeof getEffectiveImageSource === 'function') ? getEffectiveImageSource(p) : p.imgObj;
-            const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width, height: p.height };
-            origW = effDims.width;
-            origH = effDims.height;
-            const srcRotW = isImgRot90 ? origH : origW;
-            const srcRotH = isImgRot90 ? origW : origH;
-            tempCanvas.width = srcRotW;
-            tempCanvas.height = srcRotH;
-            const tctx = tempCanvas.getContext('2d');
-            tctx.fillStyle = '#ffffff';
-            tctx.fillRect(0, 0, srcRotW, srcRotH);
-            tctx.translate(srcRotW / 2, srcRotH / 2);
-            tctx.rotate(rotRad);
-            tctx.drawImage(effImg, -origW / 2, -origH / 2);
-
-            baseScaleW = srcRotW;
-            baseScaleH = srcRotH;
+          if (p.type === 'pdf' && !p.imgObj) {
+            await ensureItemCanvas(p);
           }
 
-          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
+          const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width || p.imgObj.width, height: p.height || p.imgObj.height };
+          const origW = effDims.width;
+          const origH = effDims.height;
+          const { isPageRot90 } = getResolvedRotations(cfg);
+
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
-          const scaleMul = (p.type === 'pdf') ? 3.0 : imgF;
+          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
+          const scaleMul = (p.type === 'pdf') ? 2.5 : imgF;
           const refW = baseOrigW * scaleMul, refH = baseOrigH * scaleMul;
           const isOrigLandscape = origW > origH;
           const orientOpt = cfg.orient || 'auto';
@@ -319,11 +225,11 @@
 
           let paperW, paperH;
           if (cfg.fit === 'original' || cfg.pageSize === 'original') {
-            paperW = baseOrigW * scaleMul;
-            paperH = baseOrigH * scaleMul;
-          } else if (cfg.fit === 'custom' || cfg.pageSize === 'custom') {
-            paperW = paper.widthPx;
-            paperH = paper.heightPx;
+            paperW = isPaperCrop ? Math.round(paper.widthPx) : Math.round(baseOrigW * scaleMul);
+            paperH = isPaperCrop ? Math.round(paper.heightPx) : Math.round(baseOrigH * scaleMul);
+          } else if (cfg.fit === 'custom' || cfg.pageSize === 'custom' || isPaperCrop) {
+            paperW = Math.round(paper.widthPx);
+            paperH = Math.round(paper.heightPx);
           } else {
             if (paper.isLandscape) {
               paperW = Math.max(refW, Math.round(refH * paper.ratio));
@@ -335,36 +241,7 @@
           }
 
           let finalCanvas = document.createElement('canvas');
-          let fctx = finalCanvas.getContext('2d');
-          finalCanvas.width = paperW;
-          finalCanvas.height = paperH;
-          fctx.fillStyle = '#ffffff';
-          fctx.fillRect(0, 0, paperW, paperH);
-
-          const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
-          const brightness = cfg.brightness !== undefined ? cfg.brightness : 100;
-          const contrast = cfg.contrast !== undefined ? cfg.contrast : 100;
-          const offsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
-          const offsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
-
-          const baseScale = Math.min(paperW / baseScaleW, paperH / baseScaleH);
-          const drawW = baseScaleW * baseScale * cScale * scaleX;
-          const drawH = baseScaleH * baseScale * cScale;
-          const shiftX = paperW * (offsetX / 100);
-          const shiftY = paperH * (offsetY / 100);
-          const posX = (paperW - drawW) / 2 + shiftX;
-          const posY = (paperH - drawH) / 2 + shiftY;
-
-          fctx.save();
-          fctx.beginPath();
-          fctx.rect(0, 0, paperW, paperH);
-          fctx.clip();
-          if (brightness !== 100 || contrast !== 100) {
-            fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
-          }
-          drawPerspectiveQuad(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
-          fctx.restore();
-          tempCanvas.width = 0; tempCanvas.height = 0;
+          drawPaperWithImage(finalCanvas, p, cfg, { targetWidth: paperW, targetHeight: paperH });
 
           // 무손실 PNG 데이터 추출
           const imgDataUrl = finalCanvas.toDataURL('image/png');

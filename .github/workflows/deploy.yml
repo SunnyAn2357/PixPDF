@@ -23,5 +23,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./V2.11.1
+          publish_dir: ./V2.11.2
 

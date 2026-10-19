@@ -706,16 +706,22 @@
       const marginPx = cfg.margin || 0;
 
       const item = docState.items[curIdx];
-      const origW = item ? (item.width || (item.imgObj ? item.imgObj.width : 1200)) : 1200;
-      const origH = item ? (item.height || (item.imgObj ? item.imgObj.height : 1600)) : 1600;
+      const effDims = (typeof getEffectiveImageDimensions === 'function' && item) ? getEffectiveImageDimensions(item) : { width: item ? (item.width || 1200) : 1200, height: item ? (item.height || 1600) : 1600 };
+      const origW = effDims.width;
+      const origH = effDims.height;
+
+      const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
+      if (isPaperCrop) fitKey = 'custom';
 
       const basePaperW = (isPageRot90 ? origH : origW) + marginPx * 2;
       const basePaperH = (isPageRot90 ? origW : origH) + marginPx * 2;
+      const customW = isPaperCrop ? basePaperW : cfg.customW;
+      const customH = isPaperCrop ? basePaperH : cfg.customH;
       const isOrigLandscape = origW > origH;
       const orientOpt = cfg.orient || 'auto';
       const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
       const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
-      const paper = resolvePaperGeometry(fitKey, isLandscape, basePaperW, basePaperH, cfg.customW, cfg.customH);
+      const paper = resolvePaperGeometry(fitKey, isLandscape, basePaperW, basePaperH, customW, customH);
 
       // 미리보기 박스(maxBoxW x maxBoxH) 안에 들어갈 시트 크기 계산
       let sheetW, sheetH;
@@ -744,6 +750,9 @@
       const line2Parts = [];
       line2Parts.push(`크기${Math.round(cScale * 100)}%`);
       if (scaleX !== 1.0) line2Parts.push(`가로${Math.round(scaleX * 100)}%`);
+      if (cfg.crop) {
+        line2Parts.push(cfg.crop.cropPaper ? '종이자르기✂️' : '자르기✂️');
+      }
       if (cfg.trapExp && (cfg.trapExp.top || cfg.trapExp.bot)) {
         if (cfg.trapExp.top) line2Parts.push(`대두+${cfg.trapExp.top}px`);
         if (cfg.trapExp.bot) line2Parts.push(`소두+${cfg.trapExp.bot}px`);

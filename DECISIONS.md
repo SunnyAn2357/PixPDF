@@ -268,3 +268,24 @@
      - 4개 모서리에 세련된 3px 두께의 L자형 코너 브래킷(`crop-bracket`) 적용.
      - 4개 변 중앙에 3px 두께의 엣지 바(`crop-bar`) 적용.
      - 시각적으로는 깔끔하고 날렵하면서도 손가락 및 마우스로 잡기 쉽도록 `::after` 투명 히트박스(8px 확장)를 내장하여 최상의 조작 편의성 보장.
+
+---
+
+### ADR-020: 3개 창 자르기 실시간 즉시 동기화, 인쇄/PDF/Img 저장 파이프라인 일체화 및 모바일 비활성화
+- **결정 일자**: v2.11.2 (2026-10-19)
+- **배경 및 원인**:
+  - **이슈 1 (자르기 적용 시 즉각 화면 미반영)**: 자르기 적용(`applyCrop`) 시 호출하던 렌더 함수명이 실제 함수명과 불일치하여, 사용자가 다른 이미지를 클릭하여 재로드하기 전까지 왼쪽 썸네일, 가운데 메인 뷰어, 우측 객체 설정 내 미리보기에 자르기 결과가 즉시 반영되지 않는 치명적 결함 발생.
+  - **이슈 2 (객체 설정 내 미리보기 종이 연동 미반영)**: 우측 패널의 객체 설정 내 시트 미리보기(`updateMiniPreview`)에서 크롭 치수(`effDims`) 및 종이 연동(`isPaperCrop`)이 누락되어 종이 시트 비율이 축소되지 않던 문제 해결.
+  - **이슈 3 (인쇄/PDF 저장/Img 저장에 자르기 미반영)**: `07_export.js`와 `04_file_mgr.js`의 인쇄 및 저장 함수들이 `drawPaperWithImage` 공통 렌더 파이프라인을 사용하지 않고 자체 루프에서 원본 PDF/이미지를 직접 그려 크롭이 완전히 무시되던 현상 발생.
+  - **이슈 4 (모바일 환경 자르기 비활성화 요구)**: 모바일 작은 화면에서는 정밀 크롭 핸들 조작이 부적합하므로 모바일에서는 자르기 버튼을 완전히 비활성화(disabled) 처리 요구.
+- **확정 규칙**:
+  1. **3개 창 즉시 동기화 (`applyCrop` / `resetCropCurrentItem`)**:
+     - 자르기 적용 및 초기화 즉시 `renderMainViewerCanvas(curIdx)` (가운데 메인 뷰어), `renderSingleThumbnailCard(curIdx)` (왼쪽 1열 썸네일), `updateMiniPreview()` (우측 객체 설정 내 미니 프리뷰)를 일괄 호출하여 눈앞에서 실시간 즉시 갱신되도록 완전 동기화.
+  2. **객체 설정 내 미리보기 100% 자르기 연동**:
+     - `updateMiniPreview()`에서 `getEffectiveImageDimensions` 및 `isPaperCrop`을 적용하여 '종이 연동' 시 미니 시트 비율 자체가 잘라낸 종이 비율로 1:1 자동 재조정되도록 개선. 정보 텍스트에 `[자르기✂️]` / `[종이자르기✂️]` 뱃지 표출.
+  3. **인쇄 및 내보내기 100% WYSIWYG 일체화 (`drawPaperWithImage`)**:
+     - `executeSaveSplitImages()` (이미지 분할 저장), `executeSaveMergedPdf()` (PDF 병합 저장), `triggerPrint()` (인쇄) 모두 `drawPaperWithImage(finalCanvas, p, cfg, { targetWidth, targetHeight })`를 호출하도록 일원화.
+     - PDF 및 이미지 모두 원본 비파괴를 유지하면서 자른 영역 및 종이 크기 변경이 100% 동일하게 인쇄/PDF/이미지 파일에 반영됨.
+  4. **모바일 환경 자르기 비활성화**:
+     - 860px 이하 모바일 환경에서는 `#btnToggleCrop`과 `#btnResetCropCurrent`에 `opacity: 0.35; pointer-events: none;`을 적용하여 오작동 차단.
+     - `toggleCropMode()` JS 레벨에서도 `window.innerWidth <= 860` 시 토스트 안내와 함께 진입 차단. 창 크기 축소 시 자동 닫기 처리.

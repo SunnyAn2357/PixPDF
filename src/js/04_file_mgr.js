@@ -452,56 +452,38 @@
           const cScale = cfg.contentScale || 1.0;
           const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
 
-          const tempCanvas = document.createElement('canvas');
-          let origW = 0, origH = 0;
-          let baseScaleW = 0, baseScaleH = 0;
-
-          if (p.type === 'pdf') {
-            const page = await p.doc.getPage(p.pageNum);
-            const vp = await renderPdfPageToCanvas(page, 3.0, rotImg, tempCanvas);
-
-            const origVp = page.getViewport({ scale: 1.0, rotation: 0 });
-            origW = origVp.width;
-            origH = origVp.height;
-            baseScaleW = vp.width;
-            baseScaleH = vp.height;
-          } else {
-            const rotRad = (rotImg * Math.PI) / 180;
-            const srcRotW = isImgRot90 ? p.height : p.width;
-            const srcRotH = isImgRot90 ? p.width : p.height;
-            tempCanvas.width = srcRotW;
-            tempCanvas.height = srcRotH;
-            const tctx = tempCanvas.getContext('2d');
-            tctx.fillStyle = '#ffffff';
-            tctx.fillRect(0, 0, srcRotW, srcRotH);
-            tctx.translate(srcRotW / 2, srcRotH / 2);
-            tctx.rotate(rotRad);
-            tctx.drawImage(p.imgObj, -p.width / 2, -p.height / 2);
-
-            origW = p.width;
-            origH = p.height;
-            baseScaleW = srcRotW;
-            baseScaleH = srcRotH;
+          if (p.type === 'pdf' && !p.imgObj) {
+            await ensureItemCanvas(p);
           }
 
-          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
+          const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width || p.imgObj.width, height: p.height || p.imgObj.height };
+          const origW = effDims.width;
+          const origH = effDims.height;
+          const { isPageRot90 } = getResolvedRotations(cfg);
+
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
-          const scaleMul = (p.type === 'pdf') ? 3.0 : imgF;
+          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
+          const scaleMul = (p.type === 'pdf') ? 2.5 : imgF;
           const refW = baseOrigW * scaleMul, refH = baseOrigH * scaleMul;
           const isOrigLandscape = origW > origH;
           const orientOpt = cfg.orient || 'auto';
           const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
           const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
-          const paper = resolvePaperGeometry(cfg.fit || cfg.pageSize || 'original', isLandscape, refW, refH, cfg.customW, cfg.customH);
+          let sizeKey = cfg.fit || cfg.pageSize || 'original';
+          const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
+          if (isPaperCrop) sizeKey = 'custom';
+          const customW = isPaperCrop ? refW : cfg.customW;
+          const customH = isPaperCrop ? refH : cfg.customH;
+          const paper = resolvePaperGeometry(sizeKey, isLandscape, refW, refH, customW, customH);
 
           let paperW, paperH;
           if (cfg.fit === 'original' || cfg.pageSize === 'original') {
-            paperW = baseOrigW * scaleMul;
-            paperH = baseOrigH * scaleMul;
-          } else if (cfg.fit === 'custom' || cfg.pageSize === 'custom') {
-            paperW = paper.widthPx;
-            paperH = paper.heightPx;
+            paperW = isPaperCrop ? Math.round(paper.widthPx) : Math.round(baseOrigW * scaleMul);
+            paperH = isPaperCrop ? Math.round(paper.heightPx) : Math.round(baseOrigH * scaleMul);
+          } else if (cfg.fit === 'custom' || cfg.pageSize === 'custom' || isPaperCrop) {
+            paperW = Math.round(paper.widthPx);
+            paperH = Math.round(paper.heightPx);
           } else {
             if (paper.isLandscape) {
               paperW = Math.max(refW, Math.round(refH * paper.ratio));
@@ -513,36 +495,7 @@
           }
 
           let finalCanvas = document.createElement('canvas');
-          let fctx = finalCanvas.getContext('2d');
-          finalCanvas.width = paperW;
-          finalCanvas.height = paperH;
-          fctx.fillStyle = '#ffffff';
-          fctx.fillRect(0, 0, paperW, paperH);
-
-          const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
-          const brightness = cfg.brightness !== undefined ? cfg.brightness : 100;
-          const contrast = cfg.contrast !== undefined ? cfg.contrast : 100;
-          const offsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
-          const offsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
-
-          const baseScale = Math.min(paperW / baseScaleW, paperH / baseScaleH);
-          const drawW = baseScaleW * baseScale * cScale * scaleX;
-          const drawH = baseScaleH * baseScale * cScale;
-          const shiftX = paperW * (offsetX / 100);
-          const shiftY = paperH * (offsetY / 100);
-          const posX = (paperW - drawW) / 2 + shiftX;
-          const posY = (paperH - drawH) / 2 + shiftY;
-
-          fctx.save();
-          fctx.beginPath();
-          fctx.rect(0, 0, paperW, paperH);
-          fctx.clip();
-          if (brightness !== 100 || contrast !== 100) {
-            fctx.filter = `brightness(${brightness}%) contrast(${contrast}%)`;
-          }
-          drawPerspectiveQuad(fctx, tempCanvas, posX, posY, drawW, drawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
-          fctx.restore();
-          tempCanvas.width = 0; tempCanvas.height = 0;
+          drawPaperWithImage(finalCanvas, p, cfg, { targetWidth: paperW, targetHeight: paperH });
 
           const pageItem = document.createElement('div');
           pageItem.className = 'print-page-item';
@@ -1285,6 +1238,24 @@
     }
     const renderPdfThumbnailList = renderThumbnailList;
     const renderImageThumbnailList = renderThumbnailList;
+
+    // [단일 카드 즉시 동기화] 특정 페이지의 썸네일 캔버스만 초고속 즉시 재렌더링
+    async function renderSingleThumbnailCard(idx) {
+      const item = docState.items[idx];
+      if (!item) return;
+      const thumbCanvas = document.getElementById(`thumb-canvas-${idx}`);
+      if (!thumbCanvas) return;
+      const cfg = getEffectiveItemSettings(idx);
+      if (item.type === 'pdf' && !item.imgObj) {
+        await ensureItemCanvas(item);
+      }
+      drawPaperWithImage(thumbCanvas, item, cfg, { isThumbnail: true });
+      const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
+      const wrap = thumbCanvas.parentElement;
+      if (wrap) wrap.classList.toggle('checkerboard-bg', isTransparent);
+      updateViewerEdits(idx);
+    }
+    const renderThumbnailCard = renderSingleThumbnailCard;
 
     async function moveItemOrder(index, delta) {
       const target = index + delta;

@@ -57,9 +57,12 @@
       const customH = isPaperCrop ? basePaperH : cfg.customH;
       const paper = resolvePaperGeometry(sizeKey, isLandscape, basePaperW, basePaperH, customW, customH);
 
-      // 3. 대상 캔버스 해상도 결정 (초고해상도 복원)
+      // 3. 대상 캔버스 해상도 결정 (초고해상도 복원 및 내보내기/인쇄 전용 크기 완벽 지원)
       let canvasW, canvasH;
-      if (options.isThumbnail) {
+      if (options.targetWidth && options.targetHeight) {
+        canvasW = Math.round(options.targetWidth);
+        canvasH = Math.round(options.targetHeight);
+      } else if (options.isThumbnail) {
         // [모바일 및 고해상도 지원] 왼쪽 썸네일 카드가 모바일 및 고해상도 디스플레이에서 글자까지 또렷이 식별되도록 초고화질(800px) 해상도 보장
         const baseW = 800;
         canvasW = baseW;

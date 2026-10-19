@@ -1209,6 +1209,16 @@
         flex-direction: column !important;
         justify-content: flex-start !important;
       }
+      /* 모바일 환경에서는 자르기 비활성화 (PC 전용 기능) */
+      #btnToggleCrop,
+      #btnResetCropCurrent {
+        opacity: 0.35 !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+      }
+      #viewerCropToolbar {
+        display: none !important;
+      }
       .dpad-wrap {
         margin-top: 6px !important; /* 메뉴 버튼 바로 아래 밀착 배치 (빈 공간 제거) */
         padding-top: 0 !important;

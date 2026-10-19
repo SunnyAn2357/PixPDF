@@ -10,6 +10,10 @@
 
     // 크롭 모드 토글 (우측 패널 [자르기] 버튼 등에서 호출)
     function toggleCropMode() {
+      if (window.innerWidth <= 860) {
+        if (typeof showExitToast === 'function') showExitToast('자르기 기능은 PC 환경에서 지원됩니다.');
+        return;
+      }
       if (docState.items.length === 0) {
         if (typeof showExitToast === 'function') showExitToast('불러온 문서가 없습니다.');
         return;
@@ -25,6 +29,7 @@
     }
 
     function openCropMode() {
+      if (window.innerWidth <= 860) return;
       const item = docState.items[docState.currentIndex];
       if (!item) return;
 
@@ -313,10 +318,19 @@
 
       cancelCrop();
 
-      // 3개 창 렌더링 즉시 동기화
-      if (typeof renderViewerPage === 'function') renderViewerPage();
-      if (typeof renderThumbnailCard === 'function') renderThumbnailCard(docState.currentIndex);
-      if (typeof renderMiniPreview === 'function') renderMiniPreview();
+      // 3개 창 렌더링 즉시 동기화:
+      // 1. 가운데 2열 메인 뷰어 캔버스
+      if (typeof renderMainViewerCanvas === 'function') {
+        await renderMainViewerCanvas(docState.currentIndex);
+      }
+      // 2. 왼쪽 1열 썸네일 카드 캔버스
+      if (typeof renderSingleThumbnailCard === 'function') {
+        await renderSingleThumbnailCard(docState.currentIndex);
+      }
+      // 3. 우측(PC 기준 좌측 미리보기 창) 객체 설정 내 미니 프리뷰
+      if (typeof updateMiniPreview === 'function') {
+        updateMiniPreview();
+      }
 
       const msg = cropPaperMode ? '종이 연동 자르기가 적용되었습니다.' : '객체 자르기가 적용되었습니다.';
       if (typeof showExitToast === 'function') showExitToast(msg);
@@ -348,9 +362,19 @@
         cancelCrop();
       }
 
-      if (typeof renderViewerPage === 'function') renderViewerPage();
-      if (typeof renderThumbnailCard === 'function') renderThumbnailCard(docState.currentIndex);
-      if (typeof renderMiniPreview === 'function') renderMiniPreview();
+      // 3개 창 렌더링 즉시 동기화:
+      // 1. 가운데 2열 메인 뷰어 캔버스
+      if (typeof renderMainViewerCanvas === 'function') {
+        await renderMainViewerCanvas(docState.currentIndex);
+      }
+      // 2. 왼쪽 1열 썸네일 카드 캔버스
+      if (typeof renderSingleThumbnailCard === 'function') {
+        await renderSingleThumbnailCard(docState.currentIndex);
+      }
+      // 3. 우측(PC 기준 좌측 미리보기 창) 객체 설정 내 미니 프리뷰
+      if (typeof updateMiniPreview === 'function') {
+        updateMiniPreview();
+      }
 
       if (typeof showExitToast === 'function') showExitToast('자르기 영역이 초기화되었습니다.');
     }
@@ -409,3 +433,10 @@
         height: Math.max(10, Math.round(origH * (crop.h || 1)))
       };
     }
+
+    // 창 크기가 모바일(860px 이하)로 축소될 경우 열려 있던 자르기 모드 자동 해제
+    window.addEventListener('resize', () => {
+      if (window.innerWidth <= 860 && isCropActive) {
+        cancelCrop();
+      }
+    });
