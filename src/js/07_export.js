@@ -65,7 +65,7 @@
 
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
-          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
+          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(fullOrigW, fullOrigH);
           const scaleMul = (p.type === 'pdf') ? cfg.scale : imgF;
           const refW = baseOrigW * scaleMul, refH = baseOrigH * scaleMul;
           const isOrigLandscape = origW > origH;
@@ -97,6 +97,7 @@
 
           let finalCanvas = document.createElement('canvas');
           drawPaperWithImage(finalCanvas, p, cfg, { targetWidth: paperW, targetHeight: paperH });
+          const fctx = finalCanvas.getContext('2d');
 
           let blob;
           const fmt = cfg.format || 'png';
@@ -224,7 +225,7 @@
 
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
-          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
+          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(fullOrigW, fullOrigH);
           const scaleMul = (p.type === 'pdf') ? 2.5 : imgF;
           const refW = baseOrigW * scaleMul, refH = baseOrigH * scaleMul;
           const isOrigLandscape = origW > origH;

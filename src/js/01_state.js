@@ -2,7 +2,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.12.0 (종이 vs 객체 분리 아키텍처 및 객체 자르기 vs 종이 연동 무결성 확립)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.12.1 (종이 연동 자르기 시 인쇄·내보내기 페이지 배율 및 가로폭 1:1 일관성 보장)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {

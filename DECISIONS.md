@@ -382,3 +382,18 @@
      - `triggerPrint()`: 객체 자르기 시 용지 전체 크기로 인쇄 페이지에 출력되어 실제 종이 위에 의도한 배치가 그대로 출력되도록 보장.
   4. **3창 초고해상도 보존 명문화**:
      - 1열 썸네일(`baseW = 800`), 2열 메인 뷰어(`baseDim = 2000`), 3열 미니 프리뷰(`dpr >= 3.5`)를 엄격히 준수하며 어떤 경우에도 임의 다운샘플링을 금지함.
+
+---
+
+### ADR-026: 종이 연동 자르기 시 인쇄(`@page`) 및 내보내기 페이지 배율·가로폭 1:1 일관성 보장
+- **결정 일자**: v2.12.1 (2026-10-20)
+- **배경 및 원인**:
+  - 세로형(Portrait, 예: `210mm × 297mm`) 페이지에서 일부 영역을 가로로 긴 배너 형태로 **종이 연동 자르기(`cropPaper = true`)**한 뒤 브라우저 인쇄(또는 인쇄창에서 PDF 저장)를 수행하면, 잘라낸 페이지의 가로 폭이 다른 페이지들(`210mm`)보다 약 1.414배(`297mm`) 크게 뻥튀기되어 페이지 간 가로 폭이 들쑥날쑥해지는 문제 발생.
+  - 원인은 `triggerPrint()`에서 `@page { size: pgW mm pgH mm }` 물리 치수를 계산할 때, 미자르기 원본 페이지의 기준 스케일을 참조하지 않고 **잘라낸 결과 캔버스(`finalCanvas`)의 긴 변을 무조건 `297mm`로 정규화(`cw >= ch ? 297 : ...`)**했기 때문. 세로 페이지의 높이를 자르면서 가로(`cw`)가 세로(`ch`)보다 길어지자 가로 폭을 `210mm`에서 `297mm`로 강제 확대한 것이 직접적 원인이었음.
+  - 또한 이미지 항목(`p.type === 'image'`)의 경우 `getImagePageFactor(origW, origH)`에 잘린 치수를 전달하여 크롭 전후 페이지 픽셀 밀도(`scaleMul`)가 달라지는 잠재적 불일치가 존재했음.
+- **확정 규칙**:
+  1. **인쇄 시 미자르기 전체 용지 기준 물리 스케일(`mmPerPx`) 1:1 고정 (`triggerPrint`)**:
+     - 먼저 자르기 전 원래 용지의 전체 픽셀 크기(`fullPaperW, fullPaperH`)를 산출하고, 그 긴 변이 `pgLong = 297mm`에 대응하도록 기준 밀리미터 스케일 `mmPerPx = 297 / Math.max(fullPaperW, fullPaperH)`를 확정.
+     - 실제 출력 캔버스(`cw = finalCanvas.width, ch = finalCanvas.height`)의 인쇄 물리 크기를 `pgW = cw * mmPerPx`, `pgH = ch * mmPerPx`로 계산하여, 세로 페이지를 가로로 얇게 종이 연동 자르기하더라도 가로 폭(`210mm`)과 배율이 다른 원본 페이지들과 100% 일치하도록 보장.
+  2. **이미지 페이지 배율 계산 시 원본 치수(`fullOrigW, fullOrigH`) 기준 고정**:
+     - `triggerPrint()`, `executeSaveSplitImages()`, `executeSaveMergedPdf()` 전 구간에서 `getImagePageFactor(fullOrigW, fullOrigH)`를 사용하여 종이 연동 자르기 시에도 이미지 픽셀 배율이 변하지 않도록 통일.

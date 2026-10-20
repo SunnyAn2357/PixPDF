@@ -153,6 +153,8 @@ flowchart TD
 2. **이미지로 저장 (`exportPdfAsImages`)**:
    - 체크된 각 페이지를 설정된 포맷(PNG, JPEG, WebP 등) 및 화질로 렌더링.
    - JSZip을 통해 `page_001.png`, `page_002.png`와 같이 3자리 0-패딩 파일명으로 일괄 압축 다운로드.
+3. **인쇄 및 인쇄창 PDF 저장 (`triggerPrint` - ADR-026)**:
+   - 각 페이지마다 미자르기 전체 용지(`fullPaperW, fullPaperH`)의 긴 변(`297mm`)을 기준으로 단일 물리 스케일(`mmPerPx`)을 산출하여 `@page` 크기를 부여함으로써, 종이 연동 자르기 후에도 페이지 간 가로 폭과 배율이 1:1로 일관되게 유지됨.
 
 ---
 

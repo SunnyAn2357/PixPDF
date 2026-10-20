@@ -471,9 +471,12 @@
 
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
-          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
+          const fullBaseOrigW = isPageRot90 ? fullOrigH : fullOrigW;
+          const fullBaseOrigH = isPageRot90 ? fullOrigW : fullOrigH;
+          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(fullOrigW, fullOrigH);
           const scaleMul = (p.type === 'pdf') ? 2.5 : imgF;
           const refW = baseOrigW * scaleMul, refH = baseOrigH * scaleMul;
+          const fullRefW = fullBaseOrigW * scaleMul, fullRefH = fullBaseOrigH * scaleMul;
           const isOrigLandscape = origW > origH;
           const orientOpt = cfg.orient || 'auto';
           const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
@@ -483,6 +486,29 @@
           const customW = isPaperCrop ? refW : cfg.customW;
           const customH = isPaperCrop ? refH : cfg.customH;
           const paper = resolvePaperGeometry(sizeKey, isLandscape, refW, refH, customW, customH);
+
+          // 미자르기 기준 전체 용지 크기 산출 (종이 연동 자르기 시에도 인쇄 배율/가로폭이 뻥튀기되지 않고 원본 비율과 1:1 일치하도록 기준점 확보)
+          const fullIsOrigLandscape = fullOrigW > fullOrigH;
+          const fullBaseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && fullIsOrigLandscape);
+          const fullIsLandscape = isPageRot90 ? !fullBaseLandscape : fullBaseLandscape;
+          const baseSizeKey = cfg.fit || cfg.pageSize || 'original';
+          const fullPaper = resolvePaperGeometry(baseSizeKey, fullIsLandscape, fullRefW, fullRefH, cfg.customW, cfg.customH);
+          let fullPaperW, fullPaperH;
+          if (baseSizeKey === 'original') {
+            fullPaperW = Math.round(fullRefW);
+            fullPaperH = Math.round(fullRefH);
+          } else if (baseSizeKey === 'custom') {
+            fullPaperW = Math.round(fullPaper.widthPx);
+            fullPaperH = Math.round(fullPaper.heightPx);
+          } else {
+            if (fullPaper.isLandscape) {
+              fullPaperW = Math.max(fullRefW, Math.round(fullRefH * fullPaper.ratio));
+              fullPaperH = Math.round(fullPaperW / fullPaper.ratio);
+            } else {
+              fullPaperH = Math.max(fullRefH, Math.round(fullRefW / fullPaper.ratio));
+              fullPaperW = Math.round(fullPaperH * fullPaper.ratio);
+            }
+          }
 
           let paperW, paperH;
           if (cfg.fit === 'original' || cfg.pageSize === 'original') {
@@ -507,11 +533,12 @@
           const pageItem = document.createElement('div');
           pageItem.className = 'print-page-item';
           {
-            // 페이지별 고정 mm 용지 크기 지정 (vh 단위 오차로 인한 빈 페이지/축소 방지)
+            // 페이지별 고정 mm 용지 크기 지정 (원본 전체 용지의 긴 변 297mm 기준 스케일을 유지하여, 종이 연동 자르기 후에도 가로 폭이 들쑥날쑥해지지 않도록 보장)
             const pgLong = 297;
             const cw = finalCanvas.width, ch = finalCanvas.height;
-            const pgW = cw >= ch ? pgLong : Math.round(pgLong * cw / ch * 100) / 100;
-            const pgH = cw >= ch ? Math.round(pgLong * ch / cw * 100) / 100 : pgLong;
+            const mmPerPx = pgLong / Math.max(1, Math.max(fullPaperW, fullPaperH));
+            const pgW = Math.max(10, Math.round(cw * mmPerPx * 100) / 100);
+            const pgH = Math.max(10, Math.round(ch * mmPerPx * 100) / 100);
             const pgName = 'pg' + printPageSeq++;
             printStyleEl.textContent += '@page ' + pgName + ' { size: ' + pgW + 'mm ' + pgH + 'mm; margin: 0; }\n';
             pageItem.style.page = pgName;
