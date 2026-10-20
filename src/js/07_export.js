@@ -49,9 +49,19 @@
             await ensureItemCanvas(p);
           }
 
-          const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width || p.imgObj.width, height: p.height || p.imgObj.height };
-          const origW = effDims.width;
-          const origH = effDims.height;
+          const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
+          const fullOrigW = p.width || (p.imgObj ? (p.imgObj.naturalWidth || p.imgObj.width) : 1200);
+          const fullOrigH = p.height || (p.imgObj ? (p.imgObj.naturalHeight || p.imgObj.height) : 1600);
+
+          let origW, origH;
+          if (isPaperCrop) {
+            const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: fullOrigW, height: fullOrigH };
+            origW = effDims.width;
+            origH = effDims.height;
+          } else {
+            origW = fullOrigW;
+            origH = fullOrigH;
+          }
 
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
@@ -63,7 +73,6 @@
           const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
           const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
           let sizeKey = cfg.fit || cfg.pageSize || 'original';
-          const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
           if (isPaperCrop) sizeKey = 'custom';
           const customW = isPaperCrop ? refW : cfg.customW;
           const customH = isPaperCrop ? refH : cfg.customH;
@@ -199,9 +208,19 @@
             await ensureItemCanvas(p);
           }
 
-          const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width || p.imgObj.width, height: p.height || p.imgObj.height };
-          const origW = effDims.width;
-          const origH = effDims.height;
+          const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
+          const fullOrigW = p.width || (p.imgObj ? (p.imgObj.naturalWidth || p.imgObj.width) : 1200);
+          const fullOrigH = p.height || (p.imgObj ? (p.imgObj.naturalHeight || p.imgObj.height) : 1600);
+
+          let origW, origH;
+          if (isPaperCrop) {
+            const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: fullOrigW, height: fullOrigH };
+            origW = effDims.width;
+            origH = effDims.height;
+          } else {
+            origW = fullOrigW;
+            origH = fullOrigH;
+          }
 
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
@@ -213,7 +232,6 @@
           const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
           const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
           let sizeKey = cfg.fit || cfg.pageSize || 'original';
-          const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
           if (isPaperCrop) sizeKey = 'custom';
           const customW = isPaperCrop ? refW : cfg.customW;
           const customH = isPaperCrop ? refH : cfg.customH;

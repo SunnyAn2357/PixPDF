@@ -2591,7 +2591,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.11.6 (자르기 영역 전체 이동(Move) 지원 및 이미지/종이 본체 완전 고정)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.12.0 (종이 vs 객체 분리 아키텍처 및 객체 자르기 vs 종이 연동 무결성 확립)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -3164,10 +3164,24 @@
       // [핵심] 중앙 메인 뷰어에서 자르기 모드(isCropActive)가 켜져 있을 때는 원본 전체 이미지를 표시하여
       // 이전에 잘랐던 핸들 위치를 원본 상에서 자유롭게 재조정(확장/축소)할 수 있도록 보장
       const isViewerCropActive = (typeof isCropActive !== 'undefined' && isCropActive && canvas.id === 'mainViewerCanvas');
-      const effImgSource = (!isViewerCropActive && typeof getEffectiveImageSource === 'function') ? getEffectiveImageSource(item) : item.imgObj;
-      const effDims = (!isViewerCropActive && typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(item) : { width: item.width || item.imgObj.naturalWidth || item.imgObj.width, height: item.height || item.imgObj.naturalHeight || item.imgObj.height };
-      const origW = effDims.width;
-      const origH = effDims.height;
+      const isPaperCrop = Boolean(!isViewerCropActive && cfg.crop && cfg.crop.cropPaper);
+      const isObjectCrop = Boolean(!isViewerCropActive && cfg.crop && !cfg.crop.cropPaper);
+
+      const fullW = item.width || (item.imgObj ? (item.imgObj.naturalWidth || item.imgObj.width) : 1200);
+      const fullH = item.height || (item.imgObj ? (item.imgObj.naturalHeight || item.imgObj.height) : 1600);
+
+      // 1. 용지 바탕 치수 계산
+      // - 종이 연동 (cropPaper: true): 바탕 종이 규격 자체가 잘라낸 이미지에 맞춰 1:1로 함께 축소됨.
+      // - 객체 자르기 (cropPaper: false): 종이 규격(A4, 원본 등)은 절대 변하지 않고 온전히 유지되며, 종이 위에서 객체만 잘려 주변 여백이 보존됨.
+      let origW, origH;
+      if (isPaperCrop) {
+        const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(item) : { width: fullW, height: fullH };
+        origW = effDims.width;
+        origH = effDims.height;
+      } else {
+        origW = fullW;
+        origH = fullH;
+      }
       const rotImgW = isImgRot90 ? origH : origW;
       const rotImgH = isImgRot90 ? origW : origH;
 
@@ -3178,7 +3192,6 @@
       const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
       const marginPx = cfg.margin || 0;
       let sizeKey = cfg.pageSize || cfg.fit || 'original';
-      const isPaperCrop = Boolean(!isViewerCropActive && cfg.crop && cfg.crop.cropPaper);
       if (isPaperCrop) sizeKey = 'custom';
 
       // [핵심 무결성] 용지 규격은 페이지 회전(rotPage / isPageRot90)과 방향(orient)에 의해서만 결정되며
@@ -3261,7 +3274,28 @@
 
       const origDrawW = isImgRot90 ? (baseDrawH * cScale) : (baseDrawW * cScale * scaleX);
       const origDrawH = isImgRot90 ? (baseDrawW * cScale * scaleX) : (baseDrawH * cScale);
-      drawPerspectiveQuad(ctx, effImgSource, -origDrawW / 2, -origDrawH / 2, origDrawW, origDrawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
+      
+      if (isObjectCrop && cfg.crop) {
+        // [객체 자르기]: 종이 규격 및 위치는 고정 유지하고, 종이 위에서 사용자가 지정한 객체 영역만 정확히 클리핑
+        const crop = cfg.crop;
+        const cx = -origDrawW / 2 + origDrawW * (crop.x || 0);
+        const cy = -origDrawH / 2 + origDrawH * (crop.y || 0);
+        const cw = origDrawW * (crop.w !== undefined ? crop.w : 1);
+        const ch = origDrawH * (crop.h !== undefined ? crop.h : 1);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(cx, cy, cw, ch);
+        ctx.clip();
+        drawPerspectiveQuad(ctx, item.imgObj, -origDrawW / 2, -origDrawH / 2, origDrawW, origDrawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
+        ctx.restore();
+      } else if (isPaperCrop) {
+        // [종이 연동]: 종이 바탕 자체가 잘린 크기에 맞춰 축소된 상태이므로, 슬라이스된 캔버스를 타이트하게 렌더링
+        const effImgSource = (typeof getEffectiveImageSource === 'function') ? getEffectiveImageSource(item) : item.imgObj;
+        drawPerspectiveQuad(ctx, effImgSource, -origDrawW / 2, -origDrawH / 2, origDrawW, origDrawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
+      } else {
+        // 미자르기 또는 뷰어 자르기 편집 모드: 원본 전체 이미지를 온전히 렌더링
+        drawPerspectiveQuad(ctx, item.imgObj, -origDrawW / 2, -origDrawH / 2, origDrawW, origDrawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
+      }
       ctx.restore();
 
       return paper;
@@ -4072,9 +4106,19 @@
             await ensureItemCanvas(p);
           }
 
-          const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width || p.imgObj.width, height: p.height || p.imgObj.height };
-          const origW = effDims.width;
-          const origH = effDims.height;
+          const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
+          const fullOrigW = p.width || (p.imgObj ? (p.imgObj.naturalWidth || p.imgObj.width) : 1200);
+          const fullOrigH = p.height || (p.imgObj ? (p.imgObj.naturalHeight || p.imgObj.height) : 1600);
+
+          let origW, origH;
+          if (isPaperCrop) {
+            const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: fullOrigW, height: fullOrigH };
+            origW = effDims.width;
+            origH = effDims.height;
+          } else {
+            origW = fullOrigW;
+            origH = fullOrigH;
+          }
 
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
@@ -4086,7 +4130,6 @@
           const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
           const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
           let sizeKey = cfg.fit || cfg.pageSize || 'original';
-          const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
           if (isPaperCrop) sizeKey = 'custom';
           const customW = isPaperCrop ? refW : cfg.customW;
           const customH = isPaperCrop ? refH : cfg.customH;
@@ -6215,12 +6258,20 @@ const modal = document.getElementById('modalPdfPicker');
       const marginPx = cfg.margin || 0;
 
       const item = docState.items[curIdx];
-      const effDims = (typeof getEffectiveImageDimensions === 'function' && item) ? getEffectiveImageDimensions(item) : { width: item ? (item.width || 1200) : 1200, height: item ? (item.height || 1600) : 1600 };
-      const origW = effDims.width;
-      const origH = effDims.height;
-
       const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
-      if (isPaperCrop) fitKey = 'custom';
+      const fullW = item ? (item.width || (item.imgObj ? (item.imgObj.naturalWidth || item.imgObj.width) : 1200)) : 1200;
+      const fullH = item ? (item.height || (item.imgObj ? (item.imgObj.naturalHeight || item.imgObj.height) : 1600)) : 1600;
+
+      let origW, origH;
+      if (isPaperCrop) {
+        const effDims = (typeof getEffectiveImageDimensions === 'function' && item) ? getEffectiveImageDimensions(item) : { width: fullW, height: fullH };
+        origW = effDims.width;
+        origH = effDims.height;
+        fitKey = 'custom';
+      } else {
+        origW = fullW;
+        origH = fullH;
+      }
 
       const basePaperW = (isPageRot90 ? origH : origW) + marginPx * 2;
       const basePaperH = (isPageRot90 ? origW : origH) + marginPx * 2;
@@ -6367,9 +6418,19 @@ const modal = document.getElementById('modalPdfPicker');
             await ensureItemCanvas(p);
           }
 
-          const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width || p.imgObj.width, height: p.height || p.imgObj.height };
-          const origW = effDims.width;
-          const origH = effDims.height;
+          const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
+          const fullOrigW = p.width || (p.imgObj ? (p.imgObj.naturalWidth || p.imgObj.width) : 1200);
+          const fullOrigH = p.height || (p.imgObj ? (p.imgObj.naturalHeight || p.imgObj.height) : 1600);
+
+          let origW, origH;
+          if (isPaperCrop) {
+            const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: fullOrigW, height: fullOrigH };
+            origW = effDims.width;
+            origH = effDims.height;
+          } else {
+            origW = fullOrigW;
+            origH = fullOrigH;
+          }
 
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
@@ -6381,7 +6442,6 @@ const modal = document.getElementById('modalPdfPicker');
           const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
           const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
           let sizeKey = cfg.fit || cfg.pageSize || 'original';
-          const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
           if (isPaperCrop) sizeKey = 'custom';
           const customW = isPaperCrop ? refW : cfg.customW;
           const customH = isPaperCrop ? refH : cfg.customH;
@@ -6517,9 +6577,19 @@ const modal = document.getElementById('modalPdfPicker');
             await ensureItemCanvas(p);
           }
 
-          const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: p.width || p.imgObj.width, height: p.height || p.imgObj.height };
-          const origW = effDims.width;
-          const origH = effDims.height;
+          const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
+          const fullOrigW = p.width || (p.imgObj ? (p.imgObj.naturalWidth || p.imgObj.width) : 1200);
+          const fullOrigH = p.height || (p.imgObj ? (p.imgObj.naturalHeight || p.imgObj.height) : 1600);
+
+          let origW, origH;
+          if (isPaperCrop) {
+            const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(p) : { width: fullOrigW, height: fullOrigH };
+            origW = effDims.width;
+            origH = effDims.height;
+          } else {
+            origW = fullOrigW;
+            origH = fullOrigH;
+          }
 
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
@@ -6531,7 +6601,6 @@ const modal = document.getElementById('modalPdfPicker');
           const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
           const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
           let sizeKey = cfg.fit || cfg.pageSize || 'original';
-          const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
           if (isPaperCrop) sizeKey = 'custom';
           const customW = isPaperCrop ? refW : cfg.customW;
           const customH = isPaperCrop ? refH : cfg.customH;
@@ -7853,7 +7922,7 @@ const modal = document.getElementById('modalPdfPicker');
         const zip = new JSZip();
 
         const projectMeta = {
-          version: '2.11.6',
+          version: '2.12.0',
           appName: 'PixPDF',
           createdAt: new Date().toISOString(),
           fileName: docState.fileName || 'PixPDF_Project',

@@ -35,10 +35,24 @@
       // [핵심] 중앙 메인 뷰어에서 자르기 모드(isCropActive)가 켜져 있을 때는 원본 전체 이미지를 표시하여
       // 이전에 잘랐던 핸들 위치를 원본 상에서 자유롭게 재조정(확장/축소)할 수 있도록 보장
       const isViewerCropActive = (typeof isCropActive !== 'undefined' && isCropActive && canvas.id === 'mainViewerCanvas');
-      const effImgSource = (!isViewerCropActive && typeof getEffectiveImageSource === 'function') ? getEffectiveImageSource(item) : item.imgObj;
-      const effDims = (!isViewerCropActive && typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(item) : { width: item.width || item.imgObj.naturalWidth || item.imgObj.width, height: item.height || item.imgObj.naturalHeight || item.imgObj.height };
-      const origW = effDims.width;
-      const origH = effDims.height;
+      const isPaperCrop = Boolean(!isViewerCropActive && cfg.crop && cfg.crop.cropPaper);
+      const isObjectCrop = Boolean(!isViewerCropActive && cfg.crop && !cfg.crop.cropPaper);
+
+      const fullW = item.width || (item.imgObj ? (item.imgObj.naturalWidth || item.imgObj.width) : 1200);
+      const fullH = item.height || (item.imgObj ? (item.imgObj.naturalHeight || item.imgObj.height) : 1600);
+
+      // 1. 용지 바탕 치수 계산
+      // - 종이 연동 (cropPaper: true): 바탕 종이 규격 자체가 잘라낸 이미지에 맞춰 1:1로 함께 축소됨.
+      // - 객체 자르기 (cropPaper: false): 종이 규격(A4, 원본 등)은 절대 변하지 않고 온전히 유지되며, 종이 위에서 객체만 잘려 주변 여백이 보존됨.
+      let origW, origH;
+      if (isPaperCrop) {
+        const effDims = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(item) : { width: fullW, height: fullH };
+        origW = effDims.width;
+        origH = effDims.height;
+      } else {
+        origW = fullW;
+        origH = fullH;
+      }
       const rotImgW = isImgRot90 ? origH : origW;
       const rotImgH = isImgRot90 ? origW : origH;
 
@@ -49,7 +63,6 @@
       const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
       const marginPx = cfg.margin || 0;
       let sizeKey = cfg.pageSize || cfg.fit || 'original';
-      const isPaperCrop = Boolean(!isViewerCropActive && cfg.crop && cfg.crop.cropPaper);
       if (isPaperCrop) sizeKey = 'custom';
 
       // [핵심 무결성] 용지 규격은 페이지 회전(rotPage / isPageRot90)과 방향(orient)에 의해서만 결정되며
@@ -132,7 +145,28 @@
 
       const origDrawW = isImgRot90 ? (baseDrawH * cScale) : (baseDrawW * cScale * scaleX);
       const origDrawH = isImgRot90 ? (baseDrawW * cScale * scaleX) : (baseDrawH * cScale);
-      drawPerspectiveQuad(ctx, effImgSource, -origDrawW / 2, -origDrawH / 2, origDrawW, origDrawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
+      
+      if (isObjectCrop && cfg.crop) {
+        // [객체 자르기]: 종이 규격 및 위치는 고정 유지하고, 종이 위에서 사용자가 지정한 객체 영역만 정확히 클리핑
+        const crop = cfg.crop;
+        const cx = -origDrawW / 2 + origDrawW * (crop.x || 0);
+        const cy = -origDrawH / 2 + origDrawH * (crop.y || 0);
+        const cw = origDrawW * (crop.w !== undefined ? crop.w : 1);
+        const ch = origDrawH * (crop.h !== undefined ? crop.h : 1);
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(cx, cy, cw, ch);
+        ctx.clip();
+        drawPerspectiveQuad(ctx, item.imgObj, -origDrawW / 2, -origDrawH / 2, origDrawW, origDrawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
+        ctx.restore();
+      } else if (isPaperCrop) {
+        // [종이 연동]: 종이 바탕 자체가 잘린 크기에 맞춰 축소된 상태이므로, 슬라이스된 캔버스를 타이트하게 렌더링
+        const effImgSource = (typeof getEffectiveImageSource === 'function') ? getEffectiveImageSource(item) : item.imgObj;
+        drawPerspectiveQuad(ctx, effImgSource, -origDrawW / 2, -origDrawH / 2, origDrawW, origDrawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
+      } else {
+        // 미자르기 또는 뷰어 자르기 편집 모드: 원본 전체 이미지를 온전히 렌더링
+        drawPerspectiveQuad(ctx, item.imgObj, -origDrawW / 2, -origDrawH / 2, origDrawW, origDrawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
+      }
       ctx.restore();
 
       return paper;

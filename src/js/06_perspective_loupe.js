@@ -706,12 +706,20 @@
       const marginPx = cfg.margin || 0;
 
       const item = docState.items[curIdx];
-      const effDims = (typeof getEffectiveImageDimensions === 'function' && item) ? getEffectiveImageDimensions(item) : { width: item ? (item.width || 1200) : 1200, height: item ? (item.height || 1600) : 1600 };
-      const origW = effDims.width;
-      const origH = effDims.height;
-
       const isPaperCrop = Boolean(cfg.crop && cfg.crop.cropPaper);
-      if (isPaperCrop) fitKey = 'custom';
+      const fullW = item ? (item.width || (item.imgObj ? (item.imgObj.naturalWidth || item.imgObj.width) : 1200)) : 1200;
+      const fullH = item ? (item.height || (item.imgObj ? (item.imgObj.naturalHeight || item.imgObj.height) : 1600)) : 1600;
+
+      let origW, origH;
+      if (isPaperCrop) {
+        const effDims = (typeof getEffectiveImageDimensions === 'function' && item) ? getEffectiveImageDimensions(item) : { width: fullW, height: fullH };
+        origW = effDims.width;
+        origH = effDims.height;
+        fitKey = 'custom';
+      } else {
+        origW = fullW;
+        origH = fullH;
+      }
 
       const basePaperW = (isPageRot90 ? origH : origW) + marginPx * 2;
       const basePaperH = (isPageRot90 ? origW : origH) + marginPx * 2;
