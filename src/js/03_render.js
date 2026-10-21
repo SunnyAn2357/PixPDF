@@ -184,18 +184,14 @@
       const origDrawH = isImgRot90 ? (baseDrawW * cScale * scaleX) : (baseDrawH * cScale);
       
       if (isObjectCrop && cfg.crop) {
-        // [객체 자르기]: 종이 규격 및 위치는 고정 유지하고, 종이 위에서 사용자가 지정한 객체 영역만 정확히 클리핑
+        // [객체 자르기]: 종이 규격 및 위치는 고정 유지하고, 종이 위에서 사용자가 지정한 객체 영역만 원래 위치·크기에 렌더링 (투시변환 연동)
         const crop = cfg.crop;
         const cx = -origDrawW / 2 + origDrawW * (crop.x || 0);
         const cy = -origDrawH / 2 + origDrawH * (crop.y || 0);
         const cw = origDrawW * (crop.w !== undefined ? crop.w : 1);
         const ch = origDrawH * (crop.h !== undefined ? crop.h : 1);
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(cx, cy, cw, ch);
-        ctx.clip();
-        drawPerspectiveQuad(ctx, item.imgObj, -origDrawW / 2, -origDrawH / 2, origDrawW, origDrawH, cfg.corners, cfg.trapExp || cfg.trapezoid);
-        ctx.restore();
+        const effImgSource = (typeof getEffectiveImageSource === 'function') ? getEffectiveImageSource(item) : item.imgObj;
+        drawPerspectiveQuad(ctx, effImgSource, cx, cy, cw, ch, cfg.corners, cfg.trapExp || cfg.trapezoid);
       } else if (isPaperCrop) {
         // [종이 연동]: 종이 바탕 자체가 잘린 크기에 맞춰 축소된 상태이므로, 슬라이스된 캔버스를 타이트하게 렌더링
         const effImgSource = (typeof getEffectiveImageSource === 'function') ? getEffectiveImageSource(item) : item.imgObj;

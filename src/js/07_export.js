@@ -276,6 +276,11 @@
               format: [pgW, pgH],
               compress: true
             });
+            if (newPdfDoc.internal && newPdfDoc.internal.events) {
+              newPdfDoc.internal.events.subscribe('putCatalog', function () {
+                newPdfDoc.internal.write('/ViewerPreferences << /PrintScaling /None >>');
+              });
+            }
           } else {
             newPdfDoc.addPage([pgW, pgH], orientation);
           }

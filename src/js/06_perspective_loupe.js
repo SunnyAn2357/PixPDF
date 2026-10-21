@@ -3,59 +3,137 @@
       const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
       const rotRad = (rotImg * Math.PI) / 180;
 
-      const origW = item.width || item.imgObj.naturalWidth || item.imgObj.width;
-      const origH = item.height || item.imgObj.naturalHeight || item.imgObj.height;
-      const rotImgW = isImgRot90 ? origH : origW;
-      const rotImgH = isImgRot90 ? origW : origH;
+      const isViewerCrop = (typeof isCropActive !== 'undefined' && isCropActive);
+      const isPaperCrop = Boolean(!isViewerCrop && cfg.crop && cfg.crop.cropPaper);
+      const isObjectCrop = Boolean(!isViewerCrop && cfg.crop && !cfg.crop.cropPaper);
 
-      const isOrigLandscape = (origW > origH);
+      const fullW = item.width || item.imgObj.naturalWidth || item.imgObj.width;
+      const fullH = item.height || item.imgObj.naturalHeight || item.imgObj.height;
+
       const orientOpt = cfg.orient || 'auto';
-      const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
-      const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
       const marginPx = cfg.margin || 0;
       const sizeKey = cfg.pageSize || cfg.fit || 'original';
-
-      // [핵심 무결성] 용지 규격은 페이지 회전(rotPage / isPageRot90)과 방향(orient)에 의해서만 결정되며
-      // 내용물인 이미지 자체의 회전(rotImg)에 의해 바탕 용지가 회전되는 일이 원천 차단됩니다.
-      const basePaperW = (isPageRot90 ? origH : origW) + marginPx * 2;
-      const basePaperH = (isPageRot90 ? origW : origH) + marginPx * 2;
-      const paper = resolvePaperGeometry(sizeKey, isLandscape, basePaperW, basePaperH, cfg.customW, cfg.customH);
-
-      const scaleFactor = canvasW / paper.widthPx;
-      const viewMargin = Math.round(marginPx * scaleFactor);
-      const innerW = Math.max(10, canvasW - (viewMargin * 2));
-      const innerH = Math.max(10, canvasH - (viewMargin * 2));
-
-      const fitScale = Math.min(innerW / rotImgW, innerH / rotImgH);
-      const baseDrawW = rotImgW * fitScale;
-      const baseDrawH = rotImgH * fitScale;
-
       const cScale = cfg.contentScale || 1.0;
       const scaleX = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
-      const finalW = baseDrawW * cScale * scaleX;
-      const finalH = baseDrawH * cScale;
 
-      const shiftX = canvasW * ((cfg.offsetX || 0) / 100);
-      const shiftY = canvasH * ((cfg.offsetY || 0) / 100);
-      const posX = (canvasW - finalW) / 2 + shiftX;
-      const posY = (canvasH - finalH) / 2 + shiftY;
+      let posX, posY, finalW, finalH, origDrawW, origDrawH;
+      let dx, dy, dw, dh, srcW, srcH;
+      let subRect = null;
 
-      const origDrawW = isImgRot90 ? (baseDrawH * cScale) : (baseDrawW * cScale * scaleX);
-      const origDrawH = isImgRot90 ? (baseDrawW * cScale * scaleX) : (baseDrawH * cScale);
+      if (isPaperCrop) {
+        // [ADR-028] 종이 연동 자르기: 원래 용지 캔버스 중앙에 축소 배치된 잘린 용지(subRect) 기준으로 4개 핀 좌표 계산
+        const fullBasePaperW = (isPageRot90 ? fullH : fullW) + marginPx * 2;
+        const fullBasePaperH = (isPageRot90 ? fullW : fullH) + marginPx * 2;
+        const fullBaseLand = orientOpt === 'l' || (orientOpt === 'auto' && fullW > fullH);
+        const fullIsLand = isPageRot90 ? !fullBaseLand : fullBaseLand;
+        const fullPaper = resolvePaperGeometry(sizeKey, fullIsLand, fullBasePaperW, fullBasePaperH, cfg.customW, cfg.customH);
 
-      const dx = -origDrawW / 2;
-      const dy = -origDrawH / 2;
-      const dw = origDrawW;
-      const dh = origDrawH;
+        const vM = marginPx * canvasW / (fullPaper.widthPx || canvasW);
+        const rFW = isImgRot90 ? fullH : fullW;
+        const rFH = isImgRot90 ? fullW : fullH;
+        const k = Math.min(Math.max(10, canvasW - vM * 2) / rFW, Math.max(10, canvasH - vM * 2) / rFH);
+        const eff = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(item) : { width: fullW, height: fullH };
+        const subW = Math.max(10, Math.min(canvasW, Math.round(((isPageRot90 ? eff.height : eff.width) * k) + vM * 2)));
+        const subH = Math.max(10, Math.min(canvasH, Math.round(((isPageRot90 ? eff.width : eff.height) * k) + vM * 2)));
+        const sx = Math.round((canvasW - subW) / 2);
+        const sy = Math.round((canvasH - subH) / 2);
+        subRect = { sx, sy, subW, subH };
 
-      const trap = cfg.trapezoid || 0;
-      const trapTopOffset = trap > 0 ? (dw * trap) / 2 : 0;
-      const trapBotOffset = trap < 0 ? (dw * Math.abs(trap)) / 2 : 0;
+        const origW = eff.width;
+        const origH = eff.height;
+        const rotImgW = isImgRot90 ? origH : origW;
+        const rotImgH = isImgRot90 ? origW : origH;
+        const subPaperW = (isPageRot90 ? origH : origW) + marginPx * 2;
+        const subPaperH = (isPageRot90 ? origW : origH) + marginPx * 2;
+        const subViewMargin = Math.round(marginPx * (subW / (subPaperW || subW)));
+        const innerW = Math.max(10, subW - (subViewMargin * 2));
+        const innerH = Math.max(10, subH - (subViewMargin * 2));
 
-      const srcW = item.imgObj.naturalWidth || item.imgObj.width || dw;
-      const srcH = item.imgObj.naturalHeight || item.imgObj.height || dh;
+        const fitScale = Math.min(innerW / rotImgW, innerH / rotImgH);
+        const baseDrawW = rotImgW * fitScale;
+        const baseDrawH = rotImgH * fitScale;
+
+        finalW = baseDrawW * cScale * scaleX;
+        finalH = baseDrawH * cScale;
+
+        const shiftX = subW * ((cfg.offsetX || 0) / 100);
+        const shiftY = subH * ((cfg.offsetY || 0) / 100);
+        posX = sx + (subW - finalW) / 2 + shiftX;
+        posY = sy + (subH - finalH) / 2 + shiftY;
+
+        origDrawW = isImgRot90 ? (baseDrawH * cScale) : (baseDrawW * cScale * scaleX);
+        origDrawH = isImgRot90 ? (baseDrawW * cScale * scaleX) : (baseDrawH * cScale);
+
+        dx = -origDrawW / 2;
+        dy = -origDrawH / 2;
+        dw = origDrawW;
+        dh = origDrawH;
+
+        const effSrc = (typeof getEffectiveImageSource === 'function') ? getEffectiveImageSource(item) : item.imgObj;
+        srcW = effSrc.naturalWidth || effSrc.width || dw;
+        srcH = effSrc.naturalHeight || effSrc.height || dh;
+      } else {
+        const origW = fullW;
+        const origH = fullH;
+        const rotImgW = isImgRot90 ? origH : origW;
+        const rotImgH = isImgRot90 ? origW : origH;
+
+        const isOrigLandscape = (origW > origH);
+        const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
+        const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
+
+        // [핵심 무결성] 용지 규격은 페이지 회전(rotPage / isPageRot90)과 방향(orient)에 의해서만 결정되며
+        // 내용물인 이미지 자체의 회전(rotImg)에 의해 바탕 용지가 회전되는 일이 원천 차단됩니다.
+        const basePaperW = (isPageRot90 ? origH : origW) + marginPx * 2;
+        const basePaperH = (isPageRot90 ? origW : origH) + marginPx * 2;
+        const paper = resolvePaperGeometry(sizeKey, isLandscape, basePaperW, basePaperH, cfg.customW, cfg.customH);
+
+        const scaleFactor = canvasW / paper.widthPx;
+        const viewMargin = Math.round(marginPx * scaleFactor);
+        const innerW = Math.max(10, canvasW - (viewMargin * 2));
+        const innerH = Math.max(10, canvasH - (viewMargin * 2));
+
+        const fitScale = Math.min(innerW / rotImgW, innerH / rotImgH);
+        const baseDrawW = rotImgW * fitScale;
+        const baseDrawH = rotImgH * fitScale;
+
+        finalW = baseDrawW * cScale * scaleX;
+        finalH = baseDrawH * cScale;
+
+        const shiftX = canvasW * ((cfg.offsetX || 0) / 100);
+        const shiftY = canvasH * ((cfg.offsetY || 0) / 100);
+        posX = (canvasW - finalW) / 2 + shiftX;
+        posY = (canvasH - finalH) / 2 + shiftY;
+
+        origDrawW = isImgRot90 ? (baseDrawH * cScale) : (baseDrawW * cScale * scaleX);
+        origDrawH = isImgRot90 ? (baseDrawW * cScale * scaleX) : (baseDrawH * cScale);
+
+        if (isObjectCrop && cfg.crop) {
+          // [ADR-028] 객체 자르기: 고정된 원래 용지 위에서 잘라낸 객체 사각형의 4개 모서리에 핀 배치
+          const crop = cfg.crop;
+          dx = -origDrawW / 2 + origDrawW * (crop.x || 0);
+          dy = -origDrawH / 2 + origDrawH * (crop.y || 0);
+          dw = origDrawW * (crop.w !== undefined ? crop.w : 1);
+          dh = origDrawH * (crop.h !== undefined ? crop.h : 1);
+          const effSrc = (typeof getEffectiveImageSource === 'function') ? getEffectiveImageSource(item) : item.imgObj;
+          srcW = effSrc.naturalWidth || effSrc.width || dw;
+          srcH = effSrc.naturalHeight || effSrc.height || dh;
+        } else {
+          dx = -origDrawW / 2;
+          dy = -origDrawH / 2;
+          dw = origDrawW;
+          dh = origDrawH;
+          srcW = item.imgObj.naturalWidth || item.imgObj.width || dw;
+          srcH = item.imgObj.naturalHeight || item.imgObj.height || dh;
+        }
+      }
+
       const scalePxX = dw / srcW;
       const scalePxY = dh / srcH;
+
+      const { topExp, botExp } = resolveTrapezoidExpands(cfg.trapExp || cfg.trapezoid, dw, scalePxX);
+      const trapTopOffset = topExp / 2;
+      const trapBotOffset = botExp / 2;
 
       const c = cfg.corners || { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
 
@@ -107,7 +185,8 @@
         dh,
         cx,
         cy,
-        rotRad
+        rotRad,
+        subRect
       };
     }
 
@@ -437,24 +516,36 @@
         lctx.drawImage(srcCanvas, 0, 0, srcCanvas.width, srcCanvas.height, pInLoupeX, pInLoupeY, pInLoupeW, pInLoupeH);
       }
 
-      // 5. [핵심] 종이 용지 외곽 테두리선(Paper Boundary) 및 4개 모서리(Corners) 강조
+      // 5. [핵심] 종이 용지 외곽 테두리선(Paper Boundary) 및 4개 모서리(Corners) 강조 (종이 연동 시 축소된 용지 테두리 강조)
+      let bX = pInLoupeX, bY = pInLoupeY, bW = pInLoupeW, bH = pInLoupeH;
+      const curItem = docState.items[docState.currentIndex];
+      const curCfg = getEffectiveItemSettings(docState.currentIndex);
+      if (srcCanvas && srcCanvas.width > 0 && curItem) {
+        const cPts = getCornerCanvasPoints(curItem, curCfg, srcCanvas.width, srcCanvas.height);
+        if (cPts && cPts.subRect) {
+          bX = pInLoupeX + (cPts.subRect.sx / srcCanvas.width) * pInLoupeW;
+          bY = pInLoupeY + (cPts.subRect.sy / srcCanvas.height) * pInLoupeH;
+          bW = (cPts.subRect.subW / srcCanvas.width) * pInLoupeW;
+          bH = (cPts.subRect.subH / srcCanvas.height) * pInLoupeH;
+        }
+      }
       lctx.strokeStyle = '#0f766e';
       lctx.lineWidth = 1.6;
-      lctx.strokeRect(pInLoupeX, pInLoupeY, pInLoupeW, pInLoupeH);
+      lctx.strokeRect(bX, bY, bW, bH);
 
       // 용지 4개 모서리 L자형 직각 가이드
-      const arm = Math.min(12, Math.min(pInLoupeW, pInLoupeH) * 0.2);
+      const arm = Math.min(12, Math.min(bW, bH) * 0.2);
       lctx.strokeStyle = '#047857';
       lctx.lineWidth = 2.5;
       lctx.beginPath();
       // TL
-      lctx.moveTo(pInLoupeX, pInLoupeY + arm); lctx.lineTo(pInLoupeX, pInLoupeY); lctx.lineTo(pInLoupeX + arm, pInLoupeY);
+      lctx.moveTo(bX, bY + arm); lctx.lineTo(bX, bY); lctx.lineTo(bX + arm, bY);
       // TR
-      lctx.moveTo(pInLoupeX + pInLoupeW - arm, pInLoupeY); lctx.lineTo(pInLoupeX + pInLoupeW, pInLoupeY); lctx.lineTo(pInLoupeX + pInLoupeW, pInLoupeY + arm);
+      lctx.moveTo(bX + bW - arm, bY); lctx.lineTo(bX + bW, bY); lctx.lineTo(bX + bW, bY + arm);
       // BR
-      lctx.moveTo(pInLoupeX + pInLoupeW, pInLoupeY + pInLoupeH - arm); lctx.lineTo(pInLoupeX + pInLoupeW, pInLoupeY + pInLoupeH); lctx.lineTo(pInLoupeX + pInLoupeW - arm, pInLoupeY + pInLoupeH);
+      lctx.moveTo(bX + bW, bY + bH - arm); lctx.lineTo(bX + bW, bY + bH); lctx.lineTo(bX + bW - arm, bY + bH);
       // BL
-      lctx.moveTo(pInLoupeX + arm, pInLoupeY + pInLoupeH); lctx.lineTo(pInLoupeX, pInLoupeY + pInLoupeH); lctx.lineTo(pInLoupeX, pInLoupeY + pInLoupeH - arm);
+      lctx.moveTo(bX + arm, bY + bH); lctx.lineTo(bX, bY + bH); lctx.lineTo(bX, bY + bH - arm);
       lctx.stroke();
 
       lctx.restore();
@@ -546,24 +637,36 @@
         lctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, pInLoupeX, pInLoupeY, pInLoupeW, pInLoupeH);
       }
 
-      // 5. [핵심] 종이 용지 외곽 테두리선(Paper Boundary) 및 4개 모서리(Corners) 강조
+      // 5. [핵심] 종이 용지 외곽 테두리선(Paper Boundary) 및 4개 모서리(Corners) 강조 (종이 연동 시 축소된 용지 테두리 강조)
+      let bX = pInLoupeX, bY = pInLoupeY, bW = pInLoupeW, bH = pInLoupeH;
+      const curItem = docState.items[docState.currentIndex];
+      const curCfg = getEffectiveItemSettings(docState.currentIndex);
+      if (canvas.width > 0 && curItem) {
+        const cPts = getCornerCanvasPoints(curItem, curCfg, canvas.width, canvas.height);
+        if (cPts && cPts.subRect) {
+          bX = pInLoupeX + (cPts.subRect.sx / canvas.width) * pInLoupeW;
+          bY = pInLoupeY + (cPts.subRect.sy / canvas.height) * pInLoupeH;
+          bW = (cPts.subRect.subW / canvas.width) * pInLoupeW;
+          bH = (cPts.subRect.subH / canvas.height) * pInLoupeH;
+        }
+      }
       lctx.strokeStyle = '#0f766e';
       lctx.lineWidth = 1.6;
-      lctx.strokeRect(pInLoupeX, pInLoupeY, pInLoupeW, pInLoupeH);
+      lctx.strokeRect(bX, bY, bW, bH);
 
       // 용지 4개 모서리 L자형 직각 가이드
-      const arm = Math.min(14, Math.min(pInLoupeW, pInLoupeH) * 0.2);
+      const arm = Math.min(14, Math.min(bW, bH) * 0.2);
       lctx.strokeStyle = '#047857';
       lctx.lineWidth = 2.5;
       lctx.beginPath();
       // TL
-      lctx.moveTo(pInLoupeX, pInLoupeY + arm); lctx.lineTo(pInLoupeX, pInLoupeY); lctx.lineTo(pInLoupeX + arm, pInLoupeY);
+      lctx.moveTo(bX, bY + arm); lctx.lineTo(bX, bY); lctx.lineTo(bX + arm, bY);
       // TR
-      lctx.moveTo(pInLoupeX + pInLoupeW - arm, pInLoupeY); lctx.lineTo(pInLoupeX + pInLoupeW, pInLoupeY); lctx.lineTo(pInLoupeX + pInLoupeW, pInLoupeY + arm);
+      lctx.moveTo(bX + bW - arm, bY); lctx.lineTo(bX + bW, bY); lctx.lineTo(bX + bW, bY + arm);
       // BR
-      lctx.moveTo(pInLoupeX + pInLoupeW, pInLoupeY + pInLoupeH - arm); lctx.lineTo(pInLoupeX + pInLoupeW, pInLoupeY + pInLoupeH); lctx.lineTo(pInLoupeX + pInLoupeW - arm, pInLoupeY + pInLoupeH);
+      lctx.moveTo(bX + bW, bY + bH - arm); lctx.lineTo(bX + bW, bY + bH); lctx.lineTo(bX + bW - arm, bY + bH);
       // BL
-      lctx.moveTo(pInLoupeX + arm, pInLoupeY + pInLoupeH); lctx.lineTo(pInLoupeX, pInLoupeY + pInLoupeH); lctx.lineTo(pInLoupeX, pInLoupeY + pInLoupeH - arm);
+      lctx.moveTo(bX + arm, bY + bH); lctx.lineTo(bX, bY + bH); lctx.lineTo(bX, bY + bH - arm);
       lctx.stroke();
 
       lctx.restore();

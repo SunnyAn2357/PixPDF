@@ -175,8 +175,6 @@
       let longMm = 297;
       if (typeof PAPER_SPECS !== 'undefined' && PAPER_SPECS[key]) {
         longMm = Math.max(PAPER_SPECS[key].wMm, PAPER_SPECS[key].hMm);
-      } else if (key === 'original' && p.type === 'pdf') {
-        longMm = Math.max(fW, fH) * 25.4 / 72;
       }
       const mmPerPx = longMm / Math.max(1, pw, ph);
       const margin = cfg.margin || 0;

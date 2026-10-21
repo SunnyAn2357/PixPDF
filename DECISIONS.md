@@ -414,3 +414,22 @@
   3. **프린터 인쇄** (`triggerPrint`): `@page`는 항상 **원래 용지 크기·방향**. 객체 자르기는 원래 용지 전체가 편집 위치 그대로, 종이 연동은 원래 용지 중앙에 실제 크기(`cw × mmPerPx × imgFit`)로 배치.
   4. **앱 PDF 저장** (`executeSaveMergedPdf`): `unit: 'mm'`으로 실제 크기 기록. 객체 자르기 = 원래 용지 mm(A4 → 210×297), 종이 연동 = 잘린 크기 페이지이되 원래 용지와 같은 실제 축척. `orientation`은 실제 mm 가로/세로로 결정.
   5. **Img 저장**: 이미지 파일에는 용지 방향 개념이 없으므로 종이 연동 결과물이 가로로 길면 가로형 파일이 되는 것이 정상. 객체 자르기는 원래 용지 크기·방향 유지.
+
+
+---
+
+### ADR-028: 자르기(종이 연동·객체 자르기) 후 투시변환 4개 코너 핀 정합성 및 앱 PDF 저장 물리 규격(297mm) 고정
+- **결정 일자**: v2.12.3 (2026-10-21)
+- **배경 및 원인**:
+  1. **자르기 + 투시변환 핀 위치 불일치**:
+     - `v2.12.2`에서 종이 연동(`cropPaper = true`) 페이지를 원래 용지 캔버스 중앙에 실제 축소 크기(`subRect = { sx, sy, subW, subH }`)로 표시하도록 변경했으나, 투시변환 코너 핀 좌표를 산출하는 `getCornerCanvasPoints`(`06_perspective_loupe.js`)가 자르기 상태를 반영하지 않고 여전히 미자르기 원본 용지 모서리 `(0, 0, canvasW, canvasH)`를 기준으로 핀을 배치했음.
+     - 또한 객체 자르기(`cropPaper = false`) 상태에서도 투시변환 핀이 잘린 객체 사각형이 아닌 원본 전체 이미지 외곽에 생성되었고, `drawPaperWithImage`에서 `ctx.clip()`으로만 잘라내어 투시변환 시 모서리가 잘리는 한계가 있었음.
+  2. **앱 자체 [PDF 저장] 결과물의 인쇄 미리보기 확대 문제**:
+     - `getOutputPaperScale`에서 `key === 'original' && p.type === 'pdf'`일 때 `longMm = Math.max(fW, fH) * 25.4 / 72`를 계산했는데, `pdf.js`의 `scale: 1.0` 뷰포트(96 DPI CSS px) 또는 고해상도 스캔/이전 내보내기 PDF(`1654~2526 pt`)가 들어오면 `longMm`이 `400mm ~ 891mm`(A4의 2~3배)로 산출되어, 모니터에서는 창 폭에 맞춰 정상으로 보이지만 인쇄 미리보기(100% 실제 크기)에서는 용지보다 2~3배 커져 확대·잘림 현상이 발생했음.
+- **확정 규칙**:
+  1. **투시변환 4개 핀 및 돋보기(Loupe)의 자르기 상태 100% 정합 (`06_perspective_loupe.js`, `03_render.js`, `08_events.js`)**:
+     - **종이 연동 (`isPaperCrop = true`)**: `getCornerCanvasPoints`에서 화면 캔버스 중앙의 축소된 용지 사각형 `subRect = { sx, sy, subW, subH }`와 슬라이스된 소스(`getEffectiveImageSource`)를 기준으로 4개 핀 좌표를 산출하여, 메인 뷰어와 우측 미니 프리뷰 모두에서 **잘린 이미지(축소된 종이)의 네 모서리에 정확히 핀과 폴리곤이 위치**하도록 보장. 돋보기(`updateMiniPinLoupe`, `updateViewerPinLoupe`)의 초록색 용지 경계선과 L자 가이드도 `subRect`를 감싸도록 동기화.
+     - **객체 자르기 (`isObjectCrop = true`)**: 고정된 원래 용지 위에서 잘라낸 객체 영역 `(cx, cy, cw, ch)`의 네 모서리에 핀을 배치하고, `drawPaperWithImage`에서 `drawPerspectiveQuad(ctx, effImgSource, cx, cy, cw, ch, ...)`로 직접 렌더링하여 고정된 용지 위에서 잘린 객체만 자유롭게 투시변환할 수 있도록 구현.
+  2. **앱 PDF 저장 시 표준 용지 물리 규격(`longMm = 297`) 일원화 및 `PrintScaling /None` 지정 (`02_transform.js`, `07_export.js`)**:
+     - `getOutputPaperScale`에서 PDF/이미지 구분 없이 `PAPER_SPECS[key]`가 지정되지 않은 `'original'`/`'custom'` 용지의 기준 긴 변을 항상 표준 A4 길이인 **`longMm = 297` (297mm)**로 고정(고해상도 래스터 픽셀은 그대로 유지하면서 PDF 물리 페이지 크기만 210×297mm 규격 내로 정규화).
+     - `executeSaveMergedPdf`에서 생성되는 PDF 카탈로그에 `/ViewerPreferences << /PrintScaling /None >>`을 기록하여 PDF 뷰어 인쇄 시 불필요한 강제 배율 확대를 방지.

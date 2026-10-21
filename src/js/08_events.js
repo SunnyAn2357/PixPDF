@@ -244,10 +244,8 @@
             const deltaLocalX = deltaCanvX * cos - deltaCanvY * sin;
             const deltaLocalY = deltaCanvX * sin + deltaCanvY * cos;
 
-            const srcW = item.imgObj?.naturalWidth || item.imgObj?.width || pts.dw;
-            const srcH = item.imgObj?.naturalHeight || item.imgObj?.height || pts.dh;
-            const scalePxX = pts.dw / srcW;
-            const scalePxY = pts.dh / srcH;
+            const scalePxX = pts.scalePxX || (pts.dw / (item.imgObj?.naturalWidth || item.imgObj?.width || pts.dw));
+            const scalePxY = pts.scalePxY || (pts.dh / (item.imgObj?.naturalHeight || item.imgObj?.height || pts.dh));
 
             // 원본 이미지 픽셀 단위로 환산
             const deltaOrigPxX = Math.round(deltaLocalX / scalePxX);
@@ -445,10 +443,8 @@
             const deltaLocalX = deltaCanvX * cos - deltaCanvY * sin;
             const deltaLocalY = deltaCanvX * sin + deltaCanvY * cos;
 
-            const srcW = item.imgObj?.naturalWidth || item.imgObj?.width || pts.dw;
-            const srcH = item.imgObj?.naturalHeight || item.imgObj?.height || pts.dh;
-            const scalePxX = pts.dw / srcW;
-            const scalePxY = pts.dh / srcH;
+            const scalePxX = pts.scalePxX || (pts.dw / (item.imgObj?.naturalWidth || item.imgObj?.width || pts.dw));
+            const scalePxY = pts.scalePxY || (pts.dh / (item.imgObj?.naturalHeight || item.imgObj?.height || pts.dh));
 
             // 원본 이미지 픽셀 단위로 환산
             const deltaOrigPxX = Math.round(deltaLocalX / scalePxX);
