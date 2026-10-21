@@ -186,14 +186,19 @@ flowchart TD
 | `executeSaveSplitImages` | `07_export.js` | 합성 캔버스들을 개별 이미지로 변환 후 ZIP 압축 다운로드 |
 | `armUserGestureHistory` | `04_file_mgr.js` | 첫 터치/클릭 제스처 시 크로미움 뒤로가기 가로채기 앵커 무장 |
 | `showExitToast` | `04_file_mgr.js` | 메인 화면 뒤로가기 1회차 시 2초 카운트다운 더블 탭 종료 토스트 표출 |
+| `renderItemLayers` | `11_layers.js` | 용지 위에 다중 객체(`item.layers`: 글상자·14종 도형·이미지/PDF 조각)를 WYSIWYG 합성 |
+| `drawChameleonBackground`| `11_layers.js` | 글상자 주변 픽셀에서 글자 획 노이즈를 배제하고 4코너 양선형 보간으로 배경을 위장 채우기 |
+| `drawShapeLayerOnCanvas`| `11_layers.js` | 14종 벡터 도형(`rect`, `ellipse`, `star`, `arrow`, `callout` 등) 및 투명 면색/점선 렌더링 |
+| `startEyedropper` | `11_layers.js` | 5배 확대 돋보기 루페(`updateEyedropperLoupe`)로 캔버스 픽셀 색상을 정밀 추출하여 적용 |
+| `updateLayerStageOverlay`| `11_layers.js` | 2열 메인 뷰어 위 선택 객체의 8방향 크기 조절·회전·삭제 핸들 오버레이 실시간 동기화 |
 
 ---
 
 ## 9. 모듈식 소스 디렉터리 구조 (`src/`) 및 원클릭 빌더
 
 - `src/template.html`: 공통 HTML 골격 및 메타 태그
-- `src/css/style.css`: 전체 앱 스타일시트 (1800라인)
-- `src/js/` (8대 기능별 JS 모듈):
+- `src/css/style.css`: 전체 앱 스타일시트
+- `src/js/` (11대 기능별 JS 모듈):
   - `01_state.js`: 전역 상태(`docState`), PWA 등록, 용지 규격 상수(`PAPER_SPECS`)
   - `02_transform.js`: 회전 연산, 사각/사다리꼴 투시변환 수식
   - `03_render.js`: `drawPaperWithImage`, PDF 2.5x 렌더러, 썸네일 합성
@@ -202,6 +207,9 @@ flowchart TD
   - `06_perspective_loupe.js`: 4코너 핀 제어, 정밀 돋보기(Loupe), 3열 미니 프리뷰
   - `07_export.js`: PDF/ZIP 저장 엔진 및 바이너리 인코더
   - `08_events.js`: 휠 줌/스크롤, 터치 패닝, 뒤로가기 더블 탭 종료
+  - `09_crop.js`: 비파괴 사각형 자르기(객체 자르기 / 종이 연동 자르기 / 개별 이미지 레이어 자르기)
+  - `10_project.js`: `.pixpdf` 프로젝트 압축 아카이브(다중 레이어 포함) 저장 및 복원
+  - `11_layers.js`: 다중 객체 레이어 엔진(카멜레온 글상자, 14종 도형, 이미지/PDF 조각 투시/자르기, 돋보기 스포이드)
 - `build.ps1` / `build.bat`:
   - 1초 만에 `src/`의 모든 모듈을 단일 독립 파일(`pixpdf.html` / `index.html`)로 병합.
   - 회사업무용 오프라인 환경에서 단일 파일만 복사해가면 더블 클릭으로 100% 정상 구동 보장.

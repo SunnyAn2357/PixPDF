@@ -18,6 +18,9 @@
       if (typeof isCropActive !== 'undefined' && isCropActive && typeof updateCropOverlayPositions === 'function') {
         updateCropOverlayPositions();
       }
+      if (typeof updateLayerStageOverlay === 'function') {
+        updateLayerStageOverlay();
+      }
     }
 
     // 2열 메인 뷰어 로드
@@ -93,6 +96,7 @@
       const badge = document.getElementById('viewerZoomBadge');
       if (badge) badge.textContent = `${Math.round(docState.zoom * 100)}%`;
       if (isPerspectiveActive) updateCornerPins();
+      if (typeof updateLayerStageOverlay === 'function') updateLayerStageOverlay();
     }
 
     async function updateViewerEdits(targetIdx) {
@@ -126,6 +130,7 @@
     }
 
     function adjustPreviewScale(delta) {
+      if (typeof handleLayerScale === 'function' && handleLayerScale(delta)) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       const curScale = cfg.contentScale || 1.0;
@@ -135,6 +140,7 @@
     }
 
     function resetPreviewScale() {
+      if (typeof handleLayerResetScale === 'function' && handleLayerResetScale()) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       cfg.contentScale = 1.0;
@@ -143,6 +149,7 @@
     }
 
     function adjustScaleX(delta) {
+      if (typeof handleLayerScaleX === 'function' && handleLayerScaleX(delta)) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       const cur = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
@@ -152,6 +159,7 @@
     }
 
     function resetScaleX() {
+      if (typeof handleLayerResetScaleX === 'function' && handleLayerResetScaleX()) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       cfg.scaleX = 1.0;
@@ -160,6 +168,7 @@
     }
 
     function adjustTrapezoid(mode) {
+      if (typeof handleLayerTrapezoid === 'function' && handleLayerTrapezoid(mode)) return;
       const curIdx = docState.currentIndex;
       const item = docState.items[curIdx];
       if (!item) return;
@@ -186,6 +195,7 @@
     }
 
     function resetTrapezoid() {
+      if (typeof handleLayerResetTrapezoid === 'function' && handleLayerResetTrapezoid()) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       cfg.trapExp = { top: 0, bot: 0 };
@@ -196,6 +206,7 @@
     }
 
     function adjustBrightness(delta) {
+      if (typeof handleLayerBrightness === 'function' && handleLayerBrightness(delta)) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       const cur = cfg.brightness !== undefined ? cfg.brightness : 100;
@@ -205,6 +216,7 @@
     }
 
     function resetBrightness() {
+      if (typeof handleLayerResetBrightness === 'function' && handleLayerResetBrightness()) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       cfg.brightness = 100;
@@ -213,6 +225,7 @@
     }
 
     function adjustContrast(delta) {
+      if (typeof handleLayerContrast === 'function' && handleLayerContrast(delta)) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       const cur = cfg.contrast !== undefined ? cfg.contrast : 100;
@@ -222,6 +235,7 @@
     }
 
     function resetContrast() {
+      if (typeof handleLayerResetContrast === 'function' && handleLayerResetContrast()) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       cfg.contrast = 100;

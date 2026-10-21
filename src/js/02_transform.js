@@ -27,6 +27,7 @@
 
     // 객체(내용물 이미지) 회전 함수
     function rotateImageByDelta(delta) {
+      if (typeof handleLayerRotateByDelta === 'function' && handleLayerRotateByDelta(delta)) return;
       const cur = docState.currentIndex;
       const cfg = getEffectiveItemSettings(cur);
       let curImg = parseInt(cfg.rotImg !== undefined ? cfg.rotImg : 0, 10) || 0;
@@ -46,6 +47,7 @@
     }
 
     function rotateImageTo(val) {
+      if (typeof handleLayerRotateTo === 'function' && handleLayerRotateTo(val)) return;
       const cur = docState.currentIndex;
       const cfg = getEffectiveItemSettings(cur);
       cfg.rotImg = val;

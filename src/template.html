@@ -31,6 +31,7 @@
   <input type="file" id="fileInput" style="display:none;" accept="application/pdf,image/*" multiple>
   <input type="file" id="insertFileInput" style="display:none;" accept="application/pdf,image/*" multiple>
   <input type="file" id="inputPixPdfProject" style="display:none;" accept=".pixpdf,.zip" onchange="handlePixPdfProjectInput(event)">
+  <input type="file" id="layerFileInput" style="display:none;" accept="application/pdf,image/*" multiple onchange="handleLayerFileInput(event)">
 
   <!-- 상단 헤더 (단일 1행) -->
   <header>
@@ -140,6 +141,7 @@
       <div class="viewer-viewport" id="viewerViewport">
         <div class="viewer-canvas-wrap" id="viewerWrap">
           <canvas id="mainViewerCanvas"></canvas>
+          <div id="layerStageOverlay" class="layer-stage-overlay" style="display: none;"></div>
           <div id="perspectiveOverlay" class="perspective-overlay" style="display: none;">
             <svg id="perspectiveSvg" class="perspective-svg">
               <polygon id="perspectivePolygon" points="" />
@@ -276,15 +278,31 @@
           </div>
         </div>
 
-        <!-- 2. [객체 설정] 카드 박스 (기존 편집 버튼 100% 보존 + 하단 1행 회전 바) -->
+        <!-- 2. [객체 설정] 카드 박스 (기존 편집 버튼 100% 보존 + 다중 객체 레이어 & 글상자/도형 통합) -->
         <div class="control-card-box">
-          <div class="control-card-header">
-            <span class="control-card-title">
+          <div class="control-card-header" style="display: flex; align-items: center; justify-content: space-between; gap: 4px; flex-wrap: nowrap;">
+            <span class="control-card-title" style="min-width: 0; flex-shrink: 1;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0f766e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
               <span>객체 설정</span>
             </span>
+            <div class="layer-add-btn-group">
+              <button type="button" class="btn-layer-add" onclick="addLayerTextBox()" title="카멜레온 위장/단색/투명 글상자 추가">+ 글상자</button>
+              <button type="button" class="btn-layer-add" onclick="addLayerShape()" title="사각형·원·화살표·별 등 14종 도형 추가">+ 도형</button>
+              <button type="button" class="btn-layer-add" onclick="triggerAddLayerFile()" title="현재 페이지 위에 이미지 또는 PDF 조각 추가">+ 이미지/PDF</button>
+            </div>
           </div>
           <div class="control-card-body">
+            <!-- 다중 객체 레이어 선택 칩 바 & 순서/복제/삭제 바 -->
+            <div id="layerManagerBar" class="layer-manager-bar" style="display: none;">
+              <div id="layerChipsList" class="layer-chips-list"></div>
+              <div id="layerOrderActions" class="layer-order-actions" style="display: none;">
+                <button type="button" class="btn-layer-act" onclick="moveSelectedLayerOrder('front')" title="맨 앞으로 가져오기">맨앞</button>
+                <button type="button" class="btn-layer-act" onclick="moveSelectedLayerOrder('up')" title="앞으로 가져오기">▲앞</button>
+                <button type="button" class="btn-layer-act" onclick="moveSelectedLayerOrder('down')" title="뒤로 보내기">▼뒤</button>
+                <button type="button" class="btn-layer-act" onclick="duplicateSelectedLayer()" title="선택 객체 복제">복제</button>
+                <button type="button" class="btn-layer-act danger" onclick="deleteSelectedLayer()" title="선택 객체 삭제 (Delete)">삭제</button>
+              </div>
+            </div>
             <!-- 미리보기 / 이미지 편집 영역 (좌: 시트 미리보기, 우: 기존 편집 메뉴 100% 유지) -->
             <div class="preview-body-split">
               <!-- 좌측: 실제 미리보기 창 -->
@@ -396,6 +414,122 @@
                 <button type="button" class="btn-rot-mini" title="이미지 +90° 회전" onclick="rotateImageByDelta(90)">⟳</button>
                 <input type="range" id="sliderRotation" min="-180" max="180" value="0" step="1" oninput="onSliderRotationInput(this.value)" class="slider-rot-mini" title="각도 미세 조절 (-180° ~ +180°)">
                 <span id="lblRotationVal" class="object-rot-val">0°</span>
+              </div>
+            </div>
+
+            <!-- [선택 객체 전용 상세 속성창 1: 카멜레온 글상자] -->
+            <div id="layerInspectorText" class="layer-inspector" style="display: none;">
+              <div class="inspector-title-row">
+                <span>🔤 글상자 스타일 &amp; 카멜레온 위장</span>
+                <button type="button" class="btn-layer-act" onclick="fitTextLayerBox()" title="글자 길이에 맞춰 글상자 크기 자동 조절">크기 맞춤</button>
+              </div>
+              <textarea id="txtLayerContent" class="layer-textarea" rows="2" placeholder="내용을 입력하세요 (줄바꿈 지원)" oninput="onTextLayerPropChange('text', this.value)"></textarea>
+              <div class="inspector-row">
+                <span class="inspector-lbl" title="글상자 배경 처리 방식">배경</span>
+                <div class="bg-mode-pills">
+                  <button type="button" class="bg-pill active" id="btnTextBgChameleon" onclick="onTextLayerPropChange('bgMode', 'chameleon')" title="주변 종이/이미지 배경색을 자동 분석해 기존 글자를 감쪽같이 덮어씁니다">🦎 카멜레온(위장)</button>
+                  <button type="button" class="bg-pill" id="btnTextBgSolid" onclick="onTextLayerPropChange('bgMode', 'solid')" title="지정한 단색으로 글상자 배경을 채웁니다">🎨 단색</button>
+                  <button type="button" class="bg-pill" id="btnTextBgTrans" onclick="onTextLayerPropChange('bgMode', 'transparent')" title="배경 없이 글자만 표시합니다">⬜ 투명</button>
+                </div>
+              </div>
+              <div class="inspector-row" style="gap: 6px;">
+                <div class="color-pick-group" style="flex: 1;">
+                  <span class="inspector-lbl">글자색</span>
+                  <input type="color" id="clrLayerTextColor" value="#1e293b" oninput="onTextLayerPropChange('color', this.value)" title="글자 색상 선택">
+                  <button type="button" class="btn-eyedropper" id="btnEyeTextColor" onclick="startEyedropper('textColor')" title="화면에서 원본 글자색 추출 (돋보기 스포이드)">💧추출</button>
+                </div>
+                <div class="color-pick-group" id="grpTextBgColorPick" style="flex: 1;">
+                  <span class="inspector-lbl">배경색</span>
+                  <input type="color" id="clrLayerBgColor" value="#ffffff" oninput="onTextLayerPropChange('bgColor', this.value)" title="단색 배경 색상 선택">
+                  <button type="button" class="btn-eyedropper" id="btnEyeTextBg" onclick="startEyedropper('textBg')" title="화면에서 배경색 직접 추출 (돋보기 스포이드)">💧추출</button>
+                </div>
+              </div>
+              <div class="inspector-row" style="gap: 5px;">
+                <select id="selLayerFontFamily" class="inspector-select" style="flex: 1.3;" onchange="onTextLayerPropChange('fontFamily', this.value)" title="글꼴 선택">
+                  <option value="Pretendard, 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', sans-serif">고딕 (맑은고딕)</option>
+                  <option value="'Batang', '바탕', 'Nanum Myeongjo', Georgia, serif">명조 (바탕체)</option>
+                  <option value="'Dotum', '돋움', sans-serif">돋움체</option>
+                  <option value="'Gulim', '굴림', sans-serif">굴림체</option>
+                  <option value="'Gungsuh', '궁서', serif">궁서체</option>
+                  <option value="'Consolas', 'Courier New', monospace">고정폭 (코딩)</option>
+                  <option value="'Comic Sans MS', 'Nanum Pen Script', cursive">손글씨풍</option>
+                </select>
+                <div class="font-size-stepper" style="flex: 1;">
+                  <button type="button" class="btn-step" onclick="stepTextLayerFontSize(-2)" title="글자 크기 작게">-</button>
+                  <input type="number" id="numLayerFontSize" value="28" min="6" max="250" oninput="onTextLayerPropChange('fontSize', this.value)" title="글자 크기">
+                  <button type="button" class="btn-step" onclick="stepTextLayerFontSize(2)" title="글자 크기 크게">+</button>
+                </div>
+              </div>
+              <div class="inspector-row" style="justify-content: space-between;">
+                <div class="style-toggle-group">
+                  <button type="button" class="btn-style-toggle" id="btnTextBold" onclick="toggleTextLayerStyle('bold')" title="굵게 (Bold)"><b>B</b></button>
+                  <button type="button" class="btn-style-toggle" id="btnTextItalic" onclick="toggleTextLayerStyle('italic')" title="기울임 (Italic)"><i>I</i></button>
+                  <button type="button" class="btn-style-toggle active" id="btnTextAlignL" onclick="onTextLayerPropChange('align', 'left')" title="왼쪽 정렬">좌</button>
+                  <button type="button" class="btn-style-toggle" id="btnTextAlignC" onclick="onTextLayerPropChange('align', 'center')" title="가운데 정렬">중</button>
+                  <button type="button" class="btn-style-toggle" id="btnTextAlignR" onclick="onTextLayerPropChange('align', 'right')" title="오른쪽 정렬">우</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 3px;">
+                  <span class="inspector-lbl">여백</span>
+                  <select id="selLayerPadding" class="inspector-select" style="width: 54px; padding: 2px 4px;" onchange="onTextLayerPropChange('padding', this.value)" title="글상자 내부 여백">
+                    <option value="2">좁게</option>
+                    <option value="8" selected>보통</option>
+                    <option value="16">넓게</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- [선택 객체 전용 상세 속성창 2: 14종 도형] -->
+            <div id="layerInspectorShape" class="layer-inspector" style="display: none;">
+              <div class="inspector-title-row">
+                <span>⭐ 도형 종류 (14종) &amp; 면/선 스타일</span>
+              </div>
+              <div class="shape-grid-14" id="shapeTypeGrid">
+                <button type="button" class="btn-shape-type active" data-shape="rect" onclick="onShapeLayerPropChange('shapeType', 'rect')" title="직사각형">▭ 사각</button>
+                <button type="button" class="btn-shape-type" data-shape="roundRect" onclick="onShapeLayerPropChange('shapeType', 'roundRect')" title="둥근 사각형">▢ 둥근</button>
+                <button type="button" class="btn-shape-type" data-shape="ellipse" onclick="onShapeLayerPropChange('shapeType', 'ellipse')" title="원 / 타원">◯ 원형</button>
+                <button type="button" class="btn-shape-type" data-shape="triangle" onclick="onShapeLayerPropChange('shapeType', 'triangle')" title="삼각형">△ 삼각</button>
+                <button type="button" class="btn-shape-type" data-shape="diamond" onclick="onShapeLayerPropChange('shapeType', 'diamond')" title="마름모">◇ 마름모</button>
+                <button type="button" class="btn-shape-type" data-shape="pentagon" onclick="onShapeLayerPropChange('shapeType', 'pentagon')" title="오각형">⬠ 오각</button>
+                <button type="button" class="btn-shape-type" data-shape="hexagon" onclick="onShapeLayerPropChange('shapeType', 'hexagon')" title="육각형">⬡ 육각</button>
+                <button type="button" class="btn-shape-type" data-shape="star" onclick="onShapeLayerPropChange('shapeType', 'star')" title="별표">☆ 별표</button>
+                <button type="button" class="btn-shape-type" data-shape="line" onclick="onShapeLayerPropChange('shapeType', 'line')" title="직선">／ 직선</button>
+                <button type="button" class="btn-shape-type" data-shape="arrow" onclick="onShapeLayerPropChange('shapeType', 'arrow')" title="단방향 화살표">→ 화살표</button>
+                <button type="button" class="btn-shape-type" data-shape="doubleArrow" onclick="onShapeLayerPropChange('shapeType', 'doubleArrow')" title="양방향 화살표">↔ 양방향</button>
+                <button type="button" class="btn-shape-type" data-shape="callout" onclick="onShapeLayerPropChange('shapeType', 'callout')" title="말풍선">💬 말풍선</button>
+                <button type="button" class="btn-shape-type" data-shape="check" onclick="onShapeLayerPropChange('shapeType', 'check')" title="체크 표시">✔ 체크</button>
+                <button type="button" class="btn-shape-type" data-shape="cross" onclick="onShapeLayerPropChange('shapeType', 'cross')" title="엑스(X) 표시">✕ 엑스</button>
+              </div>
+              <div class="inspector-row" style="justify-content: space-between; gap: 6px;">
+                <label class="chk-fill-trans" title="체크하면 도형 내부를 칠하지 않고 투명한 테두리 액자처럼 표시합니다">
+                  <input type="checkbox" id="chkShapeFillTrans" checked onchange="onShapeLayerPropChange('fillTransparent', this.checked)">
+                  <span>면색 없음(투명)</span>
+                </label>
+                <div class="color-pick-group" id="grpShapeFillColor">
+                  <span class="inspector-lbl">면색</span>
+                  <input type="color" id="clrShapeFillColor" value="#fef08a" oninput="onShapeLayerPropChange('fillColor', this.value)" title="도형 내부 채우기 색상">
+                  <button type="button" class="btn-eyedropper" id="btnEyeShapeFill" onclick="startEyedropper('shapeFill')" title="화면에서 면색 추출 (스포이드)">💧추출</button>
+                </div>
+              </div>
+              <div class="inspector-row" style="justify-content: space-between; gap: 6px;">
+                <div class="color-pick-group">
+                  <span class="inspector-lbl">선색</span>
+                  <input type="color" id="clrShapeStrokeColor" value="#dc2626" oninput="onShapeLayerPropChange('strokeColor', this.value)" title="도형 테두리/선 색상">
+                  <button type="button" class="btn-eyedropper" id="btnEyeShapeStroke" onclick="startEyedropper('shapeStroke')" title="화면에서 선색 추출 (스포이드)">💧추출</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px; flex: 1; justify-content: flex-end;">
+                  <span class="inspector-lbl">선종류</span>
+                  <select id="selShapeStrokeDash" class="inspector-select" style="width: 68px; padding: 2px 4px;" onchange="onShapeLayerPropChange('strokeDash', this.value)">
+                    <option value="solid" selected>실선</option>
+                    <option value="dashed">파선</option>
+                    <option value="dotted">점선</option>
+                  </select>
+                </div>
+              </div>
+              <div class="inspector-row" style="gap: 6px;">
+                <span class="inspector-lbl">선두께</span>
+                <input type="range" id="rngShapeStrokeWidth" min="0" max="30" value="4" step="1" style="flex: 1; accent-color: var(--primary); height: 4px; cursor: pointer;" oninput="onShapeLayerPropChange('strokeWidth', this.value)">
+                <span id="lblShapeStrokeWidth" style="font-size: 11px; font-weight: 700; color: var(--primary); min-width: 28px; text-align: right;">4px</span>
               </div>
             </div>
           </div>

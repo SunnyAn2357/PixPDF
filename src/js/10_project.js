@@ -24,7 +24,7 @@
         const zip = new JSZip();
 
         const projectMeta = {
-          version: '2.12.3',
+          version: '2.13.1',
           appName: 'PixPDF',
           createdAt: new Date().toISOString(),
           fileName: docState.fileName || 'PixPDF_Project',
@@ -64,6 +64,38 @@
             mediaFolder.file(mediaName, blob);
           }
 
+          const serializedLayers = [];
+          if (Array.isArray(item.layers)) {
+            for (let li = 0; li < item.layers.length; li++) {
+              const lyr = item.layers[li];
+              if (!lyr) continue;
+              const lyrCopy = JSON.parse(JSON.stringify({
+                ...lyr,
+                imgObj: undefined,
+                _croppedCanvas: undefined
+              }));
+              if (lyr.type === 'image' && lyr.imgObj) {
+                const lyrMediaName = `layer_${String(i + 1).padStart(3, '0')}_${String(li + 1).padStart(2, '0')}.png`;
+                let lyrBlob = null;
+                if (lyr.imgObj instanceof HTMLCanvasElement) {
+                  lyrBlob = await new Promise(r => lyr.imgObj.toBlob(r, 'image/png'));
+                } else {
+                  const tc = document.createElement('canvas');
+                  tc.width = lyr.imgObj.naturalWidth || lyr.imgObj.width || lyr.origW || 800;
+                  tc.height = lyr.imgObj.naturalHeight || lyr.imgObj.height || lyr.origH || 600;
+                  tc.getContext('2d').drawImage(lyr.imgObj, 0, 0);
+                  lyrBlob = await new Promise(r => tc.toBlob(r, 'image/png'));
+                  tc.width = 0; tc.height = 0;
+                }
+                if (lyrBlob) {
+                  mediaFolder.file(lyrMediaName, lyrBlob);
+                  lyrCopy.mediaFile = `media/${lyrMediaName}`;
+                }
+              }
+              serializedLayers.push(lyrCopy);
+            }
+          }
+
           projectMeta.items.push({
             name: item.name || `페이지_${i + 1}`,
             type: 'image', // 프로젝트 복원 시 무손실 고화질 래스터 객체로 로드
@@ -71,7 +103,8 @@
             height: item.height || 1000,
             pageNum: item.pageNum || (i + 1),
             mediaFile: `media/${mediaName}`,
-            settings: JSON.parse(JSON.stringify(item.settings || {}))
+            settings: JSON.parse(JSON.stringify(item.settings || {})),
+            layers: serializedLayers
           });
         }
 
@@ -195,6 +228,34 @@
             setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
           }
 
+          const restoredLayers = [];
+          if (Array.isArray(itemMeta.layers)) {
+            for (const lyrMeta of itemMeta.layers) {
+              if (!lyrMeta) continue;
+              const lyrObj = { ...lyrMeta };
+              if (lyrObj.type === 'image' && lyrObj.mediaFile) {
+                const lyrEntry = zip.file(lyrObj.mediaFile);
+                if (lyrEntry) {
+                  const lyrBlob = await lyrEntry.async('blob');
+                  const blobUrl = URL.createObjectURL(lyrBlob);
+                  const lyrImg = new Image();
+                  await new Promise((res, rej) => {
+                    lyrImg.onload = res;
+                    lyrImg.onerror = rej;
+                    lyrImg.src = blobUrl;
+                  });
+                  const lc = document.createElement('canvas');
+                  lc.width = lyrImg.naturalWidth || lyrImg.width || lyrObj.origW || 800;
+                  lc.height = lyrImg.naturalHeight || lyrImg.height || lyrObj.origH || 600;
+                  lc.getContext('2d').drawImage(lyrImg, 0, 0);
+                  URL.revokeObjectURL(blobUrl);
+                  lyrObj.imgObj = lc;
+                }
+              }
+              restoredLayers.push(lyrObj);
+            }
+          }
+
           docState.items.push({
             name: itemMeta.name || `페이지_${i + 1}`,
             type: 'image',
@@ -203,7 +264,8 @@
             height: itemMeta.height || imgObj.height || (imgObj.naturalHeight || 600),
             pageNum: itemMeta.pageNum || (i + 1),
             imgObj: imgObj,
-            settings: itemMeta.settings || {}
+            settings: itemMeta.settings || {},
+            layers: restoredLayers
           });
 
           const isChecked = (meta.checkList && meta.checkList[i] !== undefined) ? Boolean(meta.checkList[i]) : true;

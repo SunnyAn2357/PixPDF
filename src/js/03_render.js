@@ -45,7 +45,7 @@
       // 원래 용지(원본/A4 등) 축척 그대로 작아진 용지를 중앙에 표시하여 실제 크기를 다른 페이지와 비교 가능하게 함.
       if (isPaperCrop && !(options.targetWidth && options.targetHeight)) {
         const fullCfg = Object.assign({}, cfg, { crop: null });
-        const fullPaper = drawPaperWithImage(canvas, item, fullCfg, options);
+        const fullPaper = drawPaperWithImage(canvas, item, fullCfg, Object.assign({}, options, { skipLayers: true }));
         if (!fullPaper) return null;
         const cW = canvas.width, cH = canvas.height;
         const mPx = cfg.margin || 0;
@@ -202,6 +202,11 @@
       }
       ctx.restore();
 
+      // 8. 다중 객체 레이어(글상자, 도형, 이미지/PDF 조각) 합성 렌더링 (WYSIWYG 3창 및 모든 내보내기 공통)
+      if (!options.skipLayers && typeof renderItemLayers === 'function') {
+        renderItemLayers(ctx, canvasW, canvasH, item, cfg, options);
+      }
+
       return paper;
     }
 
@@ -354,6 +359,11 @@
 
       // 7. 투시 변환 활성화 여부 동기화 (페이지별 독립 유지)
       syncPerspectiveUI(Boolean(cfg.isPerspectiveActive));
+
+      // 8. 다중 객체 레이어 UI 및 인스펙터 동기화
+      if (typeof syncLayerUI === 'function') {
+        syncLayerUI();
+      }
     }
 
     // PNG 포맷 선택 시에만 [배경 투명화] 체크박스 동적 노출/숨김 (가운데 툴바 및 우측/모바일 패널 동시 지원)
@@ -480,6 +490,7 @@
     // 슬라이더 바 직접 드래그 시 선택된 타겟(페이지 및/또는 이미지)에 각도 즉시 독립 적용
     function onSliderRotationInput(val) {
       const num = parseInt(val, 10) || 0;
+      if (typeof handleLayerRotationInput === 'function' && handleLayerRotationInput(num)) return;
       const cur = docState.currentIndex;
       const cfg = getEffectiveItemSettings(cur);
       const target = cfg.rotTarget || { page: true, image: true };

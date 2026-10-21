@@ -87,15 +87,17 @@
 
           const curIdx = docState.currentIndex;
           const cfg = getEffectiveItemSettings(curIdx);
-          if (!cfg.corners) {
-            cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+          const cornerOwner = (typeof getSelectedLayer === 'function' && getSelectedLayer()?.type === 'image') ? getSelectedLayer() : cfg;
+          if (!cornerOwner.corners) {
+            cornerOwner.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
           }
           pinDragStartCornerVal = {
-            x: cfg.corners[cornerKey]?.x || 0,
-            y: cfg.corners[cornerKey]?.y || 0
+            x: cornerOwner.corners[cornerKey]?.x || 0,
+            y: cornerOwner.corners[cornerKey]?.y || 0
           };
           updateMiniPinLoupe(cornerKey);
         } else if (docState.items.length > 0 && !isPerspectiveActive) {
+          if (typeof isEyedropperActive !== 'undefined' && isEyedropperActive) return;
           // 미니 프리뷰 내 이미지 마우스 드래그 이동
           isMiniPanning = true;
           const sRect = miniStageEl.getBoundingClientRect();
@@ -103,8 +105,14 @@
           miniPanStartY = Math.max(sRect.top, Math.min(sRect.bottom, e.clientY));
           const curIdx = docState.currentIndex;
           const cfg = getEffectiveItemSettings(curIdx);
-          miniPanStartOffsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
-          miniPanStartOffsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
+          const selLayer = (typeof getSelectedLayer === 'function') ? getSelectedLayer() : null;
+          if (selLayer) {
+            miniPanStartOffsetX = selLayer.x * 100;
+            miniPanStartOffsetY = selLayer.y * 100;
+          } else {
+            miniPanStartOffsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
+            miniPanStartOffsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
+          }
         }
       });
 
@@ -126,15 +134,17 @@
 
           const curIdx = docState.currentIndex;
           const cfg = getEffectiveItemSettings(curIdx);
-          if (!cfg.corners) {
-            cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+          const cornerOwner = (typeof getSelectedLayer === 'function' && getSelectedLayer()?.type === 'image') ? getSelectedLayer() : cfg;
+          if (!cornerOwner.corners) {
+            cornerOwner.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
           }
           pinDragStartCornerVal = {
-            x: cfg.corners[cornerKey]?.x || 0,
-            y: cfg.corners[cornerKey]?.y || 0
+            x: cornerOwner.corners[cornerKey]?.x || 0,
+            y: cornerOwner.corners[cornerKey]?.y || 0
           };
           updateMiniPinLoupe(cornerKey);
         } else if (e.touches.length === 1 && docState.items.length > 0 && !isPerspectiveActive) {
+          if (typeof isEyedropperActive !== 'undefined' && isEyedropperActive) return;
           // 미니 프리뷰 내 이미지 터치 드래그 이동 (Panning) - 회색 박스 시작
           isMiniPanning = true;
           const sRect = miniStageEl.getBoundingClientRect();
@@ -142,8 +152,14 @@
           miniPanStartY = Math.max(sRect.top, Math.min(sRect.bottom, e.touches[0].clientY));
           const curIdx = docState.currentIndex;
           const cfg = getEffectiveItemSettings(curIdx);
-          miniPanStartOffsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
-          miniPanStartOffsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
+          const selLayer = (typeof getSelectedLayer === 'function') ? getSelectedLayer() : null;
+          if (selLayer) {
+            miniPanStartOffsetX = selLayer.x * 100;
+            miniPanStartOffsetY = selLayer.y * 100;
+          } else {
+            miniPanStartOffsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
+            miniPanStartOffsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
+          }
         }
       }, { passive: false });
     }
@@ -153,6 +169,8 @@
         if (e.button !== 0) return; // 마우스 좌클릭만 처리
         const total = docState.items.length;
         if (total === 0) return;
+
+        if (typeof isEyedropperActive !== 'undefined' && isEyedropperActive) return;
 
         // 1. 투시 변환 핀 핸들 드래그 우선 처리
         const pinEl = e.target.closest('.corner-pin');
@@ -169,12 +187,13 @@
 
           const curIdx = docState.currentIndex;
           const cfg = getEffectiveItemSettings(curIdx);
-          if (!cfg.corners) {
-            cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+          const cornerOwner = (typeof getSelectedLayer === 'function' && getSelectedLayer()?.type === 'image') ? getSelectedLayer() : cfg;
+          if (!cornerOwner.corners) {
+            cornerOwner.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
           }
           pinDragStartCornerVal = {
-            x: cfg.corners[cornerKey]?.x || 0,
-            y: cfg.corners[cornerKey]?.y || 0
+            x: cornerOwner.corners[cornerKey]?.x || 0,
+            y: cornerOwner.corners[cornerKey]?.y || 0
           };
           updateViewerPinLoupe(cornerKey, e.clientX, e.clientY);
           return;
@@ -182,6 +201,12 @@
 
         // 2. 자르기(크롭) 모드 중에는 캔버스 패닝(이미지 위치 이동) 차단
         if (typeof isCropActive !== 'undefined' && isCropActive) return;
+
+        // 2-1. 다중 객체 레이어 박스/핸들 클릭 시에는 레이어 드래그가 전담
+        if (e.target.closest('.layer-item-box')) return;
+        if (typeof getSelectedLayer === 'function' && getSelectedLayer() && typeof selectLayer === 'function') {
+          selectLayer(null);
+        }
 
         // 3. 일반 이미지 캔버스 패닝 (전체 이동)
         e.preventDefault();
@@ -209,6 +234,7 @@
           if (!canvas || !item || !item.imgObj || canvas.width === 0 || canvas.height === 0) return;
 
           const cfg = getEffectiveItemSettings(curIdx);
+          const cornerOwner = (typeof getSelectedLayer === 'function' && getSelectedLayer()?.type === 'image') ? getSelectedLayer() : cfg;
           const pts = getCornerCanvasPoints(item, cfg, canvas.width, canvas.height);
           if (!pts || !pts.dw || !pts.dh) return;
 
@@ -219,10 +245,10 @@
               const sRect = stageEl.getBoundingClientRect();
               const stageX = e.clientX - sRect.left;
               const stageY = e.clientY - sRect.top;
-              if (!cfg.corners) {
-                cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+              if (!cornerOwner.corners) {
+                cornerOwner.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
               }
-              cfg.corners[activeDraggingPinKey] = calcCornerFromMiniStagePos(pts, activeDraggingPinKey, stageX, stageY, miniSheet, stageEl, canvas);
+              cornerOwner.corners[activeDraggingPinKey] = calcCornerFromMiniStagePos(pts, activeDraggingPinKey, stageX, stageY, miniSheet, stageEl, canvas);
             }
           } else {
             // 가운데 창(메인 뷰어): 용지 밖으로 자유롭게 핀 이동 지원 (캔버스 클램프 완전 제거)
@@ -251,10 +277,10 @@
             const deltaOrigPxX = Math.round(deltaLocalX / scalePxX);
             const deltaOrigPxY = Math.round(deltaLocalY / scalePxY);
 
-            if (!cfg.corners) {
-              cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+            if (!cornerOwner.corners) {
+              cornerOwner.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
             }
-            cfg.corners[activeDraggingPinKey] = {
+            cornerOwner.corners[activeDraggingPinKey] = {
               x: pinDragStartCornerVal.x + deltaOrigPxX,
               y: pinDragStartCornerVal.y + deltaOrigPxY
             };
@@ -292,9 +318,15 @@
             const curIdx = docState.currentIndex;
             const cfg = getEffectiveItemSettings(curIdx);
             const item = docState.items[curIdx];
-            const { maxOffsetX, maxOffsetY } = getImageOffsetMaxLimits(item, cfg);
-            cfg.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, Math.round((miniPanStartOffsetX + pctDx) * 10) / 10));
-            cfg.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, Math.round((miniPanStartOffsetY + pctDy) * 10) / 10));
+            const selLayer = (typeof getSelectedLayer === 'function') ? getSelectedLayer() : null;
+            if (selLayer) {
+              selLayer.x = Math.max(-0.5, Math.min(1.5, (miniPanStartOffsetX + pctDx) / 100));
+              selLayer.y = Math.max(-0.5, Math.min(1.5, (miniPanStartOffsetY + pctDy) / 100));
+            } else {
+              const { maxOffsetX, maxOffsetY } = getImageOffsetMaxLimits(item, cfg);
+              cfg.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, Math.round((miniPanStartOffsetX + pctDx) * 10) / 10));
+              cfg.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, Math.round((miniPanStartOffsetY + pctDy) * 10) / 10));
+            }
 
             updateViewerEdits(curIdx);
             updateMiniPreview();
@@ -355,6 +387,8 @@
         const total = docState.items.length;
         if (total === 0) return;
 
+        if (typeof isEyedropperActive !== 'undefined' && isEyedropperActive) return;
+
         // 1. 투시 핀 터치 드래그 우선 처리
         const pinEl = e.target.closest('.corner-pin');
         if (pinEl && isPerspectiveActive) {
@@ -370,12 +404,13 @@
 
           const curIdx = docState.currentIndex;
           const cfg = getEffectiveItemSettings(curIdx);
-          if (!cfg.corners) {
-            cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+          const cornerOwner = (typeof getSelectedLayer === 'function' && getSelectedLayer()?.type === 'image') ? getSelectedLayer() : cfg;
+          if (!cornerOwner.corners) {
+            cornerOwner.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
           }
           pinDragStartCornerVal = {
-            x: cfg.corners[cornerKey]?.x || 0,
-            y: cfg.corners[cornerKey]?.y || 0
+            x: cornerOwner.corners[cornerKey]?.x || 0,
+            y: cornerOwner.corners[cornerKey]?.y || 0
           };
           updateViewerPinLoupe(cornerKey, e.touches[0].clientX, e.touches[0].clientY);
           return;
@@ -383,6 +418,11 @@
 
         // 자르기(크롭) 모드 중에는 터치 패닝(이미지 위치 이동) 차단
         if (typeof isCropActive !== 'undefined' && isCropActive) return;
+
+        if (e.target.closest('.layer-item-box')) return;
+        if (typeof getSelectedLayer === 'function' && getSelectedLayer() && typeof selectLayer === 'function') {
+          selectLayer(null);
+        }
 
         if (e.touches.length !== 1) return;
 
@@ -409,6 +449,7 @@
           if (!canvas || !item || !item.imgObj || canvas.width === 0 || canvas.height === 0) return;
 
           const cfg = getEffectiveItemSettings(curIdx);
+          const cornerOwner = (typeof getSelectedLayer === 'function' && getSelectedLayer()?.type === 'image') ? getSelectedLayer() : cfg;
           const pts = getCornerCanvasPoints(item, cfg, canvas.width, canvas.height);
           if (!pts || !pts.dw || !pts.dh) return;
 
@@ -419,10 +460,10 @@
               const sRect = stageEl.getBoundingClientRect();
               const stageX = e.touches[0].clientX - sRect.left;
               const stageY = e.touches[0].clientY - sRect.top;
-              if (!cfg.corners) {
-                cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+              if (!cornerOwner.corners) {
+                cornerOwner.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
               }
-              cfg.corners[activeDraggingPinKey] = calcCornerFromMiniStagePos(pts, activeDraggingPinKey, stageX, stageY, miniSheet, stageEl, canvas);
+              cornerOwner.corners[activeDraggingPinKey] = calcCornerFromMiniStagePos(pts, activeDraggingPinKey, stageX, stageY, miniSheet, stageEl, canvas);
             }
           } else {
             // 가운데 창(메인 뷰어): 용지 밖으로 자유롭게 핀 이동 지원 (캔버스 클램프 완전 제거)
@@ -450,10 +491,10 @@
             const deltaOrigPxX = Math.round(deltaLocalX / scalePxX);
             const deltaOrigPxY = Math.round(deltaLocalY / scalePxY);
 
-            if (!cfg.corners) {
-              cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+            if (!cornerOwner.corners) {
+              cornerOwner.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
             }
-            cfg.corners[activeDraggingPinKey] = {
+            cornerOwner.corners[activeDraggingPinKey] = {
               x: pinDragStartCornerVal.x + deltaOrigPxX,
               y: pinDragStartCornerVal.y + deltaOrigPxY
             };
@@ -491,9 +532,15 @@
             const curIdx = docState.currentIndex;
             const cfg = getEffectiveItemSettings(curIdx);
             const item = docState.items[curIdx];
-            const { maxOffsetX, maxOffsetY } = getImageOffsetMaxLimits(item, cfg);
-            cfg.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, Math.round((miniPanStartOffsetX + pctDx) * 10) / 10));
-            cfg.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, Math.round((miniPanStartOffsetY + pctDy) * 10) / 10));
+            const selLayer = (typeof getSelectedLayer === 'function') ? getSelectedLayer() : null;
+            if (selLayer) {
+              selLayer.x = Math.max(-0.5, Math.min(1.5, (miniPanStartOffsetX + pctDx) / 100));
+              selLayer.y = Math.max(-0.5, Math.min(1.5, (miniPanStartOffsetY + pctDy) / 100));
+            } else {
+              const { maxOffsetX, maxOffsetY } = getImageOffsetMaxLimits(item, cfg);
+              cfg.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, Math.round((miniPanStartOffsetX + pctDx) * 10) / 10));
+              cfg.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, Math.round((miniPanStartOffsetY + pctDy) * 10) / 10));
+            }
 
             updateViewerEdits(curIdx);
             updateMiniPreview();
@@ -572,6 +619,10 @@
     window.addEventListener('keydown', (e) => {
       // 1. ESC 키: 팝업 모달, 햄버거 메뉴 및 모바일 패널 닫기 (최상위 레이어부터 순차 닫기)
       if (e.key === 'Escape') {
+        if (typeof isEyedropperActive !== 'undefined' && isEyedropperActive && typeof cancelEyedropper === 'function') {
+          cancelEyedropper();
+          return;
+        }
         const fileMgrModal = document.getElementById('modalOpenFilesManager');
         if (fileMgrModal && fileMgrModal.classList.contains('show')) {
           closeOpenFilesManagerModal(true);
@@ -608,6 +659,12 @@
       // 입력 중일 때는 화살표 탐색 스킵
       const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
       if (activeTag === 'input' || activeTag === 'select' || activeTag === 'textarea') {
+        return;
+      }
+
+      if (e.key === 'Delete' && typeof getSelectedLayer === 'function' && getSelectedLayer() && typeof deleteSelectedLayer === 'function') {
+        e.preventDefault();
+        deleteSelectedLayer();
         return;
       }
 
@@ -695,6 +752,9 @@
       }
       if (typeof isCropActive !== 'undefined' && isCropActive && typeof updateCropOverlayPositions === 'function') {
         updateCropOverlayPositions();
+      }
+      if (typeof updateLayerStageOverlay === 'function') {
+        updateLayerStageOverlay();
       }
     });
 

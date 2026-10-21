@@ -1,5 +1,11 @@
     function getCornerCanvasPoints(item, cfg, canvasW, canvasH) {
       if (!item || !item.imgObj) return null;
+      if (typeof getSelectedLayer === 'function' && typeof getLayerCornerCanvasPoints === 'function') {
+        const selLayer = getSelectedLayer();
+        if (selLayer && selLayer.type === 'image') {
+          return getLayerCornerCanvasPoints(item, cfg, selLayer, canvasW, canvasH);
+        }
+      }
       const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
       const rotRad = (rotImg * Math.PI) / 180;
 
@@ -375,6 +381,9 @@
         const viewerLoupe = document.getElementById('viewerPinLoupe');
         if (viewerLoupe) viewerLoupe.style.display = 'none';
       }
+      if (typeof updateLayerStageOverlay === 'function') {
+        updateLayerStageOverlay();
+      }
     }
 
     // 돋보기 투명 배경용 체커보드 패턴 렌더링 헬퍼
@@ -712,6 +721,7 @@
 
     // 모서리 핀 좌표 초기화 (0% 0%)
     async function resetCorners() {
+      if (typeof handleLayerResetCorners === 'function' && await handleLayerResetCorners()) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       cfg.corners = {
@@ -728,6 +738,7 @@
     }
 
     function adjustImageOffset(pixelDx, pixelDy) {
+      if (typeof handleLayerOffset === 'function' && handleLayerOffset(pixelDx, pixelDy)) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       const item = docState.items[curIdx];
@@ -748,6 +759,7 @@
     }
 
     function resetImageOffset() {
+      if (typeof handleLayerResetOffset === 'function' && handleLayerResetOffset()) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       cfg.offsetX = 0;

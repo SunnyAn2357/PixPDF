@@ -1511,6 +1511,28 @@ const modal = document.getElementById('modalPdfPicker');
         return;
       }
 
+      if (pickerState.mode === 'layer_insert') {
+        const doc = pickerState.doc;
+        const file = pickerState.file;
+        closePdfPickerModal();
+        if (doc && typeof insertImageCanvasAsLayer === 'function') {
+          const baseLabel = (file ? file.name : 'PDF').replace(/\.[^/.]+$/, '');
+          for (const pNum of selectedNums) {
+            const page = await doc.getPage(pNum);
+            const vp = page.getViewport({ scale: 2.5 });
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = vp.width;
+            offCanvas.height = vp.height;
+            const offCtx = offCanvas.getContext('2d');
+            offCtx.fillStyle = '#ffffff';
+            offCtx.fillRect(0, 0, vp.width, vp.height);
+            await page.render({ canvasContext: offCtx, viewport: vp }).promise;
+            await insertImageCanvasAsLayer(offCanvas, `${baseLabel} (p.${pNum})`);
+          }
+        }
+        return;
+      }
+
       if (pickerState.mode === 'resync') {
         const fileId = pickerState.resyncFileId;
         const oldSettingsMap = new Map();

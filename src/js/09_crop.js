@@ -4,6 +4,7 @@
     // ==========================================================================
 
     let isCropActive = false;
+    let croppingLayerId = null; // null이면 바탕 이미지 자르기, 문자열이면 해당 레이어(type==='image') 자르기
     let cropBox = { x: 0, y: 0, w: 1, h: 1 }; // 0.0 ~ 1.0 비율 좌표 (기본은 객체 가장 바깥)
     let cropPaperMode = false; // false: 객체 자르기, true: 종이 연동 자르기
     let activeCropDrag = null; // { handle, startX, startY, origBox, imgRect }
@@ -42,19 +43,39 @@
 
       isCropActive = true;
 
-      // 기존 설정 복원 또는 객체 가장 바깥 100% 가이드 박스로 초기화
-      const settings = item.settings || {};
-      if (settings.crop) {
-        cropBox = {
-          x: Math.max(0, Math.min(0.95, settings.crop.x || 0)),
-          y: Math.max(0, Math.min(0.95, settings.crop.y || 0)),
-          w: Math.max(0.05, Math.min(1 - (settings.crop.x || 0), settings.crop.w || 1)),
-          h: Math.max(0.05, Math.min(1 - (settings.crop.y || 0), settings.crop.h || 1))
-        };
-        cropPaperMode = Boolean(settings.crop.cropPaper);
-      } else {
-        cropBox = { x: 0, y: 0, w: 1, h: 1 };
+      const selLayer = (typeof getSelectedLayer === 'function') ? getSelectedLayer() : null;
+      const btnPaper = document.getElementById('btnCropModePaper');
+      if (selLayer && selLayer.type === 'image') {
+        croppingLayerId = selLayer.id;
         cropPaperMode = false;
+        if (btnPaper) btnPaper.style.display = 'none';
+        if (selLayer.crop) {
+          cropBox = {
+            x: Math.max(0, Math.min(0.95, selLayer.crop.x || 0)),
+            y: Math.max(0, Math.min(0.95, selLayer.crop.y || 0)),
+            w: Math.max(0.05, Math.min(1 - (selLayer.crop.x || 0), selLayer.crop.w || 1)),
+            h: Math.max(0.05, Math.min(1 - (selLayer.crop.y || 0), selLayer.crop.h || 1))
+          };
+        } else {
+          cropBox = { x: 0, y: 0, w: 1, h: 1 };
+        }
+      } else {
+        croppingLayerId = null;
+        if (btnPaper) btnPaper.style.display = '';
+        // 기존 설정 복원 또는 객체 가장 바깥 100% 가이드 박스로 초기화
+        const settings = item.settings || {};
+        if (settings.crop) {
+          cropBox = {
+            x: Math.max(0, Math.min(0.95, settings.crop.x || 0)),
+            y: Math.max(0, Math.min(0.95, settings.crop.y || 0)),
+            w: Math.max(0.05, Math.min(1 - (settings.crop.x || 0), settings.crop.w || 1)),
+            h: Math.max(0.05, Math.min(1 - (settings.crop.y || 0), settings.crop.h || 1))
+          };
+          cropPaperMode = Boolean(settings.crop.cropPaper);
+        } else {
+          cropBox = { x: 0, y: 0, w: 1, h: 1 };
+          cropPaperMode = false;
+        }
       }
 
       // [핵심] 자르기 모드 시작 시 메인 뷰어 캔버스를 원본 전체 이미지로 즉시 렌더링
@@ -80,6 +101,7 @@
     async function cancelCrop() {
       if (!isCropActive) return;
       isCropActive = false;
+      croppingLayerId = null;
       const overlay = document.getElementById('cropOverlay');
       if (overlay) overlay.style.display = 'none';
 
@@ -332,31 +354,50 @@
       const item = docState.items[docState.currentIndex];
       if (!item) return;
 
-      if (!item.settings) item.settings = {};
-
-      // 99% 이상 전체 크기인 경우 크롭 해제
       const isFull = (cropBox.x <= 0.01 && cropBox.y <= 0.01 && cropBox.w >= 0.98 && cropBox.h >= 0.98);
-      if (isFull) {
-        item.settings.crop = null;
-      } else {
-        item.settings.crop = {
-          x: Math.max(0, Math.min(0.95, cropBox.x)),
-          y: Math.max(0, Math.min(0.95, cropBox.y)),
-          w: Math.max(0.05, Math.min(1 - cropBox.x, cropBox.w)),
-          h: Math.max(0.05, Math.min(1 - cropBox.y, cropBox.h)),
-          cropPaper: Boolean(cropPaperMode)
-        };
-      }
+      const selLayer = (croppingLayerId && item.layers) ? item.layers.find(l => l.id === croppingLayerId) : null;
 
-      // 캐시 무효화
-      if (item._croppedCanvas) {
-        item._croppedCanvas.width = 0;
-        item._croppedCanvas.height = 0;
-        item._croppedCanvas = null;
+      if (selLayer && selLayer.type === 'image') {
+        if (isFull) {
+          selLayer.crop = null;
+        } else {
+          selLayer.crop = {
+            x: Math.max(0, Math.min(0.95, cropBox.x)),
+            y: Math.max(0, Math.min(0.95, cropBox.y)),
+            w: Math.max(0.05, Math.min(1 - cropBox.x, cropBox.w)),
+            h: Math.max(0.05, Math.min(1 - cropBox.y, cropBox.h))
+          };
+        }
+        if (selLayer._croppedCanvas) {
+          selLayer._croppedCanvas.width = 0;
+          selLayer._croppedCanvas.height = 0;
+          selLayer._croppedCanvas = null;
+        }
+      } else {
+        if (!item.settings) item.settings = {};
+        if (isFull) {
+          item.settings.crop = null;
+        } else {
+          item.settings.crop = {
+            x: Math.max(0, Math.min(0.95, cropBox.x)),
+            y: Math.max(0, Math.min(0.95, cropBox.y)),
+            w: Math.max(0.05, Math.min(1 - cropBox.x, cropBox.w)),
+            h: Math.max(0.05, Math.min(1 - cropBox.y, cropBox.h)),
+            cropPaper: Boolean(cropPaperMode)
+          };
+        }
+
+        // 캐시 무효화
+        if (item._croppedCanvas) {
+          item._croppedCanvas.width = 0;
+          item._croppedCanvas.height = 0;
+          item._croppedCanvas = null;
+        }
       }
 
       // 크롭 모드 비활성화 및 UI 닫기
       isCropActive = false;
+      croppingLayerId = null;
       const overlay = document.getElementById('cropOverlay');
       if (overlay) overlay.style.display = 'none';
       const cropToolbar = document.getElementById('viewerCropToolbar');
@@ -393,18 +434,29 @@
       const item = docState.items[docState.currentIndex];
       if (!item) return;
 
-      if (item.settings) {
-        item.settings.crop = null;
-      }
-      if (item._croppedCanvas) {
-        item._croppedCanvas.width = 0;
-        item._croppedCanvas.height = 0;
-        item._croppedCanvas = null;
+      const selLayer = (typeof getSelectedLayer === 'function') ? getSelectedLayer() : null;
+      if (selLayer && selLayer.type === 'image') {
+        selLayer.crop = null;
+        if (selLayer._croppedCanvas) {
+          selLayer._croppedCanvas.width = 0;
+          selLayer._croppedCanvas.height = 0;
+          selLayer._croppedCanvas = null;
+        }
+      } else {
+        if (item.settings) {
+          item.settings.crop = null;
+        }
+        if (item._croppedCanvas) {
+          item._croppedCanvas.width = 0;
+          item._croppedCanvas.height = 0;
+          item._croppedCanvas = null;
+        }
       }
 
       if (isCropActive) {
         cropBox = { x: 0, y: 0, w: 1, h: 1 };
         isCropActive = false;
+        croppingLayerId = null;
         const overlay = document.getElementById('cropOverlay');
         if (overlay) overlay.style.display = 'none';
         const cropToolbar = document.getElementById('viewerCropToolbar');
