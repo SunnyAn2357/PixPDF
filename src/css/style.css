@@ -1556,11 +1556,12 @@
       margin: 0;
     }
 
-    /* 객체 회전 1행 바 */
+    /* 객체 회전 1행 바 (4개 그룹 균등 배치: 라벨 | 90도 회전 버튼군 | 슬라이더 | 각도 표시) */
     .object-rot-bar {
       display: flex;
       align-items: center;
-      gap: 6px;
+      justify-content: space-between;
+      gap: 10px;
       padding-top: 5px;
       border-top: 1px dashed var(--border-light);
       margin-top: 3px;
@@ -1572,12 +1573,11 @@
       white-space: nowrap;
       flex-shrink: 0;
     }
-    .object-rot-controls {
+    .object-rot-btns {
       display: flex;
       align-items: center;
-      gap: 4px;
-      flex: 1;
-      min-width: 0;
+      gap: 3px;
+      flex-shrink: 0;
     }
     .btn-rot-mini {
       width: 24px;
@@ -1603,7 +1603,8 @@
     }
     .slider-rot-mini {
       flex: 1;
-      min-width: 0;
+      min-width: 50px;
+      margin: 0;
       accent-color: var(--primary);
       cursor: pointer;
       height: 4px;
@@ -1612,7 +1613,7 @@
       font-size: 11px;
       font-weight: 700;
       color: var(--primary);
-      width: 28px;
+      min-width: 24px;
       text-align: right;
       flex-shrink: 0;
     }
@@ -1983,13 +1984,18 @@
       color: #ffffff;
       border-color: var(--primary);
     }
+    .btn-insert-header {
+      padding: 3.5px 9px;
+      font-size: 11.5px;
+      border-radius: 5px;
+    }
 
     .layer-manager-bar {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 5px;
       margin-bottom: 6px;
-      padding: 5px 6px;
+      padding: 6px 6px 5px 6px;
       background: #f8fafc;
       border: 1px solid var(--border-light);
       border-radius: 6px;
@@ -1997,9 +2003,10 @@
     .layer-chips-list {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
       overflow-x: auto;
-      padding-bottom: 2px;
+      padding-bottom: 8px;
+      margin-bottom: 2px;
       scrollbar-width: thin;
     }
     .layer-chip {

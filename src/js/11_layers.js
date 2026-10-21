@@ -1,6 +1,6 @@
     // ==========================================================================
     // [MODULE] 11_layers.js
-    // 다중 객체 레이어 엔진 (카멜레온 글상자, 14종 도형, 이미지/PDF 조각, 정밀 스포이드)
+    // 다중 객체 레이어 엔진 (카멜레온 글상자 v2, 15종 도형 & 5종 선, 이미지/PDF 조각, 정밀 스포이드)
     // ==========================================================================
 
     let selectedLayerId = null;
@@ -18,6 +18,8 @@
       pentagon: '오각형',
       hexagon: '육각형',
       star: '별표',
+      heart: '하트',
+      noSymbol: '금지',
       line: '직선',
       arrow: '화살표',
       doubleArrow: '양방향화살표',
@@ -158,8 +160,9 @@
         bgMode: 'chameleon', // 'chameleon' | 'solid' | 'transparent'
         bgColor: '#ffffff',
         color: '#1e293b',
-        fontFamily: "Pretendard, 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', sans-serif",
+        fontFamily: "'Dotum', '돋움', 'Apple SD Gothic Neo', sans-serif",
         fontSize: 28,
+        letterSpacing: -1.5,
         bold: false,
         italic: false,
         align: 'left',
@@ -232,7 +235,7 @@
       }
     }
 
-    async function addFileAsObjectLayer(file) {
+    async function addFileAsObjectLayer(file, dropOpts = null) {
       if (!file || docState.items.length === 0) return;
       const curItem = docState.items[docState.currentIndex];
       if (!curItem) return;
@@ -249,6 +252,7 @@
             pickerState.total = pdfDoc.numPages;
             pickerState.selected = Array.from({ length: pdfDoc.numPages }, (_, i) => i === 0);
             pickerState.mode = 'layer_insert';
+            pickerState.dropOpts = dropOpts || null;
             const titleEl = document.getElementById('pickerModalTitle');
             if (titleEl) titleEl.textContent = `📑 현재 페이지에 올릴 PDF 페이지 선택 (${file.name})`;
             const posEl = document.getElementById('pickerTargetPosText');
@@ -274,7 +278,7 @@
           offCtx.fillRect(0, 0, vp.width, vp.height);
           await page.render({ canvasContext: offCtx, viewport: vp }).promise;
 
-          await insertImageCanvasAsLayer(offCanvas, file.name.replace(/\.[^/.]+$/, '') + ' (p.1)');
+          await insertImageCanvasAsLayer(offCanvas, file.name.replace(/\.[^/.]+$/, '') + ' (p.1)', dropOpts);
         } else if (/\.tiff?$/i.test(file.name) && typeof UTIF !== 'undefined') {
           const buf = await file.arrayBuffer();
           const ifds = UTIF.decode(buf);
@@ -287,7 +291,7 @@
             const ctx = c.getContext('2d');
             const imgData = new ImageData(new Uint8ClampedArray(rgba), c.width, c.height);
             ctx.putImageData(imgData, 0, 0);
-            await insertImageCanvasAsLayer(c, file.name);
+            await insertImageCanvasAsLayer(c, file.name, dropOpts);
           }
         } else {
           const blobUrl = URL.createObjectURL(file);
@@ -302,7 +306,7 @@
           c.height = img.naturalHeight || img.height || 600;
           c.getContext('2d').drawImage(img, 0, 0);
           URL.revokeObjectURL(blobUrl);
-          await insertImageCanvasAsLayer(c, file.name);
+          await insertImageCanvasAsLayer(c, file.name, dropOpts);
         }
       } catch (err) {
         console.error('[Layer File Load Error]', err);
@@ -310,7 +314,7 @@
       }
     }
 
-    async function insertImageCanvasAsLayer(imgCanvas, labelName) {
+    async function insertImageCanvasAsLayer(imgCanvas, labelName, dropOpts = null) {
       const layers = getCurrentItemLayers();
       const count = layers.filter(l => l.type === 'image').length + 1;
       const origW = imgCanvas.width || 800;
@@ -328,6 +332,25 @@
       }
 
       const offsetStep = ((layers.length % 5) - 2) * 0.03;
+      let targetX = 0.5 + offsetStep;
+      let targetY = 0.5 + offsetStep;
+
+      // 가운데 창에 직접 드래그 앤 드롭한 경우 드롭한 마우스 위치에 배치
+      if (dropOpts && typeof dropOpts.dropClientX === 'number' && typeof dropOpts.dropClientY === 'number' && mainCanvas) {
+        const rect = mainCanvas.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0 &&
+            dropOpts.dropClientX >= rect.left && dropOpts.dropClientX <= rect.right &&
+            dropOpts.dropClientY >= rect.top && dropOpts.dropClientY <= rect.bottom) {
+          const item = docState.items[docState.currentIndex];
+          const cfg = getEffectiveItemSettings(docState.currentIndex);
+          const paperRect = getActivePaperCanvasRect(mainCanvas, item, cfg);
+          const canvX = ((dropOpts.dropClientX - rect.left) / rect.width) * mainCanvas.width;
+          const canvY = ((dropOpts.dropClientY - rect.top) / rect.height) * mainCanvas.height;
+          targetX = Math.max(0.08, Math.min(0.92, (canvX - paperRect.sx) / Math.max(1, paperRect.subW)));
+          targetY = Math.max(0.08, Math.min(0.92, (canvY - paperRect.sy) / Math.max(1, paperRect.subH)));
+        }
+      }
+
       const newLayer = {
         id: 'layer_' + Date.now() + '_' + (layerSeqCounter++),
         type: 'image',
@@ -335,8 +358,8 @@
         imgObj: imgCanvas,
         origW: origW,
         origH: origH,
-        x: 0.5 + offsetStep,
-        y: 0.5 + offsetStep,
+        x: targetX,
+        y: targetY,
         w: Math.max(0.08, Math.min(0.9, w)),
         h: Math.max(0.08, Math.min(0.9, h)),
         rot: 0,
@@ -356,7 +379,7 @@
       selectedLayerId = newLayer.id;
       syncLayerUI();
       await refreshAllViewsForLayers();
-      if (typeof showExitToast === 'function') showExitToast('이미지/PDF 조각이 추가되었습니다. (투시변환·자르기 지원)');
+      if (typeof showExitToast === 'function') showExitToast('이미지/PDF 조각이 현재 페이지 객체로 추가되었습니다.');
     }
 
     async function moveSelectedLayerOrder(dir) {
@@ -434,6 +457,17 @@
       const inspShape = document.getElementById('layerInspectorShape');
 
       if (mgrBar && chipsList) {
+        // 삽입된 객체 칩 목록 위에서 마우스 휠로 가로 스크롤 지원 (1회 바인딩)
+        if (!chipsList.dataset.wheelBound) {
+          chipsList.dataset.wheelBound = '1';
+          chipsList.addEventListener('wheel', (e) => {
+            if (chipsList.scrollWidth > chipsList.clientWidth) {
+              e.preventDefault();
+              chipsList.scrollLeft += (e.deltaY !== 0 ? e.deltaY : e.deltaX);
+            }
+          }, { passive: false });
+        }
+
         if (layers.length === 0) {
           mgrBar.style.display = 'none';
         } else {
@@ -514,6 +548,9 @@
           document.getElementById('btnTextAlignC')?.classList.toggle('active', align === 'center');
           document.getElementById('btnTextAlignR')?.classList.toggle('active', align === 'right');
 
+          const selLS = document.getElementById('selLayerLetterSpacing');
+          if (selLS) selLS.value = String(sel.letterSpacing !== undefined ? sel.letterSpacing : -1.5);
+
           const selPad = document.getElementById('selLayerPadding');
           if (selPad) selPad.value = String(sel.padding !== undefined ? sel.padding : 8);
         } else {
@@ -557,6 +594,9 @@
 
       if (prop === 'fontSize') {
         sel.fontSize = Math.max(6, Math.min(250, parseInt(val, 10) || 28));
+      } else if (prop === 'letterSpacing') {
+        sel.letterSpacing = parseFloat(val);
+        if (isNaN(sel.letterSpacing)) sel.letterSpacing = 0;
       } else if (prop === 'padding') {
         sel.padding = parseInt(val, 10) || 0;
       } else if (prop === 'bgColor') {
@@ -585,6 +625,38 @@
       await refreshAllViewsForLayers();
     }
 
+    // 자간(letterSpacing) 반영 문자열 폭 측정 & 렌더링 헬퍼
+    function measureSpacedText(ctx, str, lsPx) {
+      if (!str) return 0;
+      if (!lsPx || Math.abs(lsPx) < 0.05 || str.length <= 1) {
+        return ctx.measureText(str).width;
+      }
+      let total = 0;
+      for (let i = 0; i < str.length; i++) {
+        total += ctx.measureText(str[i]).width;
+      }
+      return Math.max(1, total + lsPx * (str.length - 1));
+    }
+
+    function fillSpacedText(ctx, str, x, y, align, lsPx) {
+      if (!str) return;
+      if (!lsPx || Math.abs(lsPx) < 0.05 || str.length <= 1) {
+        ctx.textAlign = align || 'left';
+        ctx.fillText(str, x, y);
+        return;
+      }
+      const totalW = measureSpacedText(ctx, str, lsPx);
+      let curX = x;
+      if (align === 'center') curX = x - totalW / 2;
+      else if (align === 'right') curX = x - totalW;
+      ctx.textAlign = 'left';
+      for (let i = 0; i < str.length; i++) {
+        const ch = str[i];
+        ctx.fillText(ch, curX, y);
+        curX += ctx.measureText(ch).width + lsPx;
+      }
+    }
+
     // 글자 길이에 맞춰 글상자 크기 자동 맞춤
     async function fitTextLayerBox() {
       const sel = getSelectedLayer();
@@ -600,6 +672,7 @@
 
       const fontPx = Math.max(8, (sel.fontSize || 28) * refScale);
       const padPx = (sel.padding !== undefined ? sel.padding : 8) * refScale;
+      const lsPx = (sel.letterSpacing !== undefined ? sel.letterSpacing : -1.5) * refScale;
       const lineH = fontPx * (sel.lineHeight || 1.35);
 
       const ctx = canvas.getContext('2d');
@@ -609,8 +682,8 @@
       const rawLines = String(sel.text || ' ').split(/\r?\n/);
       let maxW = 40;
       rawLines.forEach(line => {
-        const m = ctx.measureText(line || ' ');
-        if (m.width > maxW) maxW = m.width;
+        const w = measureSpacedText(ctx, line || ' ', lsPx);
+        if (w > maxW) maxW = w;
       });
       ctx.restore();
 
@@ -934,7 +1007,7 @@
     }
 
     // --------------------------------------------------------------------------
-    // 5. 마스터 렌더러 연동: 카멜레온 글상자 / 14종 도형 / 이미지 조각 렌더링
+    // 5. 마스터 렌더러 연동: 카멜레온 글상자 v2 / 15종 도형 / 이미지 조각 렌더링
     // --------------------------------------------------------------------------
 
     function renderItemLayers(ctx, canvasW, canvasH, item, cfg, options = {}) {
@@ -971,7 +1044,9 @@
       ctx.restore();
     }
 
-    // [핵심] 카멜레온 위장 배경 인페인팅 (주변 픽셀의 글자 잉크 노이즈를 제거하고 순수 종이/배경 4코너 그라데이션 합성)
+    // [핵심 v2] 카멜레온 픽셀 단위 텍스트 획 선택 제거 알고리즘 (Local Morphological Ink-Only Eraser)
+    // - 배경 픽셀은 원본 그대로 100% 보존(투명 글상자처럼 작동)하면서,
+    //   주변 국소 배경 대비 튀는 글자 획(잉크) 픽셀과 1px 안티앨리어싱 테두리만 국소 배경색으로 덮어써서 제거
     function drawChameleonBackground(ctx, canvasW, canvasH, cx, cy, boxW, boxH, rotRad) {
       try {
         const cos = Math.cos(rotRad);
@@ -979,7 +1054,6 @@
         const hw = boxW / 2;
         const hh = boxH / 2;
 
-        // 로컬 좌표 (lx, ly)를 캔버스 픽셀 좌표로 변환하여 주변 샘플 추출
         const cornersLocal = [
           { x: -hw, y: -hh },
           { x: hw, y: -hh },
@@ -991,81 +1065,201 @@
           y: cy + p.x * sin + p.y * cos
         }));
 
-        const pad = Math.max(3, Math.round(Math.min(boxW, boxH) * 0.12));
-        const minX = Math.max(0, Math.floor(Math.min(...cornersCanv.map(p => p.x)) - pad));
-        const minY = Math.max(0, Math.floor(Math.min(...cornersCanv.map(p => p.y)) - pad));
-        const maxX = Math.min(canvasW - 1, Math.ceil(Math.max(...cornersCanv.map(p => p.x)) + pad));
-        const maxY = Math.min(canvasH - 1, Math.ceil(Math.max(...cornersCanv.map(p => p.y)) + pad));
+        // 글자 두께를 넘어 주변 배경을 참조할 수 있도록 반경 설정
+        const radius = Math.max(5, Math.min(26, Math.round(Math.min(boxW, boxH) * 0.24)));
+        const minX = Math.max(0, Math.floor(Math.min(...cornersCanv.map(p => p.x)) - radius - 2));
+        const minY = Math.max(0, Math.floor(Math.min(...cornersCanv.map(p => p.y)) - radius - 2));
+        const maxX = Math.min(canvasW - 1, Math.ceil(Math.max(...cornersCanv.map(p => p.x)) + radius + 2));
+        const maxY = Math.min(canvasH - 1, Math.ceil(Math.max(...cornersCanv.map(p => p.y)) + radius + 2));
         const rw = Math.max(1, maxX - minX + 1);
         const rh = Math.max(1, maxY - minY + 1);
 
-        const imgData = ctx.getImageData(minX, minY, rw, rh).data;
+        const imgDataObj = ctx.getImageData(minX, minY, rw, rh);
+        const data = imgDataObj.data;
+        const totalPx = rw * rh;
 
-        // 테두리 둘레 픽셀 샘플링 함수 (로컬 좌표 기준 테두리 바깥쪽 띠에서 추출)
-        function sampleRegionCleanColor(lx0, ly0, lx1, ly1) {
-          const samples = [];
-          const stepsX = 10;
-          const stepsY = 6;
-          for (let sy = 0; sy <= stepsY; sy++) {
-            const ly = ly0 + (ly1 - ly0) * (sy / stepsY);
-            for (let sx = 0; sx <= stepsX; sx++) {
-              const lx = lx0 + (lx1 - lx0) * (sx / stepsX);
-              const px = Math.round(cx + lx * cos - ly * sin) - minX;
-              const py = Math.round(cy + lx * sin + ly * cos) - minY;
-              if (px >= 0 && px < rw && py >= 0 && py < rh) {
-                const idx = (py * rw + px) * 4;
-                const a = imgData[idx + 3];
-                if (a > 10) {
-                  const r = imgData[idx];
-                  const g = imgData[idx + 1];
-                  const b = imgData[idx + 2];
-                  const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-                  samples.push({ r, g, b, lum });
-                }
+        // 1단계: 각 픽셀의 밝기(Luminance) 계산 및 밝은 배경(일반 문서) vs 어두운 배경(반전 라벨) 판별
+        const lumArr = new Uint8Array(totalPx);
+        let borderLumSum = 0;
+        let borderCnt = 0;
+        let innerDarkSum = 0;
+        let innerLightSum = 0;
+        let innerCnt = 0;
+
+        for (let py = 0; py < rh; py++) {
+          const gy = minY + py - cy;
+          for (let px = 0; px < rw; px++) {
+            const idx = py * rw + px;
+            const i4 = idx * 4;
+            const lum = (data[i4] * 77 + data[i4 + 1] * 150 + data[i4 + 2] * 29) >> 8;
+            lumArr[idx] = lum;
+
+            const gx = minX + px - cx;
+            const lx = gx * cos + gy * sin;
+            const ly = -gx * sin + gy * cos;
+            if (Math.abs(lx) <= hw + radius * 0.5 && Math.abs(ly) <= hh + radius * 0.5) {
+              if (Math.abs(lx) > hw * 0.82 || Math.abs(ly) > hh * 0.82) {
+                borderLumSum += lum;
+                borderCnt++;
+              } else {
+                innerCnt++;
+                if (lum < 128) innerDarkSum++;
+                else innerLightSum++;
               }
             }
           }
-          if (samples.length === 0) return { r: 255, g: 255, b: 255 };
-
-          // 어두운 글자 획(Outlier)을 배제하기 위해 밝기 상위 55~85% 구간의 대표 배경색 평균 산출
-          samples.sort((a, b) => a.lum - b.lum);
-          const startIdx = Math.floor(samples.length * 0.50);
-          const endIdx = Math.max(startIdx + 1, Math.ceil(samples.length * 0.90));
-          let sr = 0, sg = 0, sb = 0, cnt = 0;
-          for (let i = startIdx; i < endIdx && i < samples.length; i++) {
-            sr += samples[i].r;
-            sg += samples[i].g;
-            sb += samples[i].b;
-            cnt++;
-          }
-          return {
-            r: Math.round(sr / cnt),
-            g: Math.round(sg / cnt),
-            b: Math.round(sb / cnt)
-          };
         }
 
-        // 4개 모서리 주변의 깨끗한 배경색 추출
-        const cTL = sampleRegionCleanColor(-hw - pad, -hh - pad, 0, 0);
-        const cTR = sampleRegionCleanColor(0, -hh - pad, hw + pad, 0);
-        const cBL = sampleRegionCleanColor(-hw - pad, 0, 0, hh + pad);
-        const cBR = sampleRegionCleanColor(0, 0, hw + pad, hh + pad);
+        const avgBorderLum = borderCnt > 0 ? (borderLumSum / borderCnt) : 240;
+        // 테두리 평균 밝기가 115 이상이면 '밝은 배경 위의 어두운 글자(일반 문서)', 아니면 '어두운 배경 위의 밝은 글자'
+        const isLightBg = avgBorderLum >= 115;
 
-        // 4코너 양선형 보간(Bilinear Patch)으로 글상자 내부를 매끄럽게 위장 채우기
-        const gridN = 12;
-        const cellW = boxW / gridN;
-        const cellH = boxH / gridN;
-        for (let gy = 0; gy < gridN; gy++) {
-          const v = (gy + 0.5) / gridN;
-          for (let gx = 0; gx < gridN; gx++) {
-            const u = (gx + 0.5) / gridN;
-            const r = Math.round((1 - u) * (1 - v) * cTL.r + u * (1 - v) * cTR.r + (1 - u) * v * cBL.r + u * v * cBR.r);
-            const g = Math.round((1 - u) * (1 - v) * cTL.g + u * (1 - v) * cTR.g + (1 - u) * v * cBL.g + u * v * cBR.g);
-            const b = Math.round((1 - u) * (1 - v) * cTL.b + u * (1 - v) * cTR.b + (1 - u) * v * cBL.b + u * v * cBR.b);
-            ctx.fillStyle = `rgb(${r},${g},${b})`;
-            ctx.fillRect(-hw + gx * cellW - 0.5, -hh + gy * cellH - 0.5, cellW + 1, cellH + 1);
+        // 2단계: 2-Pass Separable 국소 모폴로지 배경 추정 (글자 획 너머의 순수 국소 배경 RGB 복원)
+        const step = Math.max(1, Math.floor(radius / 4));
+        const passR = new Uint8Array(totalPx);
+        const passG = new Uint8Array(totalPx);
+        const passB = new Uint8Array(totalPx);
+        const passL = new Uint8Array(totalPx);
+
+        // Pass H (가로 방향 윈도우에서 글자 잉크가 아닌 대표 배경 픽셀 추출)
+        for (let py = 0; py < rh; py++) {
+          const rowOff = py * rw;
+          for (let px = 0; px < rw; px++) {
+            let bestLum = isLightBg ? 0 : 255;
+            let secondLum = lumArr[rowOff + px];
+            let bestIdx = rowOff + px;
+            let secondIdx = bestIdx;
+
+            for (let dx = -radius; dx <= radius; dx += step) {
+              const nx = px + dx;
+              if (nx < 0 || nx >= rw) continue;
+              const nIdx = rowOff + nx;
+              const l = lumArr[nIdx];
+              if (isLightBg) {
+                if (l > bestLum) {
+                  secondLum = bestLum; secondIdx = bestIdx;
+                  bestLum = l; bestIdx = nIdx;
+                } else if (l > secondLum) {
+                  secondLum = l; secondIdx = nIdx;
+                }
+              } else {
+                if (l < bestLum) {
+                  secondLum = bestLum; secondIdx = bestIdx;
+                  bestLum = l; bestIdx = nIdx;
+                } else if (l < secondLum) {
+                  secondLum = l; secondIdx = nIdx;
+                }
+              }
+            }
+            const pick4 = secondIdx * 4;
+            const outIdx = rowOff + px;
+            passR[outIdx] = data[pick4];
+            passG[outIdx] = data[pick4 + 1];
+            passB[outIdx] = data[pick4 + 2];
+            passL[outIdx] = lumArr[secondIdx];
           }
         }
+
+        // Pass V (세로 방향 윈도우에서 최종 국소 배경 bgR, bgG, bgB 확정)
+        const bgR = new Uint8Array(totalPx);
+        const bgG = new Uint8Array(totalPx);
+        const bgB = new Uint8Array(totalPx);
+        const bgL = new Uint8Array(totalPx);
+
+        for (let py = 0; py < rh; py++) {
+          for (let px = 0; px < rw; px++) {
+            let sumR = 0, sumG = 0, sumB = 0, sumL = 0, cnt = 0;
+            const centerL = passL[py * rw + px];
+            for (let dy = -radius; dy <= radius; dy += step) {
+              const ny = py + dy;
+              if (ny < 0 || ny >= rh) continue;
+              const nIdx = ny * rw + px;
+              const l = passL[nIdx];
+              // Pass H를 거친 후보 중 여전히 남아 있을 수 있는 잔여 획 픽셀 배제
+              if ((isLightBg && l >= centerL - 18) || (!isLightBg && l <= centerL + 18)) {
+                sumR += passR[nIdx];
+                sumG += passG[nIdx];
+                sumB += passB[nIdx];
+                sumL += l;
+                cnt++;
+              }
+            }
+            const outIdx = py * rw + px;
+            if (cnt > 0) {
+              bgR[outIdx] = (sumR / cnt) | 0;
+              bgG[outIdx] = (sumG / cnt) | 0;
+              bgB[outIdx] = (sumB / cnt) | 0;
+              bgL[outIdx] = (sumL / cnt) | 0;
+            } else {
+              bgR[outIdx] = passR[outIdx];
+              bgG[outIdx] = passG[outIdx];
+              bgB[outIdx] = passB[outIdx];
+              bgL[outIdx] = passL[outIdx];
+            }
+          }
+        }
+
+        // 3단계: 글자 획(잉크) 픽셀 검출 마스크 생성 (배경과 유사한 픽셀은 0으로 두어 원본 배경 100% 보존)
+        const inkMask = new Uint8Array(totalPx);
+        for (let py = 0; py < rh; py++) {
+          const gy = minY + py - cy;
+          const rowOff = py * rw;
+          for (let px = 0; px < rw; px++) {
+            const gx = minX + px - cx;
+            const lx = gx * cos + gy * sin;
+            const ly = -gx * sin + gy * cos;
+            // 회전된 글상자 내부 영역만 마스킹 대상
+            if (lx < -hw || lx > hw || ly < -hh || ly > hh) continue;
+
+            const idx = rowOff + px;
+            const i4 = idx * 4;
+            const lumDiff = isLightBg ? (bgL[idx] - lumArr[idx]) : (lumArr[idx] - bgL[idx]);
+            const chromaDiff = (Math.abs(data[i4] - bgR[idx]) + Math.abs(data[i4 + 1] - bgG[idx]) + Math.abs(data[i4 + 2] - bgB[idx])) / 3;
+            const score = Math.max(0, lumDiff) + chromaDiff * 0.45;
+
+            if (score > 11) {
+              // 11~28 구간은 부드러운 안티앨리어싱 가중치, 28 이상은 100% 잉크 획으로 판정
+              inkMask[idx] = Math.min(255, Math.round(((score - 11) / 17) * 255));
+            }
+          }
+        }
+
+        // 4단계: 글자 테두리의 잔상(Anti-aliasing Halo)까지 깨끗이 지우기 위해 마스크 1px 팽창(Dilation) 후 국소 배경으로 치환
+        for (let py = 1; py < rh - 1; py++) {
+          const gy = minY + py - cy;
+          const rowOff = py * rw;
+          for (let px = 1; px < rw - 1; px++) {
+            const gx = minX + px - cx;
+            const lx = gx * cos + gy * sin;
+            const ly = -gx * sin + gy * cos;
+            if (lx < -hw || lx > hw || ly < -hh || ly > hh) continue;
+
+            const idx = rowOff + px;
+            // 3x3 이웃 중 최대 마스크 강도 취함 (1px 팽창 효과)
+            let maxM = inkMask[idx];
+            if (maxM < 255) {
+              const m1 = inkMask[idx - 1]; if (m1 > maxM) maxM = m1;
+              const m2 = inkMask[idx + 1]; if (m2 > maxM) maxM = m2;
+              const m3 = inkMask[idx - rw]; if (m3 > maxM) maxM = m3;
+              const m4 = inkMask[idx + rw]; if (m4 > maxM) maxM = m4;
+              const m5 = inkMask[idx - rw - 1] * 0.7; if (m5 > maxM) maxM = m5 | 0;
+              const m6 = inkMask[idx - rw + 1] * 0.7; if (m6 > maxM) maxM = m6 | 0;
+              const m7 = inkMask[idx + rw - 1] * 0.7; if (m7 > maxM) maxM = m7 | 0;
+              const m8 = inkMask[idx + rw + 1] * 0.7; if (m8 > maxM) maxM = m8 | 0;
+            }
+
+            if (maxM > 0) {
+              const i4 = idx * 4;
+              const alpha = maxM / 255;
+              data[i4]     = Math.round(data[i4] * (1 - alpha) + bgR[idx] * alpha);
+              data[i4 + 1] = Math.round(data[i4 + 1] * (1 - alpha) + bgG[idx] * alpha);
+              data[i4 + 2] = Math.round(data[i4 + 2] * (1 - alpha) + bgB[idx] * alpha);
+            }
+          }
+        }
+
+        // 변환된 ImageData를 캔버스 절대 픽셀 좌표에 즉시 반영
+        ctx.putImageData(imgDataObj, minX, minY);
       } catch (e) {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(-boxW / 2, -boxH / 2, boxW, boxH);
@@ -1073,14 +1267,16 @@
     }
 
     function drawTextLayerOnCanvas(ctx, canvasW, canvasH, layer, cx, cy, boxW, boxH, rotRad, refScale) {
+      const bgMode = layer.bgMode || 'chameleon';
+      if (bgMode === 'chameleon') {
+        drawChameleonBackground(ctx, canvasW, canvasH, cx, cy, boxW, boxH, rotRad);
+      }
+
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(rotRad);
 
-      const bgMode = layer.bgMode || 'chameleon';
-      if (bgMode === 'chameleon') {
-        drawChameleonBackground(ctx, canvasW, canvasH, cx, cy, boxW, boxH, rotRad);
-      } else if (bgMode === 'solid') {
+      if (bgMode === 'solid') {
         ctx.fillStyle = layer.bgColor || '#ffffff';
         ctx.fillRect(-boxW / 2, -boxH / 2, boxW, boxH);
       }
@@ -1092,8 +1288,9 @@
 
       const fontPx = Math.max(6, (layer.fontSize || 28) * refScale);
       const padPx = (layer.padding !== undefined ? layer.padding : 8) * refScale;
+      const lsPx = (layer.letterSpacing !== undefined ? layer.letterSpacing : -1.5) * refScale;
       const lineH = fontPx * (layer.lineHeight || 1.35);
-      const fontStyle = `${layer.italic ? 'italic ' : ''}${layer.bold ? 'bold ' : ''}${fontPx}px ${layer.fontFamily || 'sans-serif'}`;
+      const fontStyle = `${layer.italic ? 'italic ' : ''}${layer.bold ? 'bold ' : ''}${fontPx}px ${layer.fontFamily || "'Dotum', '돋움', sans-serif"}`;
 
       ctx.font = fontStyle;
       ctx.fillStyle = layer.color || '#1e293b';
@@ -1112,7 +1309,7 @@
         for (let i = 0; i < para.length; i++) {
           const ch = para[i];
           const testLine = curLine + ch;
-          if (curLine.length > 0 && ctx.measureText(testLine).width > maxTextW) {
+          if (curLine.length > 0 && measureSpacedText(ctx, testLine, lsPx) > maxTextW) {
             wrappedLines.push(curLine);
             curLine = ch;
           } else {
@@ -1126,50 +1323,19 @@
       let startY = -totalTextH / 2 + lineH / 2;
 
       const align = layer.align || 'left';
-      ctx.textAlign = align;
       let textX = -boxW / 2 + padPx;
       if (align === 'center') textX = 0;
       else if (align === 'right') textX = boxW / 2 - padPx;
 
       for (let i = 0; i < wrappedLines.length; i++) {
-        ctx.fillText(wrappedLines[i], textX, startY + i * lineH);
+        fillSpacedText(ctx, wrappedLines[i], textX, startY + i * lineH, align, lsPx);
       }
 
       ctx.restore();
     }
 
-    // 14종 벡터 도형 렌더러 (면색 없음 투명 테두리 및 점선/파선 완벽 지원)
-    function drawShapeLayerOnCanvas(ctx, layer, cx, cy, boxW, boxH, rotRad, refScale) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(rotRad);
-
-      const hw = boxW / 2;
-      const hh = boxH / 2;
-      const sw = Math.max(0, (layer.strokeWidth !== undefined ? layer.strokeWidth : 4) * refScale);
-      const inset = sw / 2;
-      const w = Math.max(2, boxW - sw);
-      const h = Math.max(2, boxH - sw);
-      const rx = -w / 2;
-      const ry = -h / 2;
-
-      ctx.lineWidth = sw;
-      ctx.strokeStyle = layer.strokeColor || '#dc2626';
-      ctx.fillStyle = layer.fillColor || '#fef08a';
-      ctx.lineJoin = 'round';
-      ctx.lineCap = 'round';
-
-      if (layer.strokeDash === 'dashed') {
-        ctx.setLineDash([Math.max(6, sw * 2.4), Math.max(4, sw * 1.6)]);
-      } else if (layer.strokeDash === 'dotted') {
-        ctx.setLineDash([Math.max(2, sw * 0.8), Math.max(4, sw * 1.8)]);
-      } else {
-        ctx.setLineDash([]);
-      }
-
-      const st = layer.shapeType || 'rect';
-      const isLineLike = (st === 'line' || st === 'arrow' || st === 'doubleArrow' || st === 'check' || st === 'cross');
-
+    // 도형 외곽 Path 생성 헬퍼
+    function traceClosedOrSymbolShapePath(ctx, st, rx, ry, w, h, hw, inset, sw) {
       ctx.beginPath();
       if (st === 'rect') {
         ctx.rect(rx, ry, w, h);
@@ -1181,7 +1347,7 @@
         ctx.arcTo(rx, ry + h, rx, ry, rad);
         ctx.arcTo(rx, ry, rx + w, ry, rad);
         ctx.closePath();
-      } else if (st === 'ellipse') {
+      } else if (st === 'ellipse' || st === 'noSymbol') {
         ctx.ellipse(0, 0, w / 2, h / 2, 0, 0, Math.PI * 2);
       } else if (st === 'triangle') {
         ctx.moveTo(0, ry);
@@ -1219,6 +1385,15 @@
           if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
         }
         ctx.closePath();
+      } else if (st === 'heart') {
+        const topY = ry + h * 0.26;
+        const botY = ry + h * 0.95;
+        ctx.moveTo(0, topY);
+        ctx.bezierCurveTo(0, ry + h * 0.02, rx, ry + h * 0.02, rx, ry + h * 0.36);
+        ctx.bezierCurveTo(rx, ry + h * 0.64, 0, ry + h * 0.76, 0, botY);
+        ctx.bezierCurveTo(0, ry + h * 0.76, rx + w, ry + h * 0.64, rx + w, ry + h * 0.36);
+        ctx.bezierCurveTo(rx + w, ry + h * 0.02, 0, ry + h * 0.02, 0, topY);
+        ctx.closePath();
       } else if (st === 'callout') {
         const bodyH = h * 0.76;
         const rad = Math.min(w, bodyH) * 0.16;
@@ -1244,7 +1419,6 @@
         const headHalfH = Math.min(h / 2, headLen * 0.72);
         ctx.moveTo(-hw + inset, 0);
         ctx.lineTo(hw - inset, 0);
-        // 우측 화살촉
         ctx.moveTo(hw - inset - headLen, -headHalfH);
         ctx.lineTo(hw - inset, 0);
         ctx.lineTo(hw - inset - headLen, headHalfH);
@@ -1263,12 +1437,125 @@
         ctx.moveTo(rx + w * 0.85, ry + h * 0.15);
         ctx.lineTo(rx + w * 0.15, ry + h * 0.85);
       }
+    }
+
+    // 15종 벡터 도형 렌더러 (면색 없음 투명 테두리 및 5종 선 스타일: 실선/이중선/파선/일점쇄선/점선 완벽 지원)
+    function drawShapeLayerOnCanvas(ctx, layer, cx, cy, boxW, boxH, rotRad, refScale) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(rotRad);
+
+      const hw = boxW / 2;
+      const hh = boxH / 2;
+      const sw = Math.max(0, (layer.strokeWidth !== undefined ? layer.strokeWidth : 4) * refScale);
+      const inset = sw / 2;
+      const w = Math.max(2, boxW - sw);
+      const h = Math.max(2, boxH - sw);
+      const rx = -w / 2;
+      const ry = -h / 2;
+
+      ctx.lineWidth = sw;
+      ctx.strokeStyle = layer.strokeColor || '#dc2626';
+      ctx.fillStyle = layer.fillColor || '#fef08a';
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+
+      const dashType = layer.strokeDash || 'solid';
+      if (dashType === 'dashed') {
+        ctx.setLineDash([Math.max(6, sw * 2.4), Math.max(4, sw * 1.6)]);
+      } else if (dashType === 'dashdot') {
+        ctx.setLineDash([Math.max(8, sw * 2.8), Math.max(4, sw * 1.3), Math.max(2, sw * 0.7), Math.max(4, sw * 1.3)]);
+      } else if (dashType === 'dotted') {
+        ctx.setLineDash([Math.max(2, sw * 0.8), Math.max(4, sw * 1.8)]);
+      } else {
+        ctx.setLineDash([]);
+      }
+
+      const st = layer.shapeType || 'rect';
+      const isLineLike = (st === 'line' || st === 'arrow' || st === 'doubleArrow' || st === 'check' || st === 'cross');
+
+      traceClosedOrSymbolShapePath(ctx, st, rx, ry, w, h, hw, inset, sw);
 
       if (!isLineLike && !layer.fillTransparent) {
         ctx.fill();
       }
+
       if (sw > 0) {
-        ctx.stroke();
+        if (dashType === 'double') {
+          // 이중선(═══) 렌더링
+          const thinSw = Math.max(1, sw * 0.36);
+          const gapOffset = Math.max(2.2, sw * 0.55);
+          ctx.lineWidth = thinSw;
+
+          if (st === 'line' || st === 'arrow' || st === 'doubleArrow') {
+            const headLen = Math.min(w * 0.35, Math.max(sw * 3.2, Math.min(w, h) * 0.42));
+            const headHalfH = Math.min(h / 2, headLen * 0.72);
+            const xStart = (st === 'doubleArrow') ? (-hw + inset + headLen * 0.45) : (-hw + inset);
+            const xEnd = (st === 'arrow' || st === 'doubleArrow') ? (hw - inset - headLen * 0.45) : (hw - inset);
+
+            ctx.beginPath();
+            ctx.moveTo(xStart, -gapOffset);
+            ctx.lineTo(xEnd, -gapOffset);
+            ctx.moveTo(xStart, gapOffset);
+            ctx.lineTo(xEnd, gapOffset);
+
+            if (st === 'arrow' || st === 'doubleArrow') {
+              ctx.moveTo(hw - inset - headLen, -headHalfH);
+              ctx.lineTo(hw - inset, 0);
+              ctx.lineTo(hw - inset - headLen, headHalfH);
+            }
+            if (st === 'doubleArrow') {
+              ctx.moveTo(-hw + inset + headLen, -headHalfH);
+              ctx.lineTo(-hw + inset, 0);
+              ctx.lineTo(-hw + inset + headLen, headHalfH);
+            }
+            ctx.stroke();
+          } else if (st === 'check' || st === 'cross') {
+            ctx.save();
+            ctx.translate(0, -gapOffset * 0.75);
+            traceClosedOrSymbolShapePath(ctx, st, rx, ry, w, h, hw, inset, sw);
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.save();
+            ctx.translate(0, gapOffset * 0.75);
+            traceClosedOrSymbolShapePath(ctx, st, rx, ry, w, h, hw, inset, sw);
+            ctx.stroke();
+            ctx.restore();
+          } else {
+            // 닫힌 도형: 바깥선 + 안쪽 동심원/동심도형 이중선
+            ctx.stroke();
+            const innerGap = Math.max(3, sw * 1.15);
+            if (w > innerGap * 2.5 && h > innerGap * 2.5) {
+              ctx.save();
+              ctx.scale((w - innerGap * 2) / w, (h - innerGap * 2) / h);
+              traceClosedOrSymbolShapePath(ctx, st, rx, ry, w, h, hw, inset, sw);
+              ctx.stroke();
+              ctx.restore();
+            }
+          }
+        } else {
+          ctx.stroke();
+        }
+
+        // 금지 기호(🚫 noSymbol)의 내부 45° 대각선 추가 렌더링
+        if (st === 'noSymbol') {
+          const diagCos = Math.SQRT1_2;
+          ctx.beginPath();
+          if (dashType === 'double') {
+            const thinSw = Math.max(1, sw * 0.36);
+            const off = Math.max(1.8, sw * 0.45);
+            ctx.lineWidth = thinSw;
+            ctx.moveTo(-diagCos * (w / 2) + off, -diagCos * (h / 2) - off);
+            ctx.lineTo(diagCos * (w / 2) + off, diagCos * (h / 2) - off);
+            ctx.moveTo(-diagCos * (w / 2) - off, -diagCos * (h / 2) + off);
+            ctx.lineTo(diagCos * (w / 2) - off, diagCos * (h / 2) + off);
+          } else {
+            ctx.moveTo(-diagCos * (w / 2), -diagCos * (h / 2));
+            ctx.lineTo(diagCos * (w / 2), diagCos * (h / 2));
+          }
+          ctx.stroke();
+        }
       }
 
       ctx.restore();

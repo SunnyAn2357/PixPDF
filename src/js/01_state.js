@@ -2,7 +2,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.13.1 (다중 객체 레이어 엔진 완결판: 카멜레온 글상자·14종 도형·다중 이미지/PDF 조각 투시변환/자르기·스포이드)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.13.2 (카멜레온 v2 텍스트 획 선택 제거·15종 도형 & 5종 선·영역별 드롭·14종 폰트/자간·UI 정밀 개선)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {

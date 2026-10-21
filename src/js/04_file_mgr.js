@@ -912,16 +912,27 @@
       if (!e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
 
       const files = Array.from(e.dataTransfer.files);
-      
+      const isProjectFile = files.some(f => f.name.toLowerCase().endsWith('.pixpdf'));
+
       // 드롭된 위치 파악
       const colThumbElem = document.getElementById('colThumb');
-      const isOverThumb = colThumbElem.contains(e.target);
+      const isOverThumb = colThumbElem && colThumbElem.contains(e.target);
+      const colViewerElem = document.getElementById('colViewerArea');
+      const isOverViewer = colViewerElem && colViewerElem.contains(e.target);
+
+      // 이미 문서/이미지가 존재할 때 가운데 창(메인 뷰어)에 드롭하면 현재 페이지 위 다중 객체 레이어로 추가
+      if (!isProjectFile && docState.items.length > 0 && isOverViewer && typeof addFileAsObjectLayer === 'function') {
+        for (const f of files) {
+          await addFileAsObjectLayer(f, { dropClientX: e.clientX, dropClientY: e.clientY });
+        }
+        return;
+      }
 
       if (isOverThumb) {
-        // 1열 썸네일 영역에 떨어진 경우 (위치 정밀 삽입)
+        // 1열 썸네일 영역에 떨어진 경우 (페이지 목록에 삽입)
         await processFiles(files, -1, 'thumb-area');
       } else {
-        // 가운데 창이나 오른쪽 창 등 화면 어디든 떨어진 경우
+        // 문서가 비어 있거나 기타 영역에 떨어진 경우
         await processFiles(files, -1, 'center-area');
       }
     });
