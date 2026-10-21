@@ -1982,6 +1982,447 @@
       }
     }
 
+    /* ==========================================================================
+       [V2.13.0] 다중 객체 레이어 & 카멜레온 글상자 & 14종 도형 & 정밀 스포이드 스타일
+       ========================================================================== */
+    .layer-add-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+    .btn-layer-add {
+      padding: 2px 6px;
+      font-size: 10.5px;
+      font-weight: 700;
+      background: #f0fdfa;
+      color: var(--primary);
+      border: 1px solid rgba(15, 118, 110, 0.35);
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.12s ease;
+    }
+    .btn-layer-add:hover {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    .layer-manager-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 6px;
+      padding: 5px 6px;
+      background: #f8fafc;
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+    }
+    .layer-chips-list {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: thin;
+    }
+    .layer-chip {
+      padding: 2.5px 7px;
+      font-size: 10.5px;
+      font-weight: 600;
+      background: #ffffff;
+      color: var(--text-sub);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.12s ease;
+      flex-shrink: 0;
+    }
+    .layer-chip:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    .layer-chip.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      font-weight: 700;
+      box-shadow: 0 1px 3px rgba(15, 118, 110, 0.25);
+    }
+    .layer-order-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 3px;
+      border-top: 1px dashed var(--border-light);
+      padding-top: 4px;
+    }
+    .btn-layer-act {
+      padding: 2px 5px;
+      font-size: 10px;
+      font-weight: 600;
+      background: #ffffff;
+      color: var(--text-sub);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-layer-act:hover {
+      background: #e2e8f0;
+      color: var(--text-main);
+    }
+    .btn-layer-act.danger {
+      color: var(--danger);
+      border-color: #fecaca;
+      background: #fef2f2;
+    }
+    .btn-layer-act.danger:hover {
+      background: var(--danger);
+      color: #ffffff;
+    }
+
+    /* 선택 객체 전용 인스펙터 (글상자 / 도형) */
+    .layer-inspector {
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .inspector-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .layer-textarea {
+      width: 100%;
+      padding: 5px 7px;
+      font-size: 12px;
+      line-height: 1.4;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      resize: vertical;
+      min-height: 44px;
+      max-height: 110px;
+      font-family: inherit;
+      color: var(--text-main);
+      background: #ffffff;
+      user-select: text !important;
+      -webkit-user-select: text !important;
+      caret-color: var(--text-main) !important;
+      outline: none;
+    }
+    .layer-textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.12);
+    }
+    .inspector-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .inspector-lbl {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--text-sub);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .bg-mode-pills {
+      display: flex;
+      flex: 1;
+      gap: 2px;
+      background: #e2e8f0;
+      padding: 2px;
+      border-radius: 5px;
+    }
+    .bg-pill {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: var(--text-sub);
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 4px;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.12s ease;
+    }
+    .bg-pill.active {
+      background: #ffffff;
+      color: var(--primary);
+      font-weight: 700;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+    }
+    .color-pick-group {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      background: #f8fafc;
+      border: 1px solid var(--border-light);
+      padding: 2px 5px;
+      border-radius: 5px;
+    }
+    .color-pick-group input[type="color"] {
+      width: 20px;
+      height: 20px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 0;
+      background: none;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .btn-eyedropper {
+      padding: 2px 5px;
+      font-size: 10px;
+      font-weight: 700;
+      background: #ffffff;
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.12s ease;
+    }
+    .btn-eyedropper:hover, .btn-eyedropper.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+    .inspector-select {
+      padding: 3px 6px !important;
+      min-height: 26px !important;
+      height: 26px !important;
+      font-size: 11px !important;
+      border-radius: 4px !important;
+    }
+    .font-size-stepper {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .font-size-stepper input[type="number"] {
+      width: 44px;
+      min-height: 26px !important;
+      height: 26px !important;
+      padding: 2px 4px !important;
+      font-size: 11px !important;
+      text-align: center;
+      user-select: text !important;
+      -webkit-user-select: text !important;
+      caret-color: auto !important;
+    }
+    .btn-step {
+      width: 22px;
+      height: 26px;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--text-sub);
+    }
+    .btn-step:hover {
+      background: #e2e8f0;
+      color: var(--text-main);
+    }
+    .style-toggle-group {
+      display: flex;
+      gap: 2px;
+    }
+    .btn-style-toggle {
+      min-width: 25px;
+      height: 24px;
+      padding: 0 5px;
+      font-size: 11px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--text-sub);
+    }
+    .btn-style-toggle.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      font-weight: 700;
+    }
+
+    /* 14종 도형 그리드 */
+    .shape-grid-14 {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 3px;
+    }
+    .btn-shape-type {
+      padding: 3px 2px;
+      font-size: 10px;
+      font-weight: 600;
+      background: #ffffff;
+      color: var(--text-sub);
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: all 0.1s ease;
+    }
+    .btn-shape-type:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: #f0fdfa;
+    }
+    .btn-shape-type.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      font-weight: 700;
+    }
+    .chk-fill-trans {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      cursor: pointer;
+      background: #f8fafc;
+      border: 1px solid var(--border-light);
+      padding: 3px 6px;
+      border-radius: 5px;
+      white-space: nowrap;
+    }
+    .chk-fill-trans input {
+      width: 14px;
+      height: 14px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    /* 2열 메인 뷰어 위 다중 객체 대화형 오버레이 (#layerStageOverlay) */
+    .layer-stage-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 12;
+      overflow: visible;
+    }
+    .layer-item-box {
+      position: absolute;
+      pointer-events: auto;
+      cursor: move;
+      box-sizing: border-box;
+      border: 1.5px solid transparent;
+      transform-origin: center center;
+      touch-action: none;
+      transition: border-color 0.1s ease;
+    }
+    .layer-item-box:hover {
+      border: 1.5px dashed rgba(15, 118, 110, 0.55);
+    }
+    .layer-item-box.selected {
+      border: 2px dashed #0d9488;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.75);
+      z-index: 14;
+    }
+    .layer-resize-handle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #ffffff;
+      border: 2px solid #0d9488;
+      border-radius: 2px;
+      box-sizing: border-box;
+      z-index: 16;
+      pointer-events: auto;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    .layer-resize-handle::after {
+      content: '';
+      position: absolute;
+      inset: -6px;
+    }
+    .layer-resize-handle.tl { left: -5px; top: -5px; cursor: nwse-resize; }
+    .layer-resize-handle.t  { left: calc(50% - 5px); top: -5px; cursor: ns-resize; }
+    .layer-resize-handle.tr { right: -5px; top: -5px; cursor: nesw-resize; }
+    .layer-resize-handle.r  { right: -5px; top: calc(50% - 5px); cursor: ew-resize; }
+    .layer-resize-handle.br { right: -5px; bottom: -5px; cursor: nwse-resize; }
+    .layer-resize-handle.b  { left: calc(50% - 5px); bottom: -5px; cursor: ns-resize; }
+    .layer-resize-handle.bl { left: -5px; bottom: -5px; cursor: nesw-resize; }
+    .layer-resize-handle.l  { left: -5px; top: calc(50% - 5px); cursor: ew-resize; }
+
+    .layer-rot-handle {
+      position: absolute;
+      left: calc(50% - 8px);
+      top: -26px;
+      width: 16px;
+      height: 16px;
+      background: #0d9488;
+      color: #ffffff;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      cursor: grab;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+      z-index: 17;
+    }
+    .layer-rot-handle::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 14px;
+      width: 1.5px;
+      height: 10px;
+      background: #0d9488;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+    .layer-del-btn {
+      position: absolute;
+      right: -10px;
+      top: -24px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #dc2626;
+      color: #ffffff;
+      border: 1.5px solid #ffffff;
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      z-index: 18;
+      padding: 0;
+      line-height: 1;
+    }
+    .layer-del-btn:hover {
+      background: #b91c1c;
+      transform: scale(1.1);
+    }
+    .eyedropper-cursor, .eyedropper-cursor * {
+      cursor: crosshair !important;
+    }
+
   
   </style>
 </head>
@@ -1991,6 +2432,7 @@
   <input type="file" id="fileInput" style="display:none;" accept="application/pdf,image/*" multiple>
   <input type="file" id="insertFileInput" style="display:none;" accept="application/pdf,image/*" multiple>
   <input type="file" id="inputPixPdfProject" style="display:none;" accept=".pixpdf,.zip" onchange="handlePixPdfProjectInput(event)">
+  <input type="file" id="layerFileInput" style="display:none;" accept="application/pdf,image/*" multiple onchange="handleLayerFileInput(event)">
 
   <!-- 상단 헤더 (단일 1행) -->
   <header>
@@ -2100,6 +2542,7 @@
       <div class="viewer-viewport" id="viewerViewport">
         <div class="viewer-canvas-wrap" id="viewerWrap">
           <canvas id="mainViewerCanvas"></canvas>
+          <div id="layerStageOverlay" class="layer-stage-overlay" style="display: none;"></div>
           <div id="perspectiveOverlay" class="perspective-overlay" style="display: none;">
             <svg id="perspectiveSvg" class="perspective-svg">
               <polygon id="perspectivePolygon" points="" />
@@ -2236,15 +2679,31 @@
           </div>
         </div>
 
-        <!-- 2. [객체 설정] 카드 박스 (기존 편집 버튼 100% 보존 + 하단 1행 회전 바) -->
+        <!-- 2. [객체 설정] 카드 박스 (기존 편집 버튼 100% 보존 + 다중 객체 레이어 & 글상자/도형 통합) -->
         <div class="control-card-box">
-          <div class="control-card-header">
-            <span class="control-card-title">
+          <div class="control-card-header" style="display: flex; align-items: center; justify-content: space-between; gap: 4px; flex-wrap: nowrap;">
+            <span class="control-card-title" style="min-width: 0; flex-shrink: 1;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0f766e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
               <span>객체 설정</span>
             </span>
+            <div class="layer-add-btn-group">
+              <button type="button" class="btn-layer-add" onclick="addLayerTextBox()" title="카멜레온 위장/단색/투명 글상자 추가">+ 글상자</button>
+              <button type="button" class="btn-layer-add" onclick="addLayerShape()" title="사각형·원·화살표·별 등 14종 도형 추가">+ 도형</button>
+              <button type="button" class="btn-layer-add" onclick="triggerAddLayerFile()" title="현재 페이지 위에 이미지 또는 PDF 조각 추가">+ 이미지/PDF</button>
+            </div>
           </div>
           <div class="control-card-body">
+            <!-- 다중 객체 레이어 선택 칩 바 & 순서/복제/삭제 바 -->
+            <div id="layerManagerBar" class="layer-manager-bar" style="display: none;">
+              <div id="layerChipsList" class="layer-chips-list"></div>
+              <div id="layerOrderActions" class="layer-order-actions" style="display: none;">
+                <button type="button" class="btn-layer-act" onclick="moveSelectedLayerOrder('front')" title="맨 앞으로 가져오기">맨앞</button>
+                <button type="button" class="btn-layer-act" onclick="moveSelectedLayerOrder('up')" title="앞으로 가져오기">▲앞</button>
+                <button type="button" class="btn-layer-act" onclick="moveSelectedLayerOrder('down')" title="뒤로 보내기">▼뒤</button>
+                <button type="button" class="btn-layer-act" onclick="duplicateSelectedLayer()" title="선택 객체 복제">복제</button>
+                <button type="button" class="btn-layer-act danger" onclick="deleteSelectedLayer()" title="선택 객체 삭제 (Delete)">삭제</button>
+              </div>
+            </div>
             <!-- 미리보기 / 이미지 편집 영역 (좌: 시트 미리보기, 우: 기존 편집 메뉴 100% 유지) -->
             <div class="preview-body-split">
               <!-- 좌측: 실제 미리보기 창 -->
@@ -2356,6 +2815,122 @@
                 <button type="button" class="btn-rot-mini" title="이미지 +90° 회전" onclick="rotateImageByDelta(90)">⟳</button>
                 <input type="range" id="sliderRotation" min="-180" max="180" value="0" step="1" oninput="onSliderRotationInput(this.value)" class="slider-rot-mini" title="각도 미세 조절 (-180° ~ +180°)">
                 <span id="lblRotationVal" class="object-rot-val">0°</span>
+              </div>
+            </div>
+
+            <!-- [선택 객체 전용 상세 속성창 1: 카멜레온 글상자] -->
+            <div id="layerInspectorText" class="layer-inspector" style="display: none;">
+              <div class="inspector-title-row">
+                <span>🔤 글상자 스타일 &amp; 카멜레온 위장</span>
+                <button type="button" class="btn-layer-act" onclick="fitTextLayerBox()" title="글자 길이에 맞춰 글상자 크기 자동 조절">크기 맞춤</button>
+              </div>
+              <textarea id="txtLayerContent" class="layer-textarea" rows="2" placeholder="내용을 입력하세요 (줄바꿈 지원)" oninput="onTextLayerPropChange('text', this.value)"></textarea>
+              <div class="inspector-row">
+                <span class="inspector-lbl" title="글상자 배경 처리 방식">배경</span>
+                <div class="bg-mode-pills">
+                  <button type="button" class="bg-pill active" id="btnTextBgChameleon" onclick="onTextLayerPropChange('bgMode', 'chameleon')" title="주변 종이/이미지 배경색을 자동 분석해 기존 글자를 감쪽같이 덮어씁니다">🦎 카멜레온(위장)</button>
+                  <button type="button" class="bg-pill" id="btnTextBgSolid" onclick="onTextLayerPropChange('bgMode', 'solid')" title="지정한 단색으로 글상자 배경을 채웁니다">🎨 단색</button>
+                  <button type="button" class="bg-pill" id="btnTextBgTrans" onclick="onTextLayerPropChange('bgMode', 'transparent')" title="배경 없이 글자만 표시합니다">⬜ 투명</button>
+                </div>
+              </div>
+              <div class="inspector-row" style="gap: 6px;">
+                <div class="color-pick-group" style="flex: 1;">
+                  <span class="inspector-lbl">글자색</span>
+                  <input type="color" id="clrLayerTextColor" value="#1e293b" oninput="onTextLayerPropChange('color', this.value)" title="글자 색상 선택">
+                  <button type="button" class="btn-eyedropper" id="btnEyeTextColor" onclick="startEyedropper('textColor')" title="화면에서 원본 글자색 추출 (돋보기 스포이드)">💧추출</button>
+                </div>
+                <div class="color-pick-group" id="grpTextBgColorPick" style="flex: 1;">
+                  <span class="inspector-lbl">배경색</span>
+                  <input type="color" id="clrLayerBgColor" value="#ffffff" oninput="onTextLayerPropChange('bgColor', this.value)" title="단색 배경 색상 선택">
+                  <button type="button" class="btn-eyedropper" id="btnEyeTextBg" onclick="startEyedropper('textBg')" title="화면에서 배경색 직접 추출 (돋보기 스포이드)">💧추출</button>
+                </div>
+              </div>
+              <div class="inspector-row" style="gap: 5px;">
+                <select id="selLayerFontFamily" class="inspector-select" style="flex: 1.3;" onchange="onTextLayerPropChange('fontFamily', this.value)" title="글꼴 선택">
+                  <option value="Pretendard, 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', sans-serif">고딕 (맑은고딕)</option>
+                  <option value="'Batang', '바탕', 'Nanum Myeongjo', Georgia, serif">명조 (바탕체)</option>
+                  <option value="'Dotum', '돋움', sans-serif">돋움체</option>
+                  <option value="'Gulim', '굴림', sans-serif">굴림체</option>
+                  <option value="'Gungsuh', '궁서', serif">궁서체</option>
+                  <option value="'Consolas', 'Courier New', monospace">고정폭 (코딩)</option>
+                  <option value="'Comic Sans MS', 'Nanum Pen Script', cursive">손글씨풍</option>
+                </select>
+                <div class="font-size-stepper" style="flex: 1;">
+                  <button type="button" class="btn-step" onclick="stepTextLayerFontSize(-2)" title="글자 크기 작게">-</button>
+                  <input type="number" id="numLayerFontSize" value="28" min="6" max="250" oninput="onTextLayerPropChange('fontSize', this.value)" title="글자 크기">
+                  <button type="button" class="btn-step" onclick="stepTextLayerFontSize(2)" title="글자 크기 크게">+</button>
+                </div>
+              </div>
+              <div class="inspector-row" style="justify-content: space-between;">
+                <div class="style-toggle-group">
+                  <button type="button" class="btn-style-toggle" id="btnTextBold" onclick="toggleTextLayerStyle('bold')" title="굵게 (Bold)"><b>B</b></button>
+                  <button type="button" class="btn-style-toggle" id="btnTextItalic" onclick="toggleTextLayerStyle('italic')" title="기울임 (Italic)"><i>I</i></button>
+                  <button type="button" class="btn-style-toggle active" id="btnTextAlignL" onclick="onTextLayerPropChange('align', 'left')" title="왼쪽 정렬">좌</button>
+                  <button type="button" class="btn-style-toggle" id="btnTextAlignC" onclick="onTextLayerPropChange('align', 'center')" title="가운데 정렬">중</button>
+                  <button type="button" class="btn-style-toggle" id="btnTextAlignR" onclick="onTextLayerPropChange('align', 'right')" title="오른쪽 정렬">우</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 3px;">
+                  <span class="inspector-lbl">여백</span>
+                  <select id="selLayerPadding" class="inspector-select" style="width: 54px; padding: 2px 4px;" onchange="onTextLayerPropChange('padding', this.value)" title="글상자 내부 여백">
+                    <option value="2">좁게</option>
+                    <option value="8" selected>보통</option>
+                    <option value="16">넓게</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- [선택 객체 전용 상세 속성창 2: 14종 도형] -->
+            <div id="layerInspectorShape" class="layer-inspector" style="display: none;">
+              <div class="inspector-title-row">
+                <span>⭐ 도형 종류 (14종) &amp; 면/선 스타일</span>
+              </div>
+              <div class="shape-grid-14" id="shapeTypeGrid">
+                <button type="button" class="btn-shape-type active" data-shape="rect" onclick="onShapeLayerPropChange('shapeType', 'rect')" title="직사각형">▭ 사각</button>
+                <button type="button" class="btn-shape-type" data-shape="roundRect" onclick="onShapeLayerPropChange('shapeType', 'roundRect')" title="둥근 사각형">▢ 둥근</button>
+                <button type="button" class="btn-shape-type" data-shape="ellipse" onclick="onShapeLayerPropChange('shapeType', 'ellipse')" title="원 / 타원">◯ 원형</button>
+                <button type="button" class="btn-shape-type" data-shape="triangle" onclick="onShapeLayerPropChange('shapeType', 'triangle')" title="삼각형">△ 삼각</button>
+                <button type="button" class="btn-shape-type" data-shape="diamond" onclick="onShapeLayerPropChange('shapeType', 'diamond')" title="마름모">◇ 마름모</button>
+                <button type="button" class="btn-shape-type" data-shape="pentagon" onclick="onShapeLayerPropChange('shapeType', 'pentagon')" title="오각형">⬠ 오각</button>
+                <button type="button" class="btn-shape-type" data-shape="hexagon" onclick="onShapeLayerPropChange('shapeType', 'hexagon')" title="육각형">⬡ 육각</button>
+                <button type="button" class="btn-shape-type" data-shape="star" onclick="onShapeLayerPropChange('shapeType', 'star')" title="별표">☆ 별표</button>
+                <button type="button" class="btn-shape-type" data-shape="line" onclick="onShapeLayerPropChange('shapeType', 'line')" title="직선">／ 직선</button>
+                <button type="button" class="btn-shape-type" data-shape="arrow" onclick="onShapeLayerPropChange('shapeType', 'arrow')" title="단방향 화살표">→ 화살표</button>
+                <button type="button" class="btn-shape-type" data-shape="doubleArrow" onclick="onShapeLayerPropChange('shapeType', 'doubleArrow')" title="양방향 화살표">↔ 양방향</button>
+                <button type="button" class="btn-shape-type" data-shape="callout" onclick="onShapeLayerPropChange('shapeType', 'callout')" title="말풍선">💬 말풍선</button>
+                <button type="button" class="btn-shape-type" data-shape="check" onclick="onShapeLayerPropChange('shapeType', 'check')" title="체크 표시">✔ 체크</button>
+                <button type="button" class="btn-shape-type" data-shape="cross" onclick="onShapeLayerPropChange('shapeType', 'cross')" title="엑스(X) 표시">✕ 엑스</button>
+              </div>
+              <div class="inspector-row" style="justify-content: space-between; gap: 6px;">
+                <label class="chk-fill-trans" title="체크하면 도형 내부를 칠하지 않고 투명한 테두리 액자처럼 표시합니다">
+                  <input type="checkbox" id="chkShapeFillTrans" checked onchange="onShapeLayerPropChange('fillTransparent', this.checked)">
+                  <span>면색 없음(투명)</span>
+                </label>
+                <div class="color-pick-group" id="grpShapeFillColor">
+                  <span class="inspector-lbl">면색</span>
+                  <input type="color" id="clrShapeFillColor" value="#fef08a" oninput="onShapeLayerPropChange('fillColor', this.value)" title="도형 내부 채우기 색상">
+                  <button type="button" class="btn-eyedropper" id="btnEyeShapeFill" onclick="startEyedropper('shapeFill')" title="화면에서 면색 추출 (스포이드)">💧추출</button>
+                </div>
+              </div>
+              <div class="inspector-row" style="justify-content: space-between; gap: 6px;">
+                <div class="color-pick-group">
+                  <span class="inspector-lbl">선색</span>
+                  <input type="color" id="clrShapeStrokeColor" value="#dc2626" oninput="onShapeLayerPropChange('strokeColor', this.value)" title="도형 테두리/선 색상">
+                  <button type="button" class="btn-eyedropper" id="btnEyeShapeStroke" onclick="startEyedropper('shapeStroke')" title="화면에서 선색 추출 (스포이드)">💧추출</button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px; flex: 1; justify-content: flex-end;">
+                  <span class="inspector-lbl">선종류</span>
+                  <select id="selShapeStrokeDash" class="inspector-select" style="width: 68px; padding: 2px 4px;" onchange="onShapeLayerPropChange('strokeDash', this.value)">
+                    <option value="solid" selected>실선</option>
+                    <option value="dashed">파선</option>
+                    <option value="dotted">점선</option>
+                  </select>
+                </div>
+              </div>
+              <div class="inspector-row" style="gap: 6px;">
+                <span class="inspector-lbl">선두께</span>
+                <input type="range" id="rngShapeStrokeWidth" min="0" max="30" value="4" step="1" style="flex: 1; accent-color: var(--primary); height: 4px; cursor: pointer;" oninput="onShapeLayerPropChange('strokeWidth', this.value)">
+                <span id="lblShapeStrokeWidth" style="font-size: 11px; font-weight: 700; color: var(--primary); min-width: 28px; text-align: right;">4px</span>
               </div>
             </div>
           </div>
@@ -2591,7 +3166,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.12.3 (자르기·종이연동 투시변환 핀 정합성 및 PDF 출력 규격 보정)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.13.1 (다중 객체 레이어 엔진 완결판: 카멜레온 글상자·14종 도형·다중 이미지/PDF 조각 투시변환/자르기·스포이드)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -2776,6 +3351,7 @@
 
     // 객체(내용물 이미지) 회전 함수
     function rotateImageByDelta(delta) {
+      if (typeof handleLayerRotateByDelta === 'function' && handleLayerRotateByDelta(delta)) return;
       const cur = docState.currentIndex;
       const cfg = getEffectiveItemSettings(cur);
       let curImg = parseInt(cfg.rotImg !== undefined ? cfg.rotImg : 0, 10) || 0;
@@ -2795,6 +3371,7 @@
     }
 
     function rotateImageTo(val) {
+      if (typeof handleLayerRotateTo === 'function' && handleLayerRotateTo(val)) return;
       const cur = docState.currentIndex;
       const cfg = getEffectiveItemSettings(cur);
       cfg.rotImg = val;
@@ -3209,7 +3786,7 @@
       // 원래 용지(원본/A4 등) 축척 그대로 작아진 용지를 중앙에 표시하여 실제 크기를 다른 페이지와 비교 가능하게 함.
       if (isPaperCrop && !(options.targetWidth && options.targetHeight)) {
         const fullCfg = Object.assign({}, cfg, { crop: null });
-        const fullPaper = drawPaperWithImage(canvas, item, fullCfg, options);
+        const fullPaper = drawPaperWithImage(canvas, item, fullCfg, Object.assign({}, options, { skipLayers: true }));
         if (!fullPaper) return null;
         const cW = canvas.width, cH = canvas.height;
         const mPx = cfg.margin || 0;
@@ -3366,6 +3943,11 @@
       }
       ctx.restore();
 
+      // 8. 다중 객체 레이어(글상자, 도형, 이미지/PDF 조각) 합성 렌더링 (WYSIWYG 3창 및 모든 내보내기 공통)
+      if (!options.skipLayers && typeof renderItemLayers === 'function') {
+        renderItemLayers(ctx, canvasW, canvasH, item, cfg, options);
+      }
+
       return paper;
     }
 
@@ -3518,6 +4100,11 @@
 
       // 7. 투시 변환 활성화 여부 동기화 (페이지별 독립 유지)
       syncPerspectiveUI(Boolean(cfg.isPerspectiveActive));
+
+      // 8. 다중 객체 레이어 UI 및 인스펙터 동기화
+      if (typeof syncLayerUI === 'function') {
+        syncLayerUI();
+      }
     }
 
     // PNG 포맷 선택 시에만 [배경 투명화] 체크박스 동적 노출/숨김 (가운데 툴바 및 우측/모바일 패널 동시 지원)
@@ -3644,6 +4231,7 @@
     // 슬라이더 바 직접 드래그 시 선택된 타겟(페이지 및/또는 이미지)에 각도 즉시 독립 적용
     function onSliderRotationInput(val) {
       const num = parseInt(val, 10) || 0;
+      if (typeof handleLayerRotationInput === 'function' && handleLayerRotationInput(num)) return;
       const cur = docState.currentIndex;
       const cfg = getEffectiveItemSettings(cur);
       const target = cfg.rotTarget || { page: true, image: true };
@@ -5230,6 +5818,28 @@ const modal = document.getElementById('modalPdfPicker');
         return;
       }
 
+      if (pickerState.mode === 'layer_insert') {
+        const doc = pickerState.doc;
+        const file = pickerState.file;
+        closePdfPickerModal();
+        if (doc && typeof insertImageCanvasAsLayer === 'function') {
+          const baseLabel = (file ? file.name : 'PDF').replace(/\.[^/.]+$/, '');
+          for (const pNum of selectedNums) {
+            const page = await doc.getPage(pNum);
+            const vp = page.getViewport({ scale: 2.5 });
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = vp.width;
+            offCanvas.height = vp.height;
+            const offCtx = offCanvas.getContext('2d');
+            offCtx.fillStyle = '#ffffff';
+            offCtx.fillRect(0, 0, vp.width, vp.height);
+            await page.render({ canvasContext: offCtx, viewport: vp }).promise;
+            await insertImageCanvasAsLayer(offCanvas, `${baseLabel} (p.${pNum})`);
+          }
+        }
+        return;
+      }
+
       if (pickerState.mode === 'resync') {
         const fileId = pickerState.resyncFileId;
         const oldSettingsMap = new Map();
@@ -5399,6 +6009,9 @@ const modal = document.getElementById('modalPdfPicker');
       if (typeof isCropActive !== 'undefined' && isCropActive && typeof updateCropOverlayPositions === 'function') {
         updateCropOverlayPositions();
       }
+      if (typeof updateLayerStageOverlay === 'function') {
+        updateLayerStageOverlay();
+      }
     }
 
     // 2열 메인 뷰어 로드
@@ -5474,6 +6087,7 @@ const modal = document.getElementById('modalPdfPicker');
       const badge = document.getElementById('viewerZoomBadge');
       if (badge) badge.textContent = `${Math.round(docState.zoom * 100)}%`;
       if (isPerspectiveActive) updateCornerPins();
+      if (typeof updateLayerStageOverlay === 'function') updateLayerStageOverlay();
     }
 
     async function updateViewerEdits(targetIdx) {
@@ -5507,6 +6121,7 @@ const modal = document.getElementById('modalPdfPicker');
     }
 
     function adjustPreviewScale(delta) {
+      if (typeof handleLayerScale === 'function' && handleLayerScale(delta)) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       const curScale = cfg.contentScale || 1.0;
@@ -5516,6 +6131,7 @@ const modal = document.getElementById('modalPdfPicker');
     }
 
     function resetPreviewScale() {
+      if (typeof handleLayerResetScale === 'function' && handleLayerResetScale()) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       cfg.contentScale = 1.0;
@@ -5524,6 +6140,7 @@ const modal = document.getElementById('modalPdfPicker');
     }
 
     function adjustScaleX(delta) {
+      if (typeof handleLayerScaleX === 'function' && handleLayerScaleX(delta)) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       const cur = cfg.scaleX !== undefined ? cfg.scaleX : 1.0;
@@ -5533,6 +6150,7 @@ const modal = document.getElementById('modalPdfPicker');
     }
 
     function resetScaleX() {
+      if (typeof handleLayerResetScaleX === 'function' && handleLayerResetScaleX()) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       cfg.scaleX = 1.0;
@@ -5541,6 +6159,7 @@ const modal = document.getElementById('modalPdfPicker');
     }
 
     function adjustTrapezoid(mode) {
+      if (typeof handleLayerTrapezoid === 'function' && handleLayerTrapezoid(mode)) return;
       const curIdx = docState.currentIndex;
       const item = docState.items[curIdx];
       if (!item) return;
@@ -5567,6 +6186,7 @@ const modal = document.getElementById('modalPdfPicker');
     }
 
     function resetTrapezoid() {
+      if (typeof handleLayerResetTrapezoid === 'function' && handleLayerResetTrapezoid()) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       cfg.trapExp = { top: 0, bot: 0 };
@@ -5577,6 +6197,7 @@ const modal = document.getElementById('modalPdfPicker');
     }
 
     function adjustBrightness(delta) {
+      if (typeof handleLayerBrightness === 'function' && handleLayerBrightness(delta)) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       const cur = cfg.brightness !== undefined ? cfg.brightness : 100;
@@ -5586,6 +6207,7 @@ const modal = document.getElementById('modalPdfPicker');
     }
 
     function resetBrightness() {
+      if (typeof handleLayerResetBrightness === 'function' && handleLayerResetBrightness()) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       cfg.brightness = 100;
@@ -5594,6 +6216,7 @@ const modal = document.getElementById('modalPdfPicker');
     }
 
     function adjustContrast(delta) {
+      if (typeof handleLayerContrast === 'function' && handleLayerContrast(delta)) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       const cur = cfg.contrast !== undefined ? cfg.contrast : 100;
@@ -5603,6 +6226,7 @@ const modal = document.getElementById('modalPdfPicker');
     }
 
     function resetContrast() {
+      if (typeof handleLayerResetContrast === 'function' && handleLayerResetContrast()) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       cfg.contrast = 100;
@@ -5634,6 +6258,12 @@ const modal = document.getElementById('modalPdfPicker');
 
     function getCornerCanvasPoints(item, cfg, canvasW, canvasH) {
       if (!item || !item.imgObj) return null;
+      if (typeof getSelectedLayer === 'function' && typeof getLayerCornerCanvasPoints === 'function') {
+        const selLayer = getSelectedLayer();
+        if (selLayer && selLayer.type === 'image') {
+          return getLayerCornerCanvasPoints(item, cfg, selLayer, canvasW, canvasH);
+        }
+      }
       const { rotImg, isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
       const rotRad = (rotImg * Math.PI) / 180;
 
@@ -6009,6 +6639,9 @@ const modal = document.getElementById('modalPdfPicker');
         const viewerLoupe = document.getElementById('viewerPinLoupe');
         if (viewerLoupe) viewerLoupe.style.display = 'none';
       }
+      if (typeof updateLayerStageOverlay === 'function') {
+        updateLayerStageOverlay();
+      }
     }
 
     // 돋보기 투명 배경용 체커보드 패턴 렌더링 헬퍼
@@ -6346,6 +6979,7 @@ const modal = document.getElementById('modalPdfPicker');
 
     // 모서리 핀 좌표 초기화 (0% 0%)
     async function resetCorners() {
+      if (typeof handleLayerResetCorners === 'function' && await handleLayerResetCorners()) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       cfg.corners = {
@@ -6362,6 +6996,7 @@ const modal = document.getElementById('modalPdfPicker');
     }
 
     function adjustImageOffset(pixelDx, pixelDy) {
+      if (typeof handleLayerOffset === 'function' && handleLayerOffset(pixelDx, pixelDy)) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       const item = docState.items[curIdx];
@@ -6382,6 +7017,7 @@ const modal = document.getElementById('modalPdfPicker');
     }
 
     function resetImageOffset() {
+      if (typeof handleLayerResetOffset === 'function' && handleLayerResetOffset()) return;
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
       cfg.offsetX = 0;
@@ -6951,15 +7587,17 @@ const modal = document.getElementById('modalPdfPicker');
 
           const curIdx = docState.currentIndex;
           const cfg = getEffectiveItemSettings(curIdx);
-          if (!cfg.corners) {
-            cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+          const cornerOwner = (typeof getSelectedLayer === 'function' && getSelectedLayer()?.type === 'image') ? getSelectedLayer() : cfg;
+          if (!cornerOwner.corners) {
+            cornerOwner.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
           }
           pinDragStartCornerVal = {
-            x: cfg.corners[cornerKey]?.x || 0,
-            y: cfg.corners[cornerKey]?.y || 0
+            x: cornerOwner.corners[cornerKey]?.x || 0,
+            y: cornerOwner.corners[cornerKey]?.y || 0
           };
           updateMiniPinLoupe(cornerKey);
         } else if (docState.items.length > 0 && !isPerspectiveActive) {
+          if (typeof isEyedropperActive !== 'undefined' && isEyedropperActive) return;
           // 미니 프리뷰 내 이미지 마우스 드래그 이동
           isMiniPanning = true;
           const sRect = miniStageEl.getBoundingClientRect();
@@ -6967,8 +7605,14 @@ const modal = document.getElementById('modalPdfPicker');
           miniPanStartY = Math.max(sRect.top, Math.min(sRect.bottom, e.clientY));
           const curIdx = docState.currentIndex;
           const cfg = getEffectiveItemSettings(curIdx);
-          miniPanStartOffsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
-          miniPanStartOffsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
+          const selLayer = (typeof getSelectedLayer === 'function') ? getSelectedLayer() : null;
+          if (selLayer) {
+            miniPanStartOffsetX = selLayer.x * 100;
+            miniPanStartOffsetY = selLayer.y * 100;
+          } else {
+            miniPanStartOffsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
+            miniPanStartOffsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
+          }
         }
       });
 
@@ -6990,15 +7634,17 @@ const modal = document.getElementById('modalPdfPicker');
 
           const curIdx = docState.currentIndex;
           const cfg = getEffectiveItemSettings(curIdx);
-          if (!cfg.corners) {
-            cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+          const cornerOwner = (typeof getSelectedLayer === 'function' && getSelectedLayer()?.type === 'image') ? getSelectedLayer() : cfg;
+          if (!cornerOwner.corners) {
+            cornerOwner.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
           }
           pinDragStartCornerVal = {
-            x: cfg.corners[cornerKey]?.x || 0,
-            y: cfg.corners[cornerKey]?.y || 0
+            x: cornerOwner.corners[cornerKey]?.x || 0,
+            y: cornerOwner.corners[cornerKey]?.y || 0
           };
           updateMiniPinLoupe(cornerKey);
         } else if (e.touches.length === 1 && docState.items.length > 0 && !isPerspectiveActive) {
+          if (typeof isEyedropperActive !== 'undefined' && isEyedropperActive) return;
           // 미니 프리뷰 내 이미지 터치 드래그 이동 (Panning) - 회색 박스 시작
           isMiniPanning = true;
           const sRect = miniStageEl.getBoundingClientRect();
@@ -7006,8 +7652,14 @@ const modal = document.getElementById('modalPdfPicker');
           miniPanStartY = Math.max(sRect.top, Math.min(sRect.bottom, e.touches[0].clientY));
           const curIdx = docState.currentIndex;
           const cfg = getEffectiveItemSettings(curIdx);
-          miniPanStartOffsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
-          miniPanStartOffsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
+          const selLayer = (typeof getSelectedLayer === 'function') ? getSelectedLayer() : null;
+          if (selLayer) {
+            miniPanStartOffsetX = selLayer.x * 100;
+            miniPanStartOffsetY = selLayer.y * 100;
+          } else {
+            miniPanStartOffsetX = cfg.offsetX !== undefined ? cfg.offsetX : 0;
+            miniPanStartOffsetY = cfg.offsetY !== undefined ? cfg.offsetY : 0;
+          }
         }
       }, { passive: false });
     }
@@ -7017,6 +7669,8 @@ const modal = document.getElementById('modalPdfPicker');
         if (e.button !== 0) return; // 마우스 좌클릭만 처리
         const total = docState.items.length;
         if (total === 0) return;
+
+        if (typeof isEyedropperActive !== 'undefined' && isEyedropperActive) return;
 
         // 1. 투시 변환 핀 핸들 드래그 우선 처리
         const pinEl = e.target.closest('.corner-pin');
@@ -7033,12 +7687,13 @@ const modal = document.getElementById('modalPdfPicker');
 
           const curIdx = docState.currentIndex;
           const cfg = getEffectiveItemSettings(curIdx);
-          if (!cfg.corners) {
-            cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+          const cornerOwner = (typeof getSelectedLayer === 'function' && getSelectedLayer()?.type === 'image') ? getSelectedLayer() : cfg;
+          if (!cornerOwner.corners) {
+            cornerOwner.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
           }
           pinDragStartCornerVal = {
-            x: cfg.corners[cornerKey]?.x || 0,
-            y: cfg.corners[cornerKey]?.y || 0
+            x: cornerOwner.corners[cornerKey]?.x || 0,
+            y: cornerOwner.corners[cornerKey]?.y || 0
           };
           updateViewerPinLoupe(cornerKey, e.clientX, e.clientY);
           return;
@@ -7046,6 +7701,12 @@ const modal = document.getElementById('modalPdfPicker');
 
         // 2. 자르기(크롭) 모드 중에는 캔버스 패닝(이미지 위치 이동) 차단
         if (typeof isCropActive !== 'undefined' && isCropActive) return;
+
+        // 2-1. 다중 객체 레이어 박스/핸들 클릭 시에는 레이어 드래그가 전담
+        if (e.target.closest('.layer-item-box')) return;
+        if (typeof getSelectedLayer === 'function' && getSelectedLayer() && typeof selectLayer === 'function') {
+          selectLayer(null);
+        }
 
         // 3. 일반 이미지 캔버스 패닝 (전체 이동)
         e.preventDefault();
@@ -7073,6 +7734,7 @@ const modal = document.getElementById('modalPdfPicker');
           if (!canvas || !item || !item.imgObj || canvas.width === 0 || canvas.height === 0) return;
 
           const cfg = getEffectiveItemSettings(curIdx);
+          const cornerOwner = (typeof getSelectedLayer === 'function' && getSelectedLayer()?.type === 'image') ? getSelectedLayer() : cfg;
           const pts = getCornerCanvasPoints(item, cfg, canvas.width, canvas.height);
           if (!pts || !pts.dw || !pts.dh) return;
 
@@ -7083,10 +7745,10 @@ const modal = document.getElementById('modalPdfPicker');
               const sRect = stageEl.getBoundingClientRect();
               const stageX = e.clientX - sRect.left;
               const stageY = e.clientY - sRect.top;
-              if (!cfg.corners) {
-                cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+              if (!cornerOwner.corners) {
+                cornerOwner.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
               }
-              cfg.corners[activeDraggingPinKey] = calcCornerFromMiniStagePos(pts, activeDraggingPinKey, stageX, stageY, miniSheet, stageEl, canvas);
+              cornerOwner.corners[activeDraggingPinKey] = calcCornerFromMiniStagePos(pts, activeDraggingPinKey, stageX, stageY, miniSheet, stageEl, canvas);
             }
           } else {
             // 가운데 창(메인 뷰어): 용지 밖으로 자유롭게 핀 이동 지원 (캔버스 클램프 완전 제거)
@@ -7115,10 +7777,10 @@ const modal = document.getElementById('modalPdfPicker');
             const deltaOrigPxX = Math.round(deltaLocalX / scalePxX);
             const deltaOrigPxY = Math.round(deltaLocalY / scalePxY);
 
-            if (!cfg.corners) {
-              cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+            if (!cornerOwner.corners) {
+              cornerOwner.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
             }
-            cfg.corners[activeDraggingPinKey] = {
+            cornerOwner.corners[activeDraggingPinKey] = {
               x: pinDragStartCornerVal.x + deltaOrigPxX,
               y: pinDragStartCornerVal.y + deltaOrigPxY
             };
@@ -7156,9 +7818,15 @@ const modal = document.getElementById('modalPdfPicker');
             const curIdx = docState.currentIndex;
             const cfg = getEffectiveItemSettings(curIdx);
             const item = docState.items[curIdx];
-            const { maxOffsetX, maxOffsetY } = getImageOffsetMaxLimits(item, cfg);
-            cfg.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, Math.round((miniPanStartOffsetX + pctDx) * 10) / 10));
-            cfg.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, Math.round((miniPanStartOffsetY + pctDy) * 10) / 10));
+            const selLayer = (typeof getSelectedLayer === 'function') ? getSelectedLayer() : null;
+            if (selLayer) {
+              selLayer.x = Math.max(-0.5, Math.min(1.5, (miniPanStartOffsetX + pctDx) / 100));
+              selLayer.y = Math.max(-0.5, Math.min(1.5, (miniPanStartOffsetY + pctDy) / 100));
+            } else {
+              const { maxOffsetX, maxOffsetY } = getImageOffsetMaxLimits(item, cfg);
+              cfg.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, Math.round((miniPanStartOffsetX + pctDx) * 10) / 10));
+              cfg.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, Math.round((miniPanStartOffsetY + pctDy) * 10) / 10));
+            }
 
             updateViewerEdits(curIdx);
             updateMiniPreview();
@@ -7219,6 +7887,8 @@ const modal = document.getElementById('modalPdfPicker');
         const total = docState.items.length;
         if (total === 0) return;
 
+        if (typeof isEyedropperActive !== 'undefined' && isEyedropperActive) return;
+
         // 1. 투시 핀 터치 드래그 우선 처리
         const pinEl = e.target.closest('.corner-pin');
         if (pinEl && isPerspectiveActive) {
@@ -7234,12 +7904,13 @@ const modal = document.getElementById('modalPdfPicker');
 
           const curIdx = docState.currentIndex;
           const cfg = getEffectiveItemSettings(curIdx);
-          if (!cfg.corners) {
-            cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+          const cornerOwner = (typeof getSelectedLayer === 'function' && getSelectedLayer()?.type === 'image') ? getSelectedLayer() : cfg;
+          if (!cornerOwner.corners) {
+            cornerOwner.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
           }
           pinDragStartCornerVal = {
-            x: cfg.corners[cornerKey]?.x || 0,
-            y: cfg.corners[cornerKey]?.y || 0
+            x: cornerOwner.corners[cornerKey]?.x || 0,
+            y: cornerOwner.corners[cornerKey]?.y || 0
           };
           updateViewerPinLoupe(cornerKey, e.touches[0].clientX, e.touches[0].clientY);
           return;
@@ -7247,6 +7918,11 @@ const modal = document.getElementById('modalPdfPicker');
 
         // 자르기(크롭) 모드 중에는 터치 패닝(이미지 위치 이동) 차단
         if (typeof isCropActive !== 'undefined' && isCropActive) return;
+
+        if (e.target.closest('.layer-item-box')) return;
+        if (typeof getSelectedLayer === 'function' && getSelectedLayer() && typeof selectLayer === 'function') {
+          selectLayer(null);
+        }
 
         if (e.touches.length !== 1) return;
 
@@ -7273,6 +7949,7 @@ const modal = document.getElementById('modalPdfPicker');
           if (!canvas || !item || !item.imgObj || canvas.width === 0 || canvas.height === 0) return;
 
           const cfg = getEffectiveItemSettings(curIdx);
+          const cornerOwner = (typeof getSelectedLayer === 'function' && getSelectedLayer()?.type === 'image') ? getSelectedLayer() : cfg;
           const pts = getCornerCanvasPoints(item, cfg, canvas.width, canvas.height);
           if (!pts || !pts.dw || !pts.dh) return;
 
@@ -7283,10 +7960,10 @@ const modal = document.getElementById('modalPdfPicker');
               const sRect = stageEl.getBoundingClientRect();
               const stageX = e.touches[0].clientX - sRect.left;
               const stageY = e.touches[0].clientY - sRect.top;
-              if (!cfg.corners) {
-                cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+              if (!cornerOwner.corners) {
+                cornerOwner.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
               }
-              cfg.corners[activeDraggingPinKey] = calcCornerFromMiniStagePos(pts, activeDraggingPinKey, stageX, stageY, miniSheet, stageEl, canvas);
+              cornerOwner.corners[activeDraggingPinKey] = calcCornerFromMiniStagePos(pts, activeDraggingPinKey, stageX, stageY, miniSheet, stageEl, canvas);
             }
           } else {
             // 가운데 창(메인 뷰어): 용지 밖으로 자유롭게 핀 이동 지원 (캔버스 클램프 완전 제거)
@@ -7314,10 +7991,10 @@ const modal = document.getElementById('modalPdfPicker');
             const deltaOrigPxX = Math.round(deltaLocalX / scalePxX);
             const deltaOrigPxY = Math.round(deltaLocalY / scalePxY);
 
-            if (!cfg.corners) {
-              cfg.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+            if (!cornerOwner.corners) {
+              cornerOwner.corners = { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
             }
-            cfg.corners[activeDraggingPinKey] = {
+            cornerOwner.corners[activeDraggingPinKey] = {
               x: pinDragStartCornerVal.x + deltaOrigPxX,
               y: pinDragStartCornerVal.y + deltaOrigPxY
             };
@@ -7355,9 +8032,15 @@ const modal = document.getElementById('modalPdfPicker');
             const curIdx = docState.currentIndex;
             const cfg = getEffectiveItemSettings(curIdx);
             const item = docState.items[curIdx];
-            const { maxOffsetX, maxOffsetY } = getImageOffsetMaxLimits(item, cfg);
-            cfg.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, Math.round((miniPanStartOffsetX + pctDx) * 10) / 10));
-            cfg.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, Math.round((miniPanStartOffsetY + pctDy) * 10) / 10));
+            const selLayer = (typeof getSelectedLayer === 'function') ? getSelectedLayer() : null;
+            if (selLayer) {
+              selLayer.x = Math.max(-0.5, Math.min(1.5, (miniPanStartOffsetX + pctDx) / 100));
+              selLayer.y = Math.max(-0.5, Math.min(1.5, (miniPanStartOffsetY + pctDy) / 100));
+            } else {
+              const { maxOffsetX, maxOffsetY } = getImageOffsetMaxLimits(item, cfg);
+              cfg.offsetX = Math.max(-maxOffsetX, Math.min(maxOffsetX, Math.round((miniPanStartOffsetX + pctDx) * 10) / 10));
+              cfg.offsetY = Math.max(-maxOffsetY, Math.min(maxOffsetY, Math.round((miniPanStartOffsetY + pctDy) * 10) / 10));
+            }
 
             updateViewerEdits(curIdx);
             updateMiniPreview();
@@ -7436,6 +8119,10 @@ const modal = document.getElementById('modalPdfPicker');
     window.addEventListener('keydown', (e) => {
       // 1. ESC 키: 팝업 모달, 햄버거 메뉴 및 모바일 패널 닫기 (최상위 레이어부터 순차 닫기)
       if (e.key === 'Escape') {
+        if (typeof isEyedropperActive !== 'undefined' && isEyedropperActive && typeof cancelEyedropper === 'function') {
+          cancelEyedropper();
+          return;
+        }
         const fileMgrModal = document.getElementById('modalOpenFilesManager');
         if (fileMgrModal && fileMgrModal.classList.contains('show')) {
           closeOpenFilesManagerModal(true);
@@ -7472,6 +8159,12 @@ const modal = document.getElementById('modalPdfPicker');
       // 입력 중일 때는 화살표 탐색 스킵
       const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
       if (activeTag === 'input' || activeTag === 'select' || activeTag === 'textarea') {
+        return;
+      }
+
+      if (e.key === 'Delete' && typeof getSelectedLayer === 'function' && getSelectedLayer() && typeof deleteSelectedLayer === 'function') {
+        e.preventDefault();
+        deleteSelectedLayer();
         return;
       }
 
@@ -7560,6 +8253,9 @@ const modal = document.getElementById('modalPdfPicker');
       if (typeof isCropActive !== 'undefined' && isCropActive && typeof updateCropOverlayPositions === 'function') {
         updateCropOverlayPositions();
       }
+      if (typeof updateLayerStageOverlay === 'function') {
+        updateLayerStageOverlay();
+      }
     });
 
     // 초기 워크스페이스 상태 초기화 및 히스토리 앵커 수립
@@ -7588,6 +8284,7 @@ const modal = document.getElementById('modalPdfPicker');
     // ==========================================================================
 
     let isCropActive = false;
+    let croppingLayerId = null; // null이면 바탕 이미지 자르기, 문자열이면 해당 레이어(type==='image') 자르기
     let cropBox = { x: 0, y: 0, w: 1, h: 1 }; // 0.0 ~ 1.0 비율 좌표 (기본은 객체 가장 바깥)
     let cropPaperMode = false; // false: 객체 자르기, true: 종이 연동 자르기
     let activeCropDrag = null; // { handle, startX, startY, origBox, imgRect }
@@ -7626,19 +8323,39 @@ const modal = document.getElementById('modalPdfPicker');
 
       isCropActive = true;
 
-      // 기존 설정 복원 또는 객체 가장 바깥 100% 가이드 박스로 초기화
-      const settings = item.settings || {};
-      if (settings.crop) {
-        cropBox = {
-          x: Math.max(0, Math.min(0.95, settings.crop.x || 0)),
-          y: Math.max(0, Math.min(0.95, settings.crop.y || 0)),
-          w: Math.max(0.05, Math.min(1 - (settings.crop.x || 0), settings.crop.w || 1)),
-          h: Math.max(0.05, Math.min(1 - (settings.crop.y || 0), settings.crop.h || 1))
-        };
-        cropPaperMode = Boolean(settings.crop.cropPaper);
-      } else {
-        cropBox = { x: 0, y: 0, w: 1, h: 1 };
+      const selLayer = (typeof getSelectedLayer === 'function') ? getSelectedLayer() : null;
+      const btnPaper = document.getElementById('btnCropModePaper');
+      if (selLayer && selLayer.type === 'image') {
+        croppingLayerId = selLayer.id;
         cropPaperMode = false;
+        if (btnPaper) btnPaper.style.display = 'none';
+        if (selLayer.crop) {
+          cropBox = {
+            x: Math.max(0, Math.min(0.95, selLayer.crop.x || 0)),
+            y: Math.max(0, Math.min(0.95, selLayer.crop.y || 0)),
+            w: Math.max(0.05, Math.min(1 - (selLayer.crop.x || 0), selLayer.crop.w || 1)),
+            h: Math.max(0.05, Math.min(1 - (selLayer.crop.y || 0), selLayer.crop.h || 1))
+          };
+        } else {
+          cropBox = { x: 0, y: 0, w: 1, h: 1 };
+        }
+      } else {
+        croppingLayerId = null;
+        if (btnPaper) btnPaper.style.display = '';
+        // 기존 설정 복원 또는 객체 가장 바깥 100% 가이드 박스로 초기화
+        const settings = item.settings || {};
+        if (settings.crop) {
+          cropBox = {
+            x: Math.max(0, Math.min(0.95, settings.crop.x || 0)),
+            y: Math.max(0, Math.min(0.95, settings.crop.y || 0)),
+            w: Math.max(0.05, Math.min(1 - (settings.crop.x || 0), settings.crop.w || 1)),
+            h: Math.max(0.05, Math.min(1 - (settings.crop.y || 0), settings.crop.h || 1))
+          };
+          cropPaperMode = Boolean(settings.crop.cropPaper);
+        } else {
+          cropBox = { x: 0, y: 0, w: 1, h: 1 };
+          cropPaperMode = false;
+        }
       }
 
       // [핵심] 자르기 모드 시작 시 메인 뷰어 캔버스를 원본 전체 이미지로 즉시 렌더링
@@ -7664,6 +8381,7 @@ const modal = document.getElementById('modalPdfPicker');
     async function cancelCrop() {
       if (!isCropActive) return;
       isCropActive = false;
+      croppingLayerId = null;
       const overlay = document.getElementById('cropOverlay');
       if (overlay) overlay.style.display = 'none';
 
@@ -7916,31 +8634,50 @@ const modal = document.getElementById('modalPdfPicker');
       const item = docState.items[docState.currentIndex];
       if (!item) return;
 
-      if (!item.settings) item.settings = {};
-
-      // 99% 이상 전체 크기인 경우 크롭 해제
       const isFull = (cropBox.x <= 0.01 && cropBox.y <= 0.01 && cropBox.w >= 0.98 && cropBox.h >= 0.98);
-      if (isFull) {
-        item.settings.crop = null;
-      } else {
-        item.settings.crop = {
-          x: Math.max(0, Math.min(0.95, cropBox.x)),
-          y: Math.max(0, Math.min(0.95, cropBox.y)),
-          w: Math.max(0.05, Math.min(1 - cropBox.x, cropBox.w)),
-          h: Math.max(0.05, Math.min(1 - cropBox.y, cropBox.h)),
-          cropPaper: Boolean(cropPaperMode)
-        };
-      }
+      const selLayer = (croppingLayerId && item.layers) ? item.layers.find(l => l.id === croppingLayerId) : null;
 
-      // 캐시 무효화
-      if (item._croppedCanvas) {
-        item._croppedCanvas.width = 0;
-        item._croppedCanvas.height = 0;
-        item._croppedCanvas = null;
+      if (selLayer && selLayer.type === 'image') {
+        if (isFull) {
+          selLayer.crop = null;
+        } else {
+          selLayer.crop = {
+            x: Math.max(0, Math.min(0.95, cropBox.x)),
+            y: Math.max(0, Math.min(0.95, cropBox.y)),
+            w: Math.max(0.05, Math.min(1 - cropBox.x, cropBox.w)),
+            h: Math.max(0.05, Math.min(1 - cropBox.y, cropBox.h))
+          };
+        }
+        if (selLayer._croppedCanvas) {
+          selLayer._croppedCanvas.width = 0;
+          selLayer._croppedCanvas.height = 0;
+          selLayer._croppedCanvas = null;
+        }
+      } else {
+        if (!item.settings) item.settings = {};
+        if (isFull) {
+          item.settings.crop = null;
+        } else {
+          item.settings.crop = {
+            x: Math.max(0, Math.min(0.95, cropBox.x)),
+            y: Math.max(0, Math.min(0.95, cropBox.y)),
+            w: Math.max(0.05, Math.min(1 - cropBox.x, cropBox.w)),
+            h: Math.max(0.05, Math.min(1 - cropBox.y, cropBox.h)),
+            cropPaper: Boolean(cropPaperMode)
+          };
+        }
+
+        // 캐시 무효화
+        if (item._croppedCanvas) {
+          item._croppedCanvas.width = 0;
+          item._croppedCanvas.height = 0;
+          item._croppedCanvas = null;
+        }
       }
 
       // 크롭 모드 비활성화 및 UI 닫기
       isCropActive = false;
+      croppingLayerId = null;
       const overlay = document.getElementById('cropOverlay');
       if (overlay) overlay.style.display = 'none';
       const cropToolbar = document.getElementById('viewerCropToolbar');
@@ -7977,18 +8714,29 @@ const modal = document.getElementById('modalPdfPicker');
       const item = docState.items[docState.currentIndex];
       if (!item) return;
 
-      if (item.settings) {
-        item.settings.crop = null;
-      }
-      if (item._croppedCanvas) {
-        item._croppedCanvas.width = 0;
-        item._croppedCanvas.height = 0;
-        item._croppedCanvas = null;
+      const selLayer = (typeof getSelectedLayer === 'function') ? getSelectedLayer() : null;
+      if (selLayer && selLayer.type === 'image') {
+        selLayer.crop = null;
+        if (selLayer._croppedCanvas) {
+          selLayer._croppedCanvas.width = 0;
+          selLayer._croppedCanvas.height = 0;
+          selLayer._croppedCanvas = null;
+        }
+      } else {
+        if (item.settings) {
+          item.settings.crop = null;
+        }
+        if (item._croppedCanvas) {
+          item._croppedCanvas.width = 0;
+          item._croppedCanvas.height = 0;
+          item._croppedCanvas = null;
+        }
       }
 
       if (isCropActive) {
         cropBox = { x: 0, y: 0, w: 1, h: 1 };
         isCropActive = false;
+        croppingLayerId = null;
         const overlay = document.getElementById('cropOverlay');
         if (overlay) overlay.style.display = 'none';
         const cropToolbar = document.getElementById('viewerCropToolbar');
@@ -8109,7 +8857,7 @@ const modal = document.getElementById('modalPdfPicker');
         const zip = new JSZip();
 
         const projectMeta = {
-          version: '2.12.3',
+          version: '2.13.1',
           appName: 'PixPDF',
           createdAt: new Date().toISOString(),
           fileName: docState.fileName || 'PixPDF_Project',
@@ -8149,6 +8897,38 @@ const modal = document.getElementById('modalPdfPicker');
             mediaFolder.file(mediaName, blob);
           }
 
+          const serializedLayers = [];
+          if (Array.isArray(item.layers)) {
+            for (let li = 0; li < item.layers.length; li++) {
+              const lyr = item.layers[li];
+              if (!lyr) continue;
+              const lyrCopy = JSON.parse(JSON.stringify({
+                ...lyr,
+                imgObj: undefined,
+                _croppedCanvas: undefined
+              }));
+              if (lyr.type === 'image' && lyr.imgObj) {
+                const lyrMediaName = `layer_${String(i + 1).padStart(3, '0')}_${String(li + 1).padStart(2, '0')}.png`;
+                let lyrBlob = null;
+                if (lyr.imgObj instanceof HTMLCanvasElement) {
+                  lyrBlob = await new Promise(r => lyr.imgObj.toBlob(r, 'image/png'));
+                } else {
+                  const tc = document.createElement('canvas');
+                  tc.width = lyr.imgObj.naturalWidth || lyr.imgObj.width || lyr.origW || 800;
+                  tc.height = lyr.imgObj.naturalHeight || lyr.imgObj.height || lyr.origH || 600;
+                  tc.getContext('2d').drawImage(lyr.imgObj, 0, 0);
+                  lyrBlob = await new Promise(r => tc.toBlob(r, 'image/png'));
+                  tc.width = 0; tc.height = 0;
+                }
+                if (lyrBlob) {
+                  mediaFolder.file(lyrMediaName, lyrBlob);
+                  lyrCopy.mediaFile = `media/${lyrMediaName}`;
+                }
+              }
+              serializedLayers.push(lyrCopy);
+            }
+          }
+
           projectMeta.items.push({
             name: item.name || `페이지_${i + 1}`,
             type: 'image', // 프로젝트 복원 시 무손실 고화질 래스터 객체로 로드
@@ -8156,7 +8936,8 @@ const modal = document.getElementById('modalPdfPicker');
             height: item.height || 1000,
             pageNum: item.pageNum || (i + 1),
             mediaFile: `media/${mediaName}`,
-            settings: JSON.parse(JSON.stringify(item.settings || {}))
+            settings: JSON.parse(JSON.stringify(item.settings || {})),
+            layers: serializedLayers
           });
         }
 
@@ -8280,6 +9061,34 @@ const modal = document.getElementById('modalPdfPicker');
             setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
           }
 
+          const restoredLayers = [];
+          if (Array.isArray(itemMeta.layers)) {
+            for (const lyrMeta of itemMeta.layers) {
+              if (!lyrMeta) continue;
+              const lyrObj = { ...lyrMeta };
+              if (lyrObj.type === 'image' && lyrObj.mediaFile) {
+                const lyrEntry = zip.file(lyrObj.mediaFile);
+                if (lyrEntry) {
+                  const lyrBlob = await lyrEntry.async('blob');
+                  const blobUrl = URL.createObjectURL(lyrBlob);
+                  const lyrImg = new Image();
+                  await new Promise((res, rej) => {
+                    lyrImg.onload = res;
+                    lyrImg.onerror = rej;
+                    lyrImg.src = blobUrl;
+                  });
+                  const lc = document.createElement('canvas');
+                  lc.width = lyrImg.naturalWidth || lyrImg.width || lyrObj.origW || 800;
+                  lc.height = lyrImg.naturalHeight || lyrImg.height || lyrObj.origH || 600;
+                  lc.getContext('2d').drawImage(lyrImg, 0, 0);
+                  URL.revokeObjectURL(blobUrl);
+                  lyrObj.imgObj = lc;
+                }
+              }
+              restoredLayers.push(lyrObj);
+            }
+          }
+
           docState.items.push({
             name: itemMeta.name || `페이지_${i + 1}`,
             type: 'image',
@@ -8288,7 +9097,8 @@ const modal = document.getElementById('modalPdfPicker');
             height: itemMeta.height || imgObj.height || (imgObj.naturalHeight || 600),
             pageNum: itemMeta.pageNum || (i + 1),
             imgObj: imgObj,
-            settings: itemMeta.settings || {}
+            settings: itemMeta.settings || {},
+            layers: restoredLayers
           });
 
           const isChecked = (meta.checkList && meta.checkList[i] !== undefined) ? Boolean(meta.checkList[i]) : true;
@@ -8321,6 +9131,1720 @@ const modal = document.getElementById('modalPdfPicker');
         if (typeof showExitToast === 'function') showExitToast(`프로젝트 열기 실패: ${err.message}`);
       }
     }
+
+
+    // ==========================================================================
+    // [MODULE] 11_layers.js
+    // ==========================================================================
+
+    // ==========================================================================
+    // [MODULE] 11_layers.js
+    // 다중 객체 레이어 엔진 (카멜레온 글상자, 14종 도형, 이미지/PDF 조각, 정밀 스포이드)
+    // ==========================================================================
+
+    let selectedLayerId = null;
+    let isEyedropperActive = false;
+    let activeEyedropperTarget = null; // 'textColor' | 'textBg' | 'shapeFill' | 'shapeStroke'
+    let activeLayerDrag = null; // { mode: 'move'|'resize'|'rot', handle, startX, startY, origLayer, paperRect, centerScreen }
+    let layerSeqCounter = 1;
+
+    const SHAPE_NAMES = {
+      rect: '직사각형',
+      roundRect: '둥근사각',
+      ellipse: '원형',
+      triangle: '삼각형',
+      diamond: '마름모',
+      pentagon: '오각형',
+      hexagon: '육각형',
+      star: '별표',
+      line: '직선',
+      arrow: '화살표',
+      doubleArrow: '양방향화살표',
+      callout: '말풍선',
+      check: '체크표시',
+      cross: '엑스표시'
+    };
+
+    function getCurrentItemLayers(pageIdx) {
+      const idx = pageIdx !== undefined ? pageIdx : docState.currentIndex;
+      const item = docState.items[idx];
+      if (!item) return [];
+      if (!Array.isArray(item.layers)) {
+        item.layers = [];
+      }
+      return item.layers;
+    }
+
+    function getSelectedLayer() {
+      if (!selectedLayerId) return null;
+      const layers = getCurrentItemLayers();
+      const found = layers.find(l => l.id === selectedLayerId);
+      if (!found) {
+        selectedLayerId = null;
+        return null;
+      }
+      return found;
+    }
+
+    function selectLayer(layerId) {
+      const prevLayer = getSelectedLayer();
+      selectedLayerId = layerId || null;
+      const nextLayer = getSelectedLayer();
+
+      // 레이어 변경 시 열려 있던 자르기나 투시변환이 부적절하면 정리
+      if (typeof isCropActive !== 'undefined' && isCropActive && typeof cancelCrop === 'function') {
+        if (!nextLayer || nextLayer.type !== 'image') {
+          cancelCrop();
+        }
+      }
+      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) {
+        if (nextLayer && nextLayer.type !== 'image') {
+          const cfg = getEffectiveItemSettings(docState.currentIndex);
+          if (cfg) cfg.isPerspectiveActive = false;
+          if (typeof syncPerspectiveUI === 'function') syncPerspectiveUI(false);
+        } else {
+          if (typeof updateCornerPins === 'function') updateCornerPins();
+        }
+      }
+
+      syncLayerUI();
+      updateLayerStageOverlay();
+
+      if (nextLayer) {
+        updateStatusMsg(`선택됨: ${nextLayer.name} (드래그 이동 / 모서리 크기·회전 조절)`);
+      } else if (prevLayer) {
+        updateStatusMsg('바탕 이미지 선택됨');
+      }
+    }
+
+    // 화면 표시 중인 메인 뷰어 캔버스에서 실제 활성 용지(종이 연동 시 subRect, 일반 시 전체 캔버스) 사각형 반환
+    function getActivePaperCanvasRect(canvas, item, cfg) {
+      if (!canvas || !item) return { sx: 0, sy: 0, subW: canvas ? canvas.width : 1000, subH: canvas ? canvas.height : 1000 };
+      const cW = canvas.width || 1000;
+      const cH = canvas.height || 1000;
+      const isViewerCrop = (typeof isCropActive !== 'undefined' && isCropActive && !croppingLayerId);
+      const isPaperCrop = Boolean(!isViewerCrop && cfg && cfg.crop && cfg.crop.cropPaper);
+
+      if (!isPaperCrop) {
+        return { sx: 0, sy: 0, subW: cW, subH: cH };
+      }
+
+      const { isPageRot90, isImgRot90 } = getResolvedRotations(cfg);
+      const fullW = item.width || (item.imgObj ? (item.imgObj.naturalWidth || item.imgObj.width) : 1200);
+      const fullH = item.height || (item.imgObj ? (item.imgObj.naturalHeight || item.imgObj.height) : 1600);
+      const orientOpt = cfg.orient || 'auto';
+      const marginPx = cfg.margin || 0;
+      const sizeKey = cfg.pageSize || cfg.fit || 'original';
+
+      const fullBasePaperW = (isPageRot90 ? fullH : fullW) + marginPx * 2;
+      const fullBasePaperH = (isPageRot90 ? fullW : fullH) + marginPx * 2;
+      const fullBaseLand = orientOpt === 'l' || (orientOpt === 'auto' && fullW > fullH);
+      const fullIsLand = isPageRot90 ? !fullBaseLand : fullBaseLand;
+      const fullPaper = resolvePaperGeometry(sizeKey, fullIsLand, fullBasePaperW, fullBasePaperH, cfg.customW, cfg.customH);
+
+      const vM = marginPx * cW / (fullPaper.widthPx || cW);
+      const rFW = isImgRot90 ? fullH : fullW;
+      const rFH = isImgRot90 ? fullW : fullH;
+      const k = Math.min(Math.max(10, cW - vM * 2) / rFW, Math.max(10, cH - vM * 2) / rFH);
+      const eff = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(item) : { width: fullW, height: fullH };
+      const subW = Math.max(10, Math.min(cW, Math.round(((isPageRot90 ? eff.height : eff.width) * k) + vM * 2)));
+      const subH = Math.max(10, Math.min(cH, Math.round(((isPageRot90 ? eff.width : eff.height) * k) + vM * 2)));
+      const sx = Math.round((cW - subW) / 2);
+      const sy = Math.round((cH - subH) / 2);
+      return { sx, sy, subW, subH };
+    }
+
+    // 3개 창 전체 즉시 리렌더링 헬퍼
+    async function refreshAllViewsForLayers() {
+      const curIdx = docState.currentIndex;
+      if (typeof renderMainViewerCanvas === 'function') {
+        await renderMainViewerCanvas(curIdx);
+      }
+      if (typeof updateThumbnailCanvas === 'function') {
+        await updateThumbnailCanvas(curIdx);
+      }
+      if (typeof updateMiniPreview === 'function') {
+        updateMiniPreview();
+      }
+      updateLayerStageOverlay();
+      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive && typeof updateCornerPins === 'function') {
+        updateCornerPins();
+      }
+    }
+
+    // --------------------------------------------------------------------------
+    // 1. 객체 추가 / 순서 변경 / 복제 / 삭제
+    // --------------------------------------------------------------------------
+
+    async function addLayerTextBox() {
+      if (docState.items.length === 0) {
+        if (typeof showExitToast === 'function') showExitToast('먼저 문서를 불러오거나 빈 페이지를 삽입하세요.');
+        return;
+      }
+      const layers = getCurrentItemLayers();
+      const count = layers.filter(l => l.type === 'text').length + 1;
+      const offsetStep = ((layers.length % 5) - 2) * 0.03;
+      const newLayer = {
+        id: 'layer_' + Date.now() + '_' + (layerSeqCounter++),
+        type: 'text',
+        name: `글상자 ${count}`,
+        x: 0.5 + offsetStep,
+        y: 0.5 + offsetStep,
+        w: 0.34,
+        h: 0.09,
+        rot: 0,
+        text: '텍스트 입력',
+        bgMode: 'chameleon', // 'chameleon' | 'solid' | 'transparent'
+        bgColor: '#ffffff',
+        color: '#1e293b',
+        fontFamily: "Pretendard, 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', sans-serif",
+        fontSize: 28,
+        bold: false,
+        italic: false,
+        align: 'left',
+        padding: 8,
+        lineHeight: 1.35
+      };
+      layers.push(newLayer);
+      selectedLayerId = newLayer.id;
+      syncLayerUI();
+      await refreshAllViewsForLayers();
+
+      const txtEl = document.getElementById('txtLayerContent');
+      if (txtEl && window.innerWidth > 860) {
+        txtEl.focus();
+        txtEl.select();
+      }
+      if (typeof showExitToast === 'function') showExitToast('카멜레온 글상자가 추가되었습니다.');
+    }
+
+    async function addLayerShape(defaultShape = 'rect') {
+      if (docState.items.length === 0) {
+        if (typeof showExitToast === 'function') showExitToast('먼저 문서를 불러오거나 빈 페이지를 삽입하세요.');
+        return;
+      }
+      const layers = getCurrentItemLayers();
+      const count = layers.filter(l => l.type === 'shape').length + 1;
+      const offsetStep = ((layers.length % 5) - 2) * 0.03;
+      const newLayer = {
+        id: 'layer_' + Date.now() + '_' + (layerSeqCounter++),
+        type: 'shape',
+        shapeType: defaultShape,
+        name: `${SHAPE_NAMES[defaultShape] || '도형'} ${count}`,
+        x: 0.5 + offsetStep,
+        y: 0.5 + offsetStep,
+        w: 0.26,
+        h: 0.18,
+        rot: 0,
+        fillTransparent: true, // 기본: 면색 없음(투명 테두리)
+        fillColor: '#fef08a',
+        strokeColor: '#dc2626',
+        strokeWidth: 4,
+        strokeDash: 'solid'
+      };
+      layers.push(newLayer);
+      selectedLayerId = newLayer.id;
+      syncLayerUI();
+      await refreshAllViewsForLayers();
+      if (typeof showExitToast === 'function') showExitToast('도형이 추가되었습니다. 면색/선두께를 자유롭게 조절하세요.');
+    }
+
+    function triggerAddLayerFile() {
+      if (docState.items.length === 0) {
+        if (typeof showExitToast === 'function') showExitToast('먼저 문서를 불러오거나 빈 페이지를 삽입하세요.');
+        return;
+      }
+      const inp = document.getElementById('layerFileInput');
+      if (inp) {
+        inp.value = '';
+        inp.click();
+      }
+    }
+
+    async function handleLayerFileInput(e) {
+      const files = e.target.files ? Array.from(e.target.files) : [];
+      if (files.length === 0) return;
+      e.target.value = '';
+
+      for (const file of files) {
+        await addFileAsObjectLayer(file);
+      }
+    }
+
+    async function addFileAsObjectLayer(file) {
+      if (!file || docState.items.length === 0) return;
+      const curItem = docState.items[docState.currentIndex];
+      if (!curItem) return;
+
+      try {
+        const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+        if (isPdf) {
+          updateStatusMsg(`PDF 객체 로딩 중: ${file.name}...`);
+          const buf = await file.arrayBuffer();
+          const pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+          if (pdfDoc.numPages > 1 && typeof renderPickerThumbnails === 'function') {
+            pickerState.doc = pdfDoc;
+            pickerState.file = file;
+            pickerState.total = pdfDoc.numPages;
+            pickerState.selected = Array.from({ length: pdfDoc.numPages }, (_, i) => i === 0);
+            pickerState.mode = 'layer_insert';
+            const titleEl = document.getElementById('pickerModalTitle');
+            if (titleEl) titleEl.textContent = `📑 현재 페이지에 올릴 PDF 페이지 선택 (${file.name})`;
+            const posEl = document.getElementById('pickerTargetPosText');
+            if (posEl) posEl.textContent = `삽입 대상: 현재 페이지 (${docState.currentIndex + 1}페이지) 위 다중 객체 레이어`;
+            const btnConfirm = document.getElementById('btnConfirmPickerInsert');
+            if (btnConfirm) btnConfirm.textContent = '선택한 페이지를 객체로 추가';
+            const rangeInput = document.getElementById('txtPickerRange');
+            if (rangeInput) rangeInput.value = '';
+            const modal = document.getElementById('modalPdfPicker');
+            if (modal) modal.classList.add('show');
+            updatePickerCount();
+            renderPickerThumbnails();
+            try { history.pushState({ appLayer: 'pdfPicker' }, ''); } catch (e) {}
+            return;
+          }
+          const page = await pdfDoc.getPage(1);
+          const vp = page.getViewport({ scale: 2.5 });
+          const offCanvas = document.createElement('canvas');
+          offCanvas.width = vp.width;
+          offCanvas.height = vp.height;
+          const offCtx = offCanvas.getContext('2d');
+          offCtx.fillStyle = '#ffffff';
+          offCtx.fillRect(0, 0, vp.width, vp.height);
+          await page.render({ canvasContext: offCtx, viewport: vp }).promise;
+
+          await insertImageCanvasAsLayer(offCanvas, file.name.replace(/\.[^/.]+$/, '') + ' (p.1)');
+        } else if (/\.tiff?$/i.test(file.name) && typeof UTIF !== 'undefined') {
+          const buf = await file.arrayBuffer();
+          const ifds = UTIF.decode(buf);
+          if (ifds && ifds.length > 0) {
+            UTIF.decodeImage(buf, ifds[0]);
+            const rgba = UTIF.toRGBA8(ifds[0]);
+            const c = document.createElement('canvas');
+            c.width = ifds[0].width;
+            c.height = ifds[0].height;
+            const ctx = c.getContext('2d');
+            const imgData = new ImageData(new Uint8ClampedArray(rgba), c.width, c.height);
+            ctx.putImageData(imgData, 0, 0);
+            await insertImageCanvasAsLayer(c, file.name);
+          }
+        } else {
+          const blobUrl = URL.createObjectURL(file);
+          const img = new Image();
+          await new Promise((res, rej) => {
+            img.onload = res;
+            img.onerror = rej;
+            img.src = blobUrl;
+          });
+          const c = document.createElement('canvas');
+          c.width = img.naturalWidth || img.width || 800;
+          c.height = img.naturalHeight || img.height || 600;
+          c.getContext('2d').drawImage(img, 0, 0);
+          URL.revokeObjectURL(blobUrl);
+          await insertImageCanvasAsLayer(c, file.name);
+        }
+      } catch (err) {
+        console.error('[Layer File Load Error]', err);
+        if (typeof showExitToast === 'function') showExitToast(`객체 추가 실패: ${err.message}`);
+      }
+    }
+
+    async function insertImageCanvasAsLayer(imgCanvas, labelName) {
+      const layers = getCurrentItemLayers();
+      const count = layers.filter(l => l.type === 'image').length + 1;
+      const origW = imgCanvas.width || 800;
+      const origH = imgCanvas.height || 600;
+
+      const mainCanvas = document.getElementById('mainViewerCanvas');
+      const paperRatio = (mainCanvas && mainCanvas.width && mainCanvas.height) ? (mainCanvas.width / mainCanvas.height) : 0.707;
+      const imgRatio = origW / origH;
+
+      let w = 0.42;
+      let h = (w * paperRatio) / imgRatio;
+      if (h > 0.45) {
+        h = 0.45;
+        w = (h * imgRatio) / paperRatio;
+      }
+
+      const offsetStep = ((layers.length % 5) - 2) * 0.03;
+      const newLayer = {
+        id: 'layer_' + Date.now() + '_' + (layerSeqCounter++),
+        type: 'image',
+        name: labelName ? `그림 ${count} (${labelName.slice(0, 10)})` : `이미지 조각 ${count}`,
+        imgObj: imgCanvas,
+        origW: origW,
+        origH: origH,
+        x: 0.5 + offsetStep,
+        y: 0.5 + offsetStep,
+        w: Math.max(0.08, Math.min(0.9, w)),
+        h: Math.max(0.08, Math.min(0.9, h)),
+        rot: 0,
+        brightness: 100,
+        contrast: 100,
+        crop: null,
+        corners: {
+          tl: { x: 0, y: 0 },
+          tr: { x: 0, y: 0 },
+          br: { x: 0, y: 0 },
+          bl: { x: 0, y: 0 }
+        },
+        trapExp: { top: 0, bot: 0 }
+      };
+
+      layers.push(newLayer);
+      selectedLayerId = newLayer.id;
+      syncLayerUI();
+      await refreshAllViewsForLayers();
+      if (typeof showExitToast === 'function') showExitToast('이미지/PDF 조각이 추가되었습니다. (투시변환·자르기 지원)');
+    }
+
+    async function moveSelectedLayerOrder(dir) {
+      const layers = getCurrentItemLayers();
+      if (!selectedLayerId || layers.length <= 1) return;
+      const idx = layers.findIndex(l => l.id === selectedLayerId);
+      if (idx < 0) return;
+
+      const [target] = layers.splice(idx, 1);
+      if (dir === 'front') {
+        layers.push(target);
+      } else if (dir === 'back') {
+        layers.unshift(target);
+      } else if (dir === 'up') {
+        layers.splice(Math.min(layers.length, idx + 1), 0, target);
+      } else if (dir === 'down') {
+        layers.splice(Math.max(0, idx - 1), 0, target);
+      }
+      syncLayerUI();
+      await refreshAllViewsForLayers();
+    }
+
+    async function duplicateSelectedLayer() {
+      const sel = getSelectedLayer();
+      if (!sel) return;
+      const layers = getCurrentItemLayers();
+      const clone = Object.assign({}, JSON.parse(JSON.stringify({
+        ...sel,
+        imgObj: undefined,
+        _croppedCanvas: undefined
+      })));
+      clone.id = 'layer_' + Date.now() + '_' + (layerSeqCounter++);
+      clone.name = sel.name + ' 사본';
+      clone.x = Math.min(0.92, sel.x + 0.04);
+      clone.y = Math.min(0.92, sel.y + 0.04);
+      if (sel.type === 'image' && sel.imgObj) {
+        clone.imgObj = sel.imgObj;
+      }
+      layers.push(clone);
+      selectedLayerId = clone.id;
+      syncLayerUI();
+      await refreshAllViewsForLayers();
+      if (typeof showExitToast === 'function') showExitToast('객체가 복제되었습니다.');
+    }
+
+    async function deleteSelectedLayer() {
+      const sel = getSelectedLayer();
+      if (!sel) return;
+      const layers = getCurrentItemLayers();
+      const idx = layers.findIndex(l => l.id === sel.id);
+      if (idx >= 0) {
+        layers.splice(idx, 1);
+      }
+      selectedLayerId = null;
+      if (typeof isCropActive !== 'undefined' && isCropActive && typeof cancelCrop === 'function') {
+        await cancelCrop();
+      }
+      syncLayerUI();
+      await refreshAllViewsForLayers();
+      if (typeof showExitToast === 'function') showExitToast('선택한 객체가 삭제되었습니다.');
+    }
+
+    // --------------------------------------------------------------------------
+    // 2. 우측 패널 레이어 칩 & 인스펙터 UI 동기화
+    // --------------------------------------------------------------------------
+
+    function syncLayerUI() {
+      const layers = getCurrentItemLayers();
+      const sel = getSelectedLayer();
+
+      const mgrBar = document.getElementById('layerManagerBar');
+      const chipsList = document.getElementById('layerChipsList');
+      const orderActions = document.getElementById('layerOrderActions');
+      const inspText = document.getElementById('layerInspectorText');
+      const inspShape = document.getElementById('layerInspectorShape');
+
+      if (mgrBar && chipsList) {
+        if (layers.length === 0) {
+          mgrBar.style.display = 'none';
+        } else {
+          mgrBar.style.display = 'flex';
+          chipsList.innerHTML = '';
+
+          // 1) 바탕 이미지 칩
+          const baseChip = document.createElement('button');
+          baseChip.type = 'button';
+          baseChip.className = 'layer-chip' + (!sel ? ' active' : '');
+          baseChip.textContent = '📄 바탕 이미지';
+          baseChip.onclick = () => selectLayer(null);
+          chipsList.appendChild(baseChip);
+
+          // 2) 각 객체 레이어 칩
+          layers.forEach((layer) => {
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'layer-chip' + (sel && sel.id === layer.id ? ' active' : '');
+            const icon = layer.type === 'text' ? '🔤' : (layer.type === 'shape' ? '⭐' : '🖼️');
+            chip.textContent = `${icon} ${layer.name}`;
+            chip.onclick = () => selectLayer(layer.id);
+            chipsList.appendChild(chip);
+          });
+        }
+      }
+
+      if (orderActions) {
+        orderActions.style.display = sel ? 'flex' : 'none';
+      }
+
+      // 회전 슬라이더를 현재 선택된 레이어(또는 바탕 이미지) 각도로 동기화
+      const sliderRot = document.getElementById('sliderRotation');
+      const lblRot = document.getElementById('lblRotationVal');
+      if (sel) {
+        const r = Math.round(sel.rot || 0);
+        if (sliderRot) sliderRot.value = r;
+        if (lblRot) lblRot.textContent = `${r}°`;
+      } else {
+        const cfg = getEffectiveItemSettings(docState.currentIndex);
+        const r = cfg ? (cfg.rotImg || cfg.rot || 0) : 0;
+        if (sliderRot) sliderRot.value = r;
+        if (lblRot) lblRot.textContent = `${r}°`;
+      }
+
+      // 글상자 인스펙터 동기화
+      if (inspText) {
+        if (sel && sel.type === 'text') {
+          inspText.style.display = 'flex';
+          const txtEl = document.getElementById('txtLayerContent');
+          if (txtEl && document.activeElement !== txtEl) {
+            txtEl.value = sel.text || '';
+          }
+          const bgMode = sel.bgMode || 'chameleon';
+          document.getElementById('btnTextBgChameleon')?.classList.toggle('active', bgMode === 'chameleon');
+          document.getElementById('btnTextBgSolid')?.classList.toggle('active', bgMode === 'solid');
+          document.getElementById('btnTextBgTrans')?.classList.toggle('active', bgMode === 'transparent');
+
+          const grpBgPick = document.getElementById('grpTextBgColorPick');
+          if (grpBgPick) {
+            grpBgPick.style.opacity = bgMode === 'solid' ? '1' : '0.55';
+          }
+
+          const clrText = document.getElementById('clrLayerTextColor');
+          if (clrText) clrText.value = sel.color || '#1e293b';
+          const clrBg = document.getElementById('clrLayerBgColor');
+          if (clrBg) clrBg.value = sel.bgColor || '#ffffff';
+
+          const selFont = document.getElementById('selLayerFontFamily');
+          if (selFont && sel.fontFamily) selFont.value = sel.fontFamily;
+          const numSize = document.getElementById('numLayerFontSize');
+          if (numSize && document.activeElement !== numSize) numSize.value = sel.fontSize || 28;
+
+          document.getElementById('btnTextBold')?.classList.toggle('active', Boolean(sel.bold));
+          document.getElementById('btnTextItalic')?.classList.toggle('active', Boolean(sel.italic));
+          const align = sel.align || 'left';
+          document.getElementById('btnTextAlignL')?.classList.toggle('active', align === 'left');
+          document.getElementById('btnTextAlignC')?.classList.toggle('active', align === 'center');
+          document.getElementById('btnTextAlignR')?.classList.toggle('active', align === 'right');
+
+          const selPad = document.getElementById('selLayerPadding');
+          if (selPad) selPad.value = String(sel.padding !== undefined ? sel.padding : 8);
+        } else {
+          inspText.style.display = 'none';
+        }
+      }
+
+      // 도형 인스펙터 동기화
+      if (inspShape) {
+        if (sel && sel.type === 'shape') {
+          inspShape.style.display = 'flex';
+          document.querySelectorAll('#shapeTypeGrid .btn-shape-type').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.shape === sel.shapeType);
+          });
+          const chkTrans = document.getElementById('chkShapeFillTrans');
+          if (chkTrans) chkTrans.checked = Boolean(sel.fillTransparent);
+          const grpFill = document.getElementById('grpShapeFillColor');
+          if (grpFill) grpFill.style.opacity = sel.fillTransparent ? '0.45' : '1';
+
+          const clrFill = document.getElementById('clrShapeFillColor');
+          if (clrFill) clrFill.value = sel.fillColor || '#fef08a';
+          const clrStroke = document.getElementById('clrShapeStrokeColor');
+          if (clrStroke) clrStroke.value = sel.strokeColor || '#dc2626';
+
+          const selDash = document.getElementById('selShapeStrokeDash');
+          if (selDash) selDash.value = sel.strokeDash || 'solid';
+          const rngW = document.getElementById('rngShapeStrokeWidth');
+          if (rngW) rngW.value = sel.strokeWidth !== undefined ? sel.strokeWidth : 4;
+          const lblW = document.getElementById('lblShapeStrokeWidth');
+          if (lblW) lblW.textContent = `${sel.strokeWidth !== undefined ? sel.strokeWidth : 4}px`;
+        } else {
+          inspShape.style.display = 'none';
+        }
+      }
+    }
+
+    // 글상자 속성 변경 핸들러
+    async function onTextLayerPropChange(prop, val) {
+      const sel = getSelectedLayer();
+      if (!sel || sel.type !== 'text') return;
+
+      if (prop === 'fontSize') {
+        sel.fontSize = Math.max(6, Math.min(250, parseInt(val, 10) || 28));
+      } else if (prop === 'padding') {
+        sel.padding = parseInt(val, 10) || 0;
+      } else if (prop === 'bgColor') {
+        sel.bgColor = val;
+        if (sel.bgMode !== 'solid') sel.bgMode = 'solid';
+      } else {
+        sel[prop] = val;
+      }
+      syncLayerUI();
+      await refreshAllViewsForLayers();
+    }
+
+    async function stepTextLayerFontSize(delta) {
+      const sel = getSelectedLayer();
+      if (!sel || sel.type !== 'text') return;
+      sel.fontSize = Math.max(6, Math.min(250, (sel.fontSize || 28) + delta));
+      syncLayerUI();
+      await refreshAllViewsForLayers();
+    }
+
+    async function toggleTextLayerStyle(prop) {
+      const sel = getSelectedLayer();
+      if (!sel || sel.type !== 'text') return;
+      sel[prop] = !sel[prop];
+      syncLayerUI();
+      await refreshAllViewsForLayers();
+    }
+
+    // 글자 길이에 맞춰 글상자 크기 자동 맞춤
+    async function fitTextLayerBox() {
+      const sel = getSelectedLayer();
+      if (!sel || sel.type !== 'text') return;
+      const canvas = document.getElementById('mainViewerCanvas');
+      if (!canvas || !canvas.width || !canvas.height) return;
+
+      const item = docState.items[docState.currentIndex];
+      const cfg = getEffectiveItemSettings(docState.currentIndex);
+      const paperRect = getActivePaperCanvasRect(canvas, item, cfg);
+      const refShort = Math.min(paperRect.subW, paperRect.subH);
+      const refScale = refShort / 1000;
+
+      const fontPx = Math.max(8, (sel.fontSize || 28) * refScale);
+      const padPx = (sel.padding !== undefined ? sel.padding : 8) * refScale;
+      const lineH = fontPx * (sel.lineHeight || 1.35);
+
+      const ctx = canvas.getContext('2d');
+      ctx.save();
+      const styleStr = `${sel.italic ? 'italic ' : ''}${sel.bold ? 'bold ' : ''}${fontPx}px ${sel.fontFamily || 'sans-serif'}`;
+      ctx.font = styleStr;
+      const rawLines = String(sel.text || ' ').split(/\r?\n/);
+      let maxW = 40;
+      rawLines.forEach(line => {
+        const m = ctx.measureText(line || ' ');
+        if (m.width > maxW) maxW = m.width;
+      });
+      ctx.restore();
+
+      const targetW = maxW + padPx * 2.4 + 12;
+      const targetH = rawLines.length * lineH + padPx * 2.2;
+
+      sel.w = Math.max(0.05, Math.min(0.98, targetW / paperRect.subW));
+      sel.h = Math.max(0.03, Math.min(0.98, targetH / paperRect.subH));
+      await refreshAllViewsForLayers();
+    }
+
+    // 도형 속성 변경 핸들러
+    async function onShapeLayerPropChange(prop, val) {
+      const sel = getSelectedLayer();
+      if (!sel || sel.type !== 'shape') return;
+
+      if (prop === 'shapeType') {
+        sel.shapeType = val;
+        const numMatch = sel.name.match(/\d+$/);
+        const numStr = numMatch ? ' ' + numMatch[0] : '';
+        sel.name = (SHAPE_NAMES[val] || '도형') + numStr;
+      } else if (prop === 'strokeWidth') {
+        sel.strokeWidth = Math.max(0, Math.min(40, parseInt(val, 10) || 0));
+      } else if (prop === 'fillColor') {
+        sel.fillColor = val;
+        sel.fillTransparent = false;
+      } else {
+        sel[prop] = val;
+      }
+      syncLayerUI();
+      await refreshAllViewsForLayers();
+    }
+
+    // --------------------------------------------------------------------------
+    // 3. 기존 [객체 설정] 버튼들과 선택된 레이어 연동 훅 (크기/비율/이동/회전/필터/투시)
+    // --------------------------------------------------------------------------
+
+    function handleLayerScale(delta) {
+      const sel = getSelectedLayer();
+      if (!sel) return false;
+      const factor = Math.max(0.5, 1 + delta);
+      sel.w = Math.max(0.03, Math.min(1.8, sel.w * factor));
+      sel.h = Math.max(0.03, Math.min(1.8, sel.h * factor));
+      if (sel.type === 'text') {
+        sel.fontSize = Math.max(6, Math.min(250, Math.round((sel.fontSize || 28) * factor)));
+        syncLayerUI();
+      }
+      refreshAllViewsForLayers();
+      return true;
+    }
+
+    function handleLayerResetScale() {
+      const sel = getSelectedLayer();
+      if (!sel) return false;
+      if (sel.type === 'text') {
+        sel.w = 0.34; sel.h = 0.09; sel.fontSize = 28;
+        syncLayerUI();
+      } else if (sel.type === 'shape') {
+        sel.w = 0.26; sel.h = 0.18;
+      } else if (sel.type === 'image') {
+        sel.w = 0.42; sel.h = 0.32;
+      }
+      refreshAllViewsForLayers();
+      return true;
+    }
+
+    function handleLayerScaleX(delta) {
+      const sel = getSelectedLayer();
+      if (!sel) return false;
+      sel.w = Math.max(0.03, Math.min(1.8, sel.w * (1 + delta)));
+      refreshAllViewsForLayers();
+      return true;
+    }
+
+    function handleLayerResetScaleX() {
+      const sel = getSelectedLayer();
+      if (!sel) return false;
+      if (sel.type === 'image' && sel.origW && sel.origH) {
+        const canvas = document.getElementById('mainViewerCanvas');
+        const pRatio = (canvas && canvas.width && canvas.height) ? (canvas.width / canvas.height) : 0.707;
+        sel.w = (sel.h * (sel.origW / sel.origH)) / pRatio;
+      } else {
+        sel.w = sel.h * 1.4;
+      }
+      refreshAllViewsForLayers();
+      return true;
+    }
+
+    function handleLayerTrapezoid(mode) {
+      const sel = getSelectedLayer();
+      if (!sel) return false;
+      if (sel.type !== 'image') {
+        if (typeof showExitToast === 'function') showExitToast('사다리꼴/투시 변형은 이미지·PDF 객체에서 지원됩니다.');
+        return true;
+      }
+      if (!sel.trapExp) sel.trapExp = { top: 0, bot: 0 };
+      const stepPx = Math.max(1, Math.round((sel.origW || 800) * 0.01));
+      if (mode === 'top' || mode > 0) sel.trapExp.top = (sel.trapExp.top || 0) + stepPx;
+      else if (mode === 'bot' || mode < 0) sel.trapExp.bot = (sel.trapExp.bot || 0) + stepPx;
+      refreshAllViewsForLayers();
+      return true;
+    }
+
+    function handleLayerResetTrapezoid() {
+      const sel = getSelectedLayer();
+      if (!sel) return false;
+      if (sel.type === 'image') {
+        sel.trapExp = { top: 0, bot: 0 };
+        refreshAllViewsForLayers();
+      }
+      return true;
+    }
+
+    function handleLayerBrightness(delta) {
+      const sel = getSelectedLayer();
+      if (!sel) return false;
+      if (sel.type === 'image') {
+        sel.brightness = Math.max(20, Math.min(250, (sel.brightness || 100) + delta));
+        refreshAllViewsForLayers();
+      }
+      return true;
+    }
+
+    function handleLayerResetBrightness() {
+      const sel = getSelectedLayer();
+      if (!sel) return false;
+      if (sel.type === 'image') {
+        sel.brightness = 100;
+        refreshAllViewsForLayers();
+      }
+      return true;
+    }
+
+    function handleLayerContrast(delta) {
+      const sel = getSelectedLayer();
+      if (!sel) return false;
+      if (sel.type === 'image') {
+        sel.contrast = Math.max(20, Math.min(250, (sel.contrast || 100) + delta));
+        refreshAllViewsForLayers();
+      }
+      return true;
+    }
+
+    function handleLayerResetContrast() {
+      const sel = getSelectedLayer();
+      if (!sel) return false;
+      if (sel.type === 'image') {
+        sel.contrast = 100;
+        refreshAllViewsForLayers();
+      }
+      return true;
+    }
+
+    function handleLayerOffset(pixelDx, pixelDy) {
+      const sel = getSelectedLayer();
+      if (!sel) return false;
+      const mainCanvas = document.getElementById('mainViewerCanvas');
+      const cw = (mainCanvas && mainCanvas.width) ? mainCanvas.width : 1200;
+      const ch = (mainCanvas && mainCanvas.height) ? mainCanvas.height : 1200;
+      sel.x = Math.max(-0.5, Math.min(1.5, sel.x + (pixelDx / cw)));
+      sel.y = Math.max(-0.5, Math.min(1.5, sel.y + (pixelDy / ch)));
+      refreshAllViewsForLayers();
+      return true;
+    }
+
+    function handleLayerResetOffset() {
+      const sel = getSelectedLayer();
+      if (!sel) return false;
+      sel.x = 0.5;
+      sel.y = 0.5;
+      refreshAllViewsForLayers();
+      return true;
+    }
+
+    function handleLayerRotationInput(num) {
+      const sel = getSelectedLayer();
+      if (!sel) return false;
+      sel.rot = num;
+      const lblRot = document.getElementById('lblRotationVal');
+      if (lblRot) lblRot.textContent = `${num}°`;
+      refreshAllViewsForLayers();
+      return true;
+    }
+
+    function handleLayerRotateByDelta(delta) {
+      const sel = getSelectedLayer();
+      if (!sel) return false;
+      let next = Math.round(sel.rot || 0) + delta;
+      if (next > 180) next -= 360;
+      if (next <= -180) next += 360;
+      sel.rot = next;
+      syncLayerUI();
+      refreshAllViewsForLayers();
+      return true;
+    }
+
+    function handleLayerRotateTo(val) {
+      const sel = getSelectedLayer();
+      if (!sel) return false;
+      sel.rot = val;
+      syncLayerUI();
+      refreshAllViewsForLayers();
+      return true;
+    }
+
+    async function handleLayerResetCorners() {
+      const sel = getSelectedLayer();
+      if (!sel || sel.type !== 'image') return false;
+      sel.corners = {
+        tl: { x: 0, y: 0 },
+        tr: { x: 0, y: 0 },
+        br: { x: 0, y: 0 },
+        bl: { x: 0, y: 0 }
+      };
+      await refreshAllViewsForLayers();
+      return true;
+    }
+
+    // --------------------------------------------------------------------------
+    // 4. 이미지/PDF 레이어 전용 크롭 & 4코너 투시변환 좌표 산출
+    // --------------------------------------------------------------------------
+
+    function getLayerEffectiveImageSource(layer, ignoreCrop = false) {
+      if (!layer || !layer.imgObj) return null;
+      if (ignoreCrop || !layer.crop) return layer.imgObj;
+      const crop = layer.crop;
+      if (crop.w >= 0.995 && crop.h >= 0.995 && crop.x <= 0.005 && crop.y <= 0.005) {
+        return layer.imgObj;
+      }
+      const origW = layer.imgObj.naturalWidth || layer.imgObj.width || layer.origW || 800;
+      const origH = layer.imgObj.naturalHeight || layer.imgObj.height || layer.origH || 600;
+      const sx = Math.max(0, Math.round(crop.x * origW));
+      const sy = Math.max(0, Math.round(crop.y * origH));
+      const sw = Math.max(1, Math.min(origW - sx, Math.round(crop.w * origW)));
+      const sh = Math.max(1, Math.min(origH - sy, Math.round(crop.h * origH)));
+
+      const key = `${sx}_${sy}_${sw}_${sh}`;
+      if (layer._croppedCanvas && layer._croppedCanvas.width === sw && layer._croppedCanvas.height === sh && layer._croppedKey === key) {
+        return layer._croppedCanvas;
+      }
+      const c = document.createElement('canvas');
+      c.width = sw;
+      c.height = sh;
+      c.getContext('2d').drawImage(layer.imgObj, sx, sy, sw, sh, 0, 0, sw, sh);
+      layer._croppedCanvas = c;
+      layer._croppedKey = key;
+      return c;
+    }
+
+    function getLayerCornerCanvasPoints(item, cfg, layer, canvasW, canvasH) {
+      if (!layer || layer.type !== 'image' || !layer.imgObj) return null;
+      const canvas = document.getElementById('mainViewerCanvas');
+      const paperRect = getActivePaperCanvasRect(canvas || { width: canvasW, height: canvasH }, item, cfg);
+
+      const cx = paperRect.sx + layer.x * paperRect.subW;
+      const cy = paperRect.sy + layer.y * paperRect.subH;
+      const boxW = Math.max(10, layer.w * paperRect.subW);
+      const boxH = Math.max(10, layer.h * paperRect.subH);
+      const rotRad = ((layer.rot || 0) * Math.PI) / 180;
+
+      const isCroppingThisLayer = (typeof isCropActive !== 'undefined' && isCropActive && croppingLayerId === layer.id);
+      let dx = -boxW / 2;
+      let dy = -boxH / 2;
+      let dw = boxW;
+      let dh = boxH;
+
+      if (!isCroppingThisLayer && layer.crop) {
+        dx = -boxW / 2 + boxW * (layer.crop.x || 0);
+        dy = -boxH / 2 + boxH * (layer.crop.y || 0);
+        dw = boxW * (layer.crop.w !== undefined ? layer.crop.w : 1);
+        dh = boxH * (layer.crop.h !== undefined ? layer.crop.h : 1);
+      }
+
+      const effSrc = getLayerEffectiveImageSource(layer, isCroppingThisLayer);
+      const srcW = effSrc.naturalWidth || effSrc.width || dw;
+      const srcH = effSrc.naturalHeight || effSrc.height || dh;
+      const scalePxX = dw / srcW;
+      const scalePxY = dh / srcH;
+
+      const { topExp, botExp } = resolveTrapezoidExpands(layer.trapExp, dw, scalePxX);
+      const trapTopOffset = topExp / 2;
+      const trapBotOffset = botExp / 2;
+      const c = layer.corners || { tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+
+      const pLocal = {
+        tl: { x: dx - trapTopOffset + ((c.tl?.x || 0) * scalePxX), y: dy + ((c.tl?.y || 0) * scalePxY) },
+        tr: { x: dx + dw + trapTopOffset + ((c.tr?.x || 0) * scalePxX), y: dy + ((c.tr?.y || 0) * scalePxY) },
+        br: { x: dx + dw + trapBotOffset + ((c.br?.x || 0) * scalePxX), y: dy + dh + ((c.br?.y || 0) * scalePxY) },
+        bl: { x: dx - trapBotOffset + ((c.bl?.x || 0) * scalePxX), y: dy + dh + ((c.bl?.y || 0) * scalePxY) }
+      };
+
+      const cos = Math.cos(rotRad);
+      const sin = Math.sin(rotRad);
+      function toCanv(pt) {
+        return {
+          x: cx + (pt.x * cos - pt.y * sin),
+          y: cy + (pt.x * sin + pt.y * cos)
+        };
+      }
+
+      return {
+        tl: toCanv(pLocal.tl),
+        tr: toCanv(pLocal.tr),
+        br: toCanv(pLocal.br),
+        bl: toCanv(pLocal.bl),
+        baseLocal: {
+          tl: { x: dx - trapTopOffset, y: dy },
+          tr: { x: dx + dw + trapTopOffset, y: dy },
+          br: { x: dx + dw + trapBotOffset, y: dy + dh },
+          bl: { x: dx - trapBotOffset, y: dy + dh }
+        },
+        scalePxX,
+        scalePxY,
+        dw,
+        dh,
+        cx,
+        cy,
+        rotRad,
+        subRect: (paperRect.sx > 0 || paperRect.sy > 0) ? paperRect : null
+      };
+    }
+
+    // --------------------------------------------------------------------------
+    // 5. 마스터 렌더러 연동: 카멜레온 글상자 / 14종 도형 / 이미지 조각 렌더링
+    // --------------------------------------------------------------------------
+
+    function renderItemLayers(ctx, canvasW, canvasH, item, cfg, options = {}) {
+      if (!ctx || !item || !Array.isArray(item.layers) || item.layers.length === 0) return;
+
+      const refShort = Math.min(canvasW, canvasH);
+      const refScale = refShort / 1000; // 1000px 기준 정규화 배율 (썸네일·메인뷰어·인쇄·PDF/Img 내보내기 100% 동일 비율 보장)
+      const isMainViewer = (ctx.canvas && ctx.canvas.id === 'mainViewerCanvas');
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, canvasW, canvasH);
+      ctx.clip();
+
+      for (let i = 0; i < item.layers.length; i++) {
+        const layer = item.layers[i];
+        if (!layer) continue;
+
+        const cx = layer.x * canvasW;
+        const cy = layer.y * canvasH;
+        const boxW = Math.max(4, layer.w * canvasW);
+        const boxH = Math.max(4, layer.h * canvasH);
+        const rotRad = ((layer.rot || 0) * Math.PI) / 180;
+
+        if (layer.type === 'text') {
+          drawTextLayerOnCanvas(ctx, canvasW, canvasH, layer, cx, cy, boxW, boxH, rotRad, refScale);
+        } else if (layer.type === 'shape') {
+          drawShapeLayerOnCanvas(ctx, layer, cx, cy, boxW, boxH, rotRad, refScale);
+        } else if (layer.type === 'image' && layer.imgObj) {
+          drawImageLayerOnCanvas(ctx, layer, cx, cy, boxW, boxH, rotRad, isMainViewer);
+        }
+      }
+
+      ctx.restore();
+    }
+
+    // [핵심] 카멜레온 위장 배경 인페인팅 (주변 픽셀의 글자 잉크 노이즈를 제거하고 순수 종이/배경 4코너 그라데이션 합성)
+    function drawChameleonBackground(ctx, canvasW, canvasH, cx, cy, boxW, boxH, rotRad) {
+      try {
+        const cos = Math.cos(rotRad);
+        const sin = Math.sin(rotRad);
+        const hw = boxW / 2;
+        const hh = boxH / 2;
+
+        // 로컬 좌표 (lx, ly)를 캔버스 픽셀 좌표로 변환하여 주변 샘플 추출
+        const cornersLocal = [
+          { x: -hw, y: -hh },
+          { x: hw, y: -hh },
+          { x: hw, y: hh },
+          { x: -hw, y: hh }
+        ];
+        const cornersCanv = cornersLocal.map(p => ({
+          x: cx + p.x * cos - p.y * sin,
+          y: cy + p.x * sin + p.y * cos
+        }));
+
+        const pad = Math.max(3, Math.round(Math.min(boxW, boxH) * 0.12));
+        const minX = Math.max(0, Math.floor(Math.min(...cornersCanv.map(p => p.x)) - pad));
+        const minY = Math.max(0, Math.floor(Math.min(...cornersCanv.map(p => p.y)) - pad));
+        const maxX = Math.min(canvasW - 1, Math.ceil(Math.max(...cornersCanv.map(p => p.x)) + pad));
+        const maxY = Math.min(canvasH - 1, Math.ceil(Math.max(...cornersCanv.map(p => p.y)) + pad));
+        const rw = Math.max(1, maxX - minX + 1);
+        const rh = Math.max(1, maxY - minY + 1);
+
+        const imgData = ctx.getImageData(minX, minY, rw, rh).data;
+
+        // 테두리 둘레 픽셀 샘플링 함수 (로컬 좌표 기준 테두리 바깥쪽 띠에서 추출)
+        function sampleRegionCleanColor(lx0, ly0, lx1, ly1) {
+          const samples = [];
+          const stepsX = 10;
+          const stepsY = 6;
+          for (let sy = 0; sy <= stepsY; sy++) {
+            const ly = ly0 + (ly1 - ly0) * (sy / stepsY);
+            for (let sx = 0; sx <= stepsX; sx++) {
+              const lx = lx0 + (lx1 - lx0) * (sx / stepsX);
+              const px = Math.round(cx + lx * cos - ly * sin) - minX;
+              const py = Math.round(cy + lx * sin + ly * cos) - minY;
+              if (px >= 0 && px < rw && py >= 0 && py < rh) {
+                const idx = (py * rw + px) * 4;
+                const a = imgData[idx + 3];
+                if (a > 10) {
+                  const r = imgData[idx];
+                  const g = imgData[idx + 1];
+                  const b = imgData[idx + 2];
+                  const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                  samples.push({ r, g, b, lum });
+                }
+              }
+            }
+          }
+          if (samples.length === 0) return { r: 255, g: 255, b: 255 };
+
+          // 어두운 글자 획(Outlier)을 배제하기 위해 밝기 상위 55~85% 구간의 대표 배경색 평균 산출
+          samples.sort((a, b) => a.lum - b.lum);
+          const startIdx = Math.floor(samples.length * 0.50);
+          const endIdx = Math.max(startIdx + 1, Math.ceil(samples.length * 0.90));
+          let sr = 0, sg = 0, sb = 0, cnt = 0;
+          for (let i = startIdx; i < endIdx && i < samples.length; i++) {
+            sr += samples[i].r;
+            sg += samples[i].g;
+            sb += samples[i].b;
+            cnt++;
+          }
+          return {
+            r: Math.round(sr / cnt),
+            g: Math.round(sg / cnt),
+            b: Math.round(sb / cnt)
+          };
+        }
+
+        // 4개 모서리 주변의 깨끗한 배경색 추출
+        const cTL = sampleRegionCleanColor(-hw - pad, -hh - pad, 0, 0);
+        const cTR = sampleRegionCleanColor(0, -hh - pad, hw + pad, 0);
+        const cBL = sampleRegionCleanColor(-hw - pad, 0, 0, hh + pad);
+        const cBR = sampleRegionCleanColor(0, 0, hw + pad, hh + pad);
+
+        // 4코너 양선형 보간(Bilinear Patch)으로 글상자 내부를 매끄럽게 위장 채우기
+        const gridN = 12;
+        const cellW = boxW / gridN;
+        const cellH = boxH / gridN;
+        for (let gy = 0; gy < gridN; gy++) {
+          const v = (gy + 0.5) / gridN;
+          for (let gx = 0; gx < gridN; gx++) {
+            const u = (gx + 0.5) / gridN;
+            const r = Math.round((1 - u) * (1 - v) * cTL.r + u * (1 - v) * cTR.r + (1 - u) * v * cBL.r + u * v * cBR.r);
+            const g = Math.round((1 - u) * (1 - v) * cTL.g + u * (1 - v) * cTR.g + (1 - u) * v * cBL.g + u * v * cBR.g);
+            const b = Math.round((1 - u) * (1 - v) * cTL.b + u * (1 - v) * cTR.b + (1 - u) * v * cBL.b + u * v * cBR.b);
+            ctx.fillStyle = `rgb(${r},${g},${b})`;
+            ctx.fillRect(-hw + gx * cellW - 0.5, -hh + gy * cellH - 0.5, cellW + 1, cellH + 1);
+          }
+        }
+      } catch (e) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(-boxW / 2, -boxH / 2, boxW, boxH);
+      }
+    }
+
+    function drawTextLayerOnCanvas(ctx, canvasW, canvasH, layer, cx, cy, boxW, boxH, rotRad, refScale) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(rotRad);
+
+      const bgMode = layer.bgMode || 'chameleon';
+      if (bgMode === 'chameleon') {
+        drawChameleonBackground(ctx, canvasW, canvasH, cx, cy, boxW, boxH, rotRad);
+      } else if (bgMode === 'solid') {
+        ctx.fillStyle = layer.bgColor || '#ffffff';
+        ctx.fillRect(-boxW / 2, -boxH / 2, boxW, boxH);
+      }
+
+      // 글상자 영역 클리핑 후 멀티라인 텍스트 렌더링
+      ctx.beginPath();
+      ctx.rect(-boxW / 2, -boxH / 2, boxW, boxH);
+      ctx.clip();
+
+      const fontPx = Math.max(6, (layer.fontSize || 28) * refScale);
+      const padPx = (layer.padding !== undefined ? layer.padding : 8) * refScale;
+      const lineH = fontPx * (layer.lineHeight || 1.35);
+      const fontStyle = `${layer.italic ? 'italic ' : ''}${layer.bold ? 'bold ' : ''}${fontPx}px ${layer.fontFamily || 'sans-serif'}`;
+
+      ctx.font = fontStyle;
+      ctx.fillStyle = layer.color || '#1e293b';
+      ctx.textBaseline = 'middle';
+
+      const maxTextW = Math.max(10, boxW - padPx * 2);
+      const rawParagraphs = String(layer.text !== undefined ? layer.text : '').split(/\r?\n/);
+      const wrappedLines = [];
+
+      for (const para of rawParagraphs) {
+        if (!para) {
+          wrappedLines.push('');
+          continue;
+        }
+        let curLine = '';
+        for (let i = 0; i < para.length; i++) {
+          const ch = para[i];
+          const testLine = curLine + ch;
+          if (curLine.length > 0 && ctx.measureText(testLine).width > maxTextW) {
+            wrappedLines.push(curLine);
+            curLine = ch;
+          } else {
+            curLine = testLine;
+          }
+        }
+        wrappedLines.push(curLine);
+      }
+
+      const totalTextH = wrappedLines.length * lineH;
+      let startY = -totalTextH / 2 + lineH / 2;
+
+      const align = layer.align || 'left';
+      ctx.textAlign = align;
+      let textX = -boxW / 2 + padPx;
+      if (align === 'center') textX = 0;
+      else if (align === 'right') textX = boxW / 2 - padPx;
+
+      for (let i = 0; i < wrappedLines.length; i++) {
+        ctx.fillText(wrappedLines[i], textX, startY + i * lineH);
+      }
+
+      ctx.restore();
+    }
+
+    // 14종 벡터 도형 렌더러 (면색 없음 투명 테두리 및 점선/파선 완벽 지원)
+    function drawShapeLayerOnCanvas(ctx, layer, cx, cy, boxW, boxH, rotRad, refScale) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(rotRad);
+
+      const hw = boxW / 2;
+      const hh = boxH / 2;
+      const sw = Math.max(0, (layer.strokeWidth !== undefined ? layer.strokeWidth : 4) * refScale);
+      const inset = sw / 2;
+      const w = Math.max(2, boxW - sw);
+      const h = Math.max(2, boxH - sw);
+      const rx = -w / 2;
+      const ry = -h / 2;
+
+      ctx.lineWidth = sw;
+      ctx.strokeStyle = layer.strokeColor || '#dc2626';
+      ctx.fillStyle = layer.fillColor || '#fef08a';
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+
+      if (layer.strokeDash === 'dashed') {
+        ctx.setLineDash([Math.max(6, sw * 2.4), Math.max(4, sw * 1.6)]);
+      } else if (layer.strokeDash === 'dotted') {
+        ctx.setLineDash([Math.max(2, sw * 0.8), Math.max(4, sw * 1.8)]);
+      } else {
+        ctx.setLineDash([]);
+      }
+
+      const st = layer.shapeType || 'rect';
+      const isLineLike = (st === 'line' || st === 'arrow' || st === 'doubleArrow' || st === 'check' || st === 'cross');
+
+      ctx.beginPath();
+      if (st === 'rect') {
+        ctx.rect(rx, ry, w, h);
+      } else if (st === 'roundRect') {
+        const rad = Math.min(w, h) * 0.22;
+        ctx.moveTo(rx + rad, ry);
+        ctx.arcTo(rx + w, ry, rx + w, ry + h, rad);
+        ctx.arcTo(rx + w, ry + h, rx, ry + h, rad);
+        ctx.arcTo(rx, ry + h, rx, ry, rad);
+        ctx.arcTo(rx, ry, rx + w, ry, rad);
+        ctx.closePath();
+      } else if (st === 'ellipse') {
+        ctx.ellipse(0, 0, w / 2, h / 2, 0, 0, Math.PI * 2);
+      } else if (st === 'triangle') {
+        ctx.moveTo(0, ry);
+        ctx.lineTo(rx + w, ry + h);
+        ctx.lineTo(rx, ry + h);
+        ctx.closePath();
+      } else if (st === 'diamond') {
+        ctx.moveTo(0, ry);
+        ctx.lineTo(rx + w, 0);
+        ctx.lineTo(0, ry + h);
+        ctx.lineTo(rx, 0);
+        ctx.closePath();
+      } else if (st === 'pentagon') {
+        for (let i = 0; i < 5; i++) {
+          const ang = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+          const px = Math.cos(ang) * (w / 2);
+          const py = Math.sin(ang) * (h / 2);
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+      } else if (st === 'hexagon') {
+        for (let i = 0; i < 6; i++) {
+          const ang = -Math.PI / 2 + (i * 2 * Math.PI) / 6;
+          const px = Math.cos(ang) * (w / 2);
+          const py = Math.sin(ang) * (h / 2);
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+      } else if (st === 'star') {
+        for (let i = 0; i < 10; i++) {
+          const ang = -Math.PI / 2 + (i * Math.PI) / 5;
+          const rMul = (i % 2 === 0) ? 1.0 : 0.42;
+          const px = Math.cos(ang) * (w / 2) * rMul;
+          const py = Math.sin(ang) * (h / 2) * rMul;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+      } else if (st === 'callout') {
+        const bodyH = h * 0.76;
+        const rad = Math.min(w, bodyH) * 0.16;
+        const by = ry;
+        ctx.moveTo(rx + rad, by);
+        ctx.lineTo(rx + w - rad, by);
+        ctx.quadraticCurveTo(rx + w, by, rx + w, by + rad);
+        ctx.lineTo(rx + w, by + bodyH - rad);
+        ctx.quadraticCurveTo(rx + w, by + bodyH, rx + w - rad, by + bodyH);
+        ctx.lineTo(rx + w * 0.42, by + bodyH);
+        ctx.lineTo(rx + w * 0.22, ry + h);
+        ctx.lineTo(rx + w * 0.26, by + bodyH);
+        ctx.lineTo(rx + rad, by + bodyH);
+        ctx.quadraticCurveTo(rx, by + bodyH, rx, by + bodyH - rad);
+        ctx.lineTo(rx, by + rad);
+        ctx.quadraticCurveTo(rx, by, rx + rad, by);
+        ctx.closePath();
+      } else if (st === 'line') {
+        ctx.moveTo(-hw + inset, 0);
+        ctx.lineTo(hw - inset, 0);
+      } else if (st === 'arrow' || st === 'doubleArrow') {
+        const headLen = Math.min(w * 0.35, Math.max(sw * 3.2, Math.min(w, h) * 0.42));
+        const headHalfH = Math.min(h / 2, headLen * 0.72);
+        ctx.moveTo(-hw + inset, 0);
+        ctx.lineTo(hw - inset, 0);
+        // 우측 화살촉
+        ctx.moveTo(hw - inset - headLen, -headHalfH);
+        ctx.lineTo(hw - inset, 0);
+        ctx.lineTo(hw - inset - headLen, headHalfH);
+        if (st === 'doubleArrow') {
+          ctx.moveTo(-hw + inset + headLen, -headHalfH);
+          ctx.lineTo(-hw + inset, 0);
+          ctx.lineTo(-hw + inset + headLen, headHalfH);
+        }
+      } else if (st === 'check') {
+        ctx.moveTo(rx + w * 0.12, ry + h * 0.52);
+        ctx.lineTo(rx + w * 0.40, ry + h * 0.82);
+        ctx.lineTo(rx + w * 0.88, ry + h * 0.18);
+      } else if (st === 'cross') {
+        ctx.moveTo(rx + w * 0.15, ry + h * 0.15);
+        ctx.lineTo(rx + w * 0.85, ry + h * 0.85);
+        ctx.moveTo(rx + w * 0.85, ry + h * 0.15);
+        ctx.lineTo(rx + w * 0.15, ry + h * 0.85);
+      }
+
+      if (!isLineLike && !layer.fillTransparent) {
+        ctx.fill();
+      }
+      if (sw > 0) {
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function drawImageLayerOnCanvas(ctx, layer, cx, cy, boxW, boxH, rotRad, isMainViewer) {
+      ctx.save();
+      const b = layer.brightness !== undefined ? layer.brightness : 100;
+      const c = layer.contrast !== undefined ? layer.contrast : 100;
+      if (b !== 100 || c !== 100) {
+        ctx.filter = `brightness(${b}%) contrast(${c}%)`;
+      }
+      ctx.translate(cx, cy);
+      ctx.rotate(rotRad);
+
+      const isCroppingThisLayer = Boolean(isMainViewer && typeof isCropActive !== 'undefined' && isCropActive && croppingLayerId === layer.id);
+      const effSrc = getLayerEffectiveImageSource(layer, isCroppingThisLayer);
+
+      if (!isCroppingThisLayer && layer.crop) {
+        const dx = -boxW / 2 + boxW * (layer.crop.x || 0);
+        const dy = -boxH / 2 + boxH * (layer.crop.y || 0);
+        const dw = boxW * (layer.crop.w !== undefined ? layer.crop.w : 1);
+        const dh = boxH * (layer.crop.h !== undefined ? layer.crop.h : 1);
+        drawPerspectiveQuad(ctx, effSrc, dx, dy, dw, dh, layer.corners, layer.trapExp);
+      } else {
+        drawPerspectiveQuad(ctx, effSrc, -boxW / 2, -boxH / 2, boxW, boxH, layer.corners, layer.trapExp);
+      }
+      ctx.restore();
+    }
+
+    // --------------------------------------------------------------------------
+    // 6. 2열 메인 뷰어 대화형 오버레이 (#layerStageOverlay) 렌더링 & 마우스/터치 조작
+    // --------------------------------------------------------------------------
+
+    function updateLayerStageOverlay() {
+      const overlay = document.getElementById('layerStageOverlay');
+      const canvas = document.getElementById('mainViewerCanvas');
+      if (!overlay || !canvas) return;
+
+      const layers = getCurrentItemLayers();
+      const hideForModes = (typeof isCropActive !== 'undefined' && isCropActive) ||
+                           (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) ||
+                           isEyedropperActive;
+
+      if (layers.length === 0 || hideForModes || canvas.width === 0 || canvas.height === 0) {
+        overlay.style.display = 'none';
+        overlay.innerHTML = '';
+        return;
+      }
+
+      const dispW = canvas.clientWidth || canvas.offsetWidth;
+      const dispH = canvas.clientHeight || canvas.offsetHeight;
+      if (!dispW || !dispH) {
+        overlay.style.display = 'none';
+        return;
+      }
+
+      overlay.style.display = 'block';
+      overlay.innerHTML = '';
+
+      const item = docState.items[docState.currentIndex];
+      const cfg = getEffectiveItemSettings(docState.currentIndex);
+      const paperRect = getActivePaperCanvasRect(canvas, item, cfg);
+      const scaleX = dispW / canvas.width;
+      const scaleY = dispH / canvas.height;
+
+      layers.forEach((layer) => {
+        const isSel = (selectedLayerId === layer.id);
+        let cx = (paperRect.sx + layer.x * paperRect.subW) * scaleX;
+        let cy = (paperRect.sy + layer.y * paperRect.subH) * scaleY;
+        let bw = Math.max(18, layer.w * paperRect.subW * scaleX);
+        let bh = Math.max(18, layer.h * paperRect.subH * scaleY);
+
+        const boxEl = document.createElement('div');
+        boxEl.className = 'layer-item-box' + (isSel ? ' selected' : '');
+        boxEl.dataset.layerId = layer.id;
+        boxEl.style.left = `${cx - bw / 2}px`;
+        boxEl.style.top = `${cy - bh / 2}px`;
+        boxEl.style.width = `${bw}px`;
+        boxEl.style.height = `${bh}px`;
+        boxEl.style.transform = `rotate(${layer.rot || 0}deg)`;
+        boxEl.title = `${layer.name} (드래그: 이동${layer.type === 'text' ? ', 더블클릭: 텍스트 수정' : ''})`;
+
+        if (isSel) {
+          ['tl', 't', 'tr', 'r', 'br', 'b', 'bl', 'l'].forEach(hKey => {
+            const hEl = document.createElement('div');
+            hEl.className = `layer-resize-handle ${hKey}`;
+            hEl.dataset.handle = hKey;
+            boxEl.appendChild(hEl);
+          });
+
+          const rotEl = document.createElement('div');
+          rotEl.className = 'layer-rot-handle';
+          rotEl.dataset.handle = 'rot';
+          rotEl.title = '드래그하여 회전';
+          rotEl.textContent = '⟳';
+          boxEl.appendChild(rotEl);
+
+          const delEl = document.createElement('button');
+          delEl.type = 'button';
+          delEl.className = 'layer-del-btn';
+          delEl.title = '이 객체 삭제';
+          delEl.textContent = '✕';
+          delEl.onpointerdown = (ev) => {
+            ev.stopPropagation();
+            ev.preventDefault();
+            deleteSelectedLayer();
+          };
+          boxEl.appendChild(delEl);
+        }
+
+        boxEl.addEventListener('dblclick', (ev) => {
+          ev.stopPropagation();
+          selectLayer(layer.id);
+          if (layer.type === 'text') {
+            const txtEl = document.getElementById('txtLayerContent');
+            if (txtEl) {
+              txtEl.focus();
+              txtEl.select();
+            }
+          }
+        });
+
+        boxEl.addEventListener('pointerdown', (ev) => {
+          if (ev.button !== 0 && ev.pointerType === 'mouse') return;
+          if (isEyedropperActive) return;
+          ev.stopPropagation();
+          ev.preventDefault();
+
+          if (selectedLayerId !== layer.id) {
+            selectLayer(layer.id);
+          }
+
+          const handleEl = ev.target.closest('[data-handle]');
+          const handleType = handleEl ? handleEl.dataset.handle : 'move';
+
+          const canvasRect = canvas.getBoundingClientRect();
+          const zoom = docState.zoom || 1.0;
+          const pScreenW = paperRect.subW * scaleX * zoom;
+          const pScreenH = paperRect.subH * scaleY * zoom;
+          const centerScreenX = canvasRect.left + cx * zoom;
+          const centerScreenY = canvasRect.top + cy * zoom;
+
+          activeLayerDrag = {
+            layerId: layer.id,
+            handle: handleType,
+            startX: ev.clientX,
+            startY: ev.clientY,
+            origX: layer.x,
+            origY: layer.y,
+            origW: layer.w,
+            origH: layer.h,
+            origRot: layer.rot || 0,
+            origFontSize: layer.fontSize || 28,
+            pScreenW: Math.max(20, pScreenW),
+            pScreenH: Math.max(20, pScreenH),
+            centerScreenX,
+            centerScreenY
+          };
+
+          window.addEventListener('pointermove', onLayerPointerMove);
+          window.addEventListener('pointerup', onLayerPointerUp);
+          window.addEventListener('pointercancel', onLayerPointerUp);
+        });
+
+        overlay.appendChild(boxEl);
+      });
+    }
+
+    function onLayerPointerMove(e) {
+      if (!activeLayerDrag) return;
+      const sel = getSelectedLayer();
+      if (!sel || sel.id !== activeLayerDrag.layerId) return;
+
+      const d = activeLayerDrag;
+      if (d.handle === 'move') {
+        const dxNorm = (e.clientX - d.startX) / d.pScreenW;
+        const dyNorm = (e.clientY - d.startY) / d.pScreenH;
+        sel.x = Math.max(-0.4, Math.min(1.4, d.origX + dxNorm));
+        sel.y = Math.max(-0.4, Math.min(1.4, d.origY + dyNorm));
+      } else if (d.handle === 'rot') {
+        const ang = Math.atan2(e.clientY - d.centerScreenY, e.clientX - d.centerScreenX);
+        let deg = Math.round((ang * 180) / Math.PI + 90);
+        if (deg > 180) deg -= 360;
+        if (deg <= -180) deg += 360;
+        sel.rot = deg;
+        syncLayerUI();
+      } else {
+        // 회전된 로컬 축 기준으로 마우스 변위 투영
+        const rad = (-d.origRot * Math.PI) / 180;
+        const rawDx = e.clientX - d.startX;
+        const rawDy = e.clientY - d.startY;
+        const localDx = (rawDx * Math.cos(rad) - rawDy * Math.sin(rad)) / d.pScreenW;
+        const localDy = (rawDx * Math.sin(rad) + rawDy * Math.cos(rad)) / d.pScreenH;
+
+        let newW = d.origW;
+        let newH = d.origH;
+        let shiftLocalX = 0;
+        let shiftLocalY = 0;
+        const minSize = 0.025;
+
+        if (d.handle.includes('r')) {
+          newW = Math.max(minSize, d.origW + localDx);
+          shiftLocalX = (newW - d.origW) / 2;
+        } else if (d.handle.includes('l')) {
+          newW = Math.max(minSize, d.origW - localDx);
+          shiftLocalX = -(newW - d.origW) / 2;
+        }
+
+        if (d.handle.includes('b')) {
+          newH = Math.max(minSize, d.origH + localDy);
+          shiftLocalY = (newH - d.origH) / 2;
+        } else if (d.handle.includes('t')) {
+          newH = Math.max(minSize, d.origH - localDy);
+          shiftLocalY = -(newH - d.origH) / 2;
+        }
+
+        const posRad = (d.origRot * Math.PI) / 180;
+        sel.w = newW;
+        sel.h = newH;
+        sel.x = d.origX + (shiftLocalX * Math.cos(posRad) - shiftLocalY * Math.sin(posRad));
+        sel.y = d.origY + (shiftLocalX * Math.sin(posRad) + shiftLocalY * Math.cos(posRad));
+      }
+
+      const curIdx = docState.currentIndex;
+      const canvas = document.getElementById('mainViewerCanvas');
+      const item = docState.items[curIdx];
+      const cfg = getEffectiveItemSettings(curIdx);
+      if (canvas && item) {
+        drawPaperWithImage(canvas, item, cfg, { isThumbnail: false });
+      }
+      updateLayerStageOverlay();
+      if (typeof updateMiniPreview === 'function') updateMiniPreview();
+    }
+
+    async function onLayerPointerUp() {
+      if (!activeLayerDrag) return;
+      activeLayerDrag = null;
+      window.removeEventListener('pointermove', onLayerPointerMove);
+      window.removeEventListener('pointerup', onLayerPointerUp);
+      window.removeEventListener('pointercancel', onLayerPointerUp);
+      await refreshAllViewsForLayers();
+    }
+
+    // --------------------------------------------------------------------------
+    // 7. 돋보기 스포이드 (Magnifying Eyedropper) 색상 추출기
+    // --------------------------------------------------------------------------
+
+    function startEyedropper(targetKey) {
+      if (isEyedropperActive && activeEyedropperTarget === targetKey) {
+        cancelEyedropper();
+        return;
+      }
+      isEyedropperActive = true;
+      activeEyedropperTarget = targetKey;
+      document.body.classList.add('eyedropper-cursor');
+
+      document.querySelectorAll('.btn-eyedropper').forEach(btn => btn.classList.remove('active'));
+      const btnMap = {
+        textColor: 'btnEyeTextColor',
+        textBg: 'btnEyeTextBg',
+        shapeFill: 'btnEyeShapeFill',
+        shapeStroke: 'btnEyeShapeStroke'
+      };
+      const activeBtn = document.getElementById(btnMap[targetKey]);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      updateLayerStageOverlay();
+      updateStatusMsg('💧 스포이드 활성화: 문서 위에서 추출할 색상을 클릭하세요 (ESC: 취소)');
+      if (typeof showExitToast === 'function') showExitToast('문서 위에서 추출할 글자/배경 색상을 클릭하세요.');
+    }
+
+    function cancelEyedropper() {
+      isEyedropperActive = false;
+      activeEyedropperTarget = null;
+      document.body.classList.remove('eyedropper-cursor');
+      document.querySelectorAll('.btn-eyedropper').forEach(btn => btn.classList.remove('active'));
+      const vLoupe = document.getElementById('viewerPinLoupe');
+      if (vLoupe) vLoupe.style.display = 'none';
+      const mLoupe = document.getElementById('miniPinLoupe');
+      if (mLoupe) mLoupe.style.display = 'none';
+      updateLayerStageOverlay();
+      updateStatusMsg('준비 완료');
+    }
+
+    function rgbToHex(r, g, b) {
+      return '#' + [r, g, b].map(v => Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0')).join('');
+    }
+
+    function sampleCanvasColorAtClientPos(canvas, clientX, clientY) {
+      if (!canvas || canvas.width === 0 || canvas.height === 0) return null;
+      const rect = canvas.getBoundingClientRect();
+      if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) return null;
+      const px = Math.max(0, Math.min(canvas.width - 1, Math.floor(((clientX - rect.left) / rect.width) * canvas.width)));
+      const py = Math.max(0, Math.min(canvas.height - 1, Math.floor(((clientY - rect.top) / rect.height) * canvas.height)));
+      const data = canvas.getContext('2d').getImageData(px, py, 1, 1).data;
+      return { hex: rgbToHex(data[0], data[1], data[2]), px, py, rect };
+    }
+
+    function updateEyedropperLoupe(canvas, clientX, clientY, isMini) {
+      const sample = sampleCanvasColorAtClientPos(canvas, clientX, clientY);
+      const loupe = document.getElementById(isMini ? 'miniPinLoupe' : 'viewerPinLoupe');
+      const loupeCanvas = document.getElementById(isMini ? 'miniLoupeCanvas' : 'viewerLoupeCanvas');
+      if (!sample || !loupe || !loupeCanvas) {
+        if (loupe) loupe.style.display = 'none';
+        return;
+      }
+
+      const loupeSize = isMini ? 100 : 110;
+      const container = isMini ? document.getElementById('previewSheetStage') : document.getElementById('viewerViewport');
+      if (!container) return;
+      const cRect = container.getBoundingClientRect();
+      let lx = (clientX - cRect.left) - loupeSize / 2;
+      let ly = (clientY - cRect.top) - loupeSize - 20;
+      if (ly < 6) ly = (clientY - cRect.top) + 24;
+      lx = Math.max(4, Math.min(cRect.width - loupeSize - 4, lx));
+
+      loupe.style.left = `${lx + (container.scrollLeft || 0)}px`;
+      loupe.style.top = `${ly + (container.scrollTop || 0)}px`;
+      loupe.style.display = 'block';
+
+      const dpr = Math.max(2, window.devicePixelRatio || 2);
+      const bufSize = Math.round(loupeSize * dpr);
+      if (loupeCanvas.width !== bufSize || loupeCanvas.height !== bufSize) {
+        loupeCanvas.width = bufSize;
+        loupeCanvas.height = bufSize;
+      }
+
+      const lctx = loupeCanvas.getContext('2d');
+      lctx.setTransform(1, 0, 0, 1, 0, 0);
+      lctx.clearRect(0, 0, bufSize, bufSize);
+      lctx.scale(dpr, dpr);
+
+      const cx = loupeSize / 2;
+      const cy = loupeSize / 2;
+      lctx.save();
+      lctx.beginPath();
+      lctx.arc(cx, cy, cx - 1, 0, Math.PI * 2);
+      lctx.clip();
+
+      lctx.fillStyle = '#ffffff';
+      lctx.fillRect(0, 0, loupeSize, loupeSize);
+
+      // 5배 초정밀 확대 렌더링 (픽셀 단위 식별)
+      const srcSpan = 22;
+      lctx.imageSmoothingEnabled = false;
+      lctx.drawImage(
+        canvas,
+        sample.px - srcSpan / 2,
+        sample.py - srcSpan / 2,
+        srcSpan,
+        srcSpan,
+        0,
+        0,
+        loupeSize,
+        loupeSize
+      );
+
+      if (typeof drawLoupeCrosshair === 'function') {
+        drawLoupeCrosshair(lctx, cx, cy, 14);
+      }
+
+      // 하단 추출 색상 미리보기 캡슐
+      lctx.fillStyle = 'rgba(15, 23, 42, 0.82)';
+      lctx.fillRect(cx - 32, loupeSize - 22, 64, 18);
+      lctx.fillStyle = sample.hex;
+      lctx.fillRect(cx - 28, loupeSize - 19, 12, 12);
+      lctx.strokeStyle = '#ffffff';
+      lctx.lineWidth = 1;
+      lctx.strokeRect(cx - 28, loupeSize - 19, 12, 12);
+      lctx.fillStyle = '#ffffff';
+      lctx.font = 'bold 9.5px monospace';
+      lctx.textAlign = 'left';
+      lctx.textBaseline = 'middle';
+      lctx.fillText(sample.hex.toUpperCase(), cx - 12, loupeSize - 13);
+
+      lctx.restore();
+    }
+
+    async function applyEyedropperColor(hex) {
+      const sel = getSelectedLayer();
+      if (sel) {
+        if (activeEyedropperTarget === 'textColor' && sel.type === 'text') {
+          sel.color = hex;
+        } else if (activeEyedropperTarget === 'textBg' && sel.type === 'text') {
+          sel.bgColor = hex;
+          sel.bgMode = 'solid';
+        } else if (activeEyedropperTarget === 'shapeFill' && sel.type === 'shape') {
+          sel.fillColor = hex;
+          sel.fillTransparent = false;
+        } else if (activeEyedropperTarget === 'shapeStroke' && sel.type === 'shape') {
+          sel.strokeColor = hex;
+        }
+      }
+      cancelEyedropper();
+      syncLayerUI();
+      await refreshAllViewsForLayers();
+      if (typeof showExitToast === 'function') showExitToast(`색상 추출 완료: ${hex.toUpperCase()}`);
+    }
+
+    // 메인 뷰어 및 미니 프리뷰에서의 스포이드 이벤트 바인딩
+    (function initEyedropperEvents() {
+      window.addEventListener('pointermove', (e) => {
+        if (!isEyedropperActive) return;
+        const mainCanvas = document.getElementById('mainViewerCanvas');
+        const miniCanvas = document.getElementById('miniCanvas');
+        if (mainCanvas && mainCanvas.offsetWidth > 0) {
+          const r = mainCanvas.getBoundingClientRect();
+          if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+            updateEyedropperLoupe(mainCanvas, e.clientX, e.clientY, false);
+            return;
+          }
+        }
+        if (miniCanvas && miniCanvas.offsetWidth > 0) {
+          const r = miniCanvas.getBoundingClientRect();
+          if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+            updateEyedropperLoupe(miniCanvas, e.clientX, e.clientY, true);
+            return;
+          }
+        }
+      });
+
+      window.addEventListener('pointerdown', (e) => {
+        if (!isEyedropperActive) return;
+        const mainCanvas = document.getElementById('mainViewerCanvas');
+        const miniCanvas = document.getElementById('miniCanvas');
+        let sample = sampleCanvasColorAtClientPos(mainCanvas, e.clientX, e.clientY);
+        if (!sample) {
+          sample = sampleCanvasColorAtClientPos(miniCanvas, e.clientX, e.clientY);
+        }
+        if (sample) {
+          e.preventDefault();
+          e.stopPropagation();
+          applyEyedropperColor(sample.hex);
+        }
+      }, true);
+    })();
 
 
   </script>
