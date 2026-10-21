@@ -147,6 +147,43 @@
       return Math.min(2526 / longSide, 1785 / shortSide);
     }
 
+    // [ADR-027] 출력 물리 축척 산출: 자르기와 무관하게 '원래 용지' 기준으로 mm/px 및 이미지 맞춤 배율을 고정
+    // - fullPaperW/H: 미자르기 원래 용지의 출력 픽셀 크기
+    // - mmPerPx: 출력 픽셀 1개당 실제 mm (A4 등은 규격 mm, PDF 원본은 원래 pt 크기, 그 외 긴 변 297mm)
+    // - imgFit: 원래 용지 위에 이미지가 맞춰질 때의 배율 (종이 연동 결과물을 같은 실제 크기로 출력하기 위함)
+    function getOutputPaperScale(p, cfg, scaleMul) {
+      const { isPageRot90 } = getResolvedRotations(cfg);
+      const fW = p.width || (p.imgObj ? (p.imgObj.naturalWidth || p.imgObj.width) : 1200);
+      const fH = p.height || (p.imgObj ? (p.imgObj.naturalHeight || p.imgObj.height) : 1600);
+      const bW = (isPageRot90 ? fH : fW) * scaleMul;
+      const bH = (isPageRot90 ? fW : fH) * scaleMul;
+      const orientOpt = cfg.orient || 'auto';
+      const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && fW > fH);
+      const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
+      const key = cfg.fit || cfg.pageSize || 'original';
+      const paper = resolvePaperGeometry(key, isLandscape, bW, bH, cfg.customW, cfg.customH);
+      let pw, ph;
+      if (key === 'original') {
+        pw = Math.round(bW); ph = Math.round(bH);
+      } else if (key === 'custom') {
+        pw = Math.round(paper.widthPx); ph = Math.round(paper.heightPx);
+      } else if (paper.isLandscape) {
+        pw = Math.max(bW, Math.round(bH * paper.ratio)); ph = Math.round(pw / paper.ratio);
+      } else {
+        ph = Math.max(bH, Math.round(bW / paper.ratio)); pw = Math.round(ph * paper.ratio);
+      }
+      let longMm = 297;
+      if (typeof PAPER_SPECS !== 'undefined' && PAPER_SPECS[key]) {
+        longMm = Math.max(PAPER_SPECS[key].wMm, PAPER_SPECS[key].hMm);
+      } else if (key === 'original' && p.type === 'pdf') {
+        longMm = Math.max(fW, fH) * 25.4 / 72;
+      }
+      const mmPerPx = longMm / Math.max(1, pw, ph);
+      const margin = cfg.margin || 0;
+      const imgFit = Math.min(Math.max(10, pw - margin * 2) / bW, Math.max(10, ph - margin * 2) / bH);
+      return { fullPaperW: pw, fullPaperH: ph, mmPerPx, imgFit };
+    }
+
     // 회전 타겟(페이지, 이미지) 해석 헬퍼 함수
     function getResolvedRotations(cfg) {
       const rotPage = parseInt(cfg.rotPage !== undefined ? cfg.rotPage : (cfg.rot || 0), 10) || 0;

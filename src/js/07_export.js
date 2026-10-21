@@ -262,19 +262,25 @@
           const imgDataUrl = finalCanvas.toDataURL('image/png');
           finalCanvas.width = 0; finalCanvas.height = 0;
 
-          const orientation = isLandscape ? 'l' : 'p';
+          // [ADR-027] PDF 페이지를 실제 mm 크기로 기록 (px 단위 거대 페이지로 인한 인쇄 시 확대·잘림 방지)
+          // 종이 연동은 (A)안: 잘린 크기 그대로의 작은 페이지이되, 원래 용지와 동일한 실제 축척을 유지
+          const outScale = getOutputPaperScale(p, cfg, scaleMul);
+          const contentMul = isPaperCrop ? outScale.imgFit : 1;
+          const pgW = Math.max(1, Math.round(paperW * outScale.mmPerPx * contentMul * 100) / 100);
+          const pgH = Math.max(1, Math.round(paperH * outScale.mmPerPx * contentMul * 100) / 100);
+          const orientation = pgW > pgH ? 'l' : 'p';
           if (idx === 0) {
             newPdfDoc = new jsPDF({
               orientation: orientation,
-              unit: 'px',
-              format: [paperW, paperH],
+              unit: 'mm',
+              format: [pgW, pgH],
               compress: true
             });
           } else {
-            newPdfDoc.addPage([paperW, paperH], orientation);
+            newPdfDoc.addPage([pgW, pgH], orientation);
           }
 
-          newPdfDoc.addImage(imgDataUrl, 'PNG', 0, 0, paperW, paperH, undefined, 'FAST');
+          newPdfDoc.addImage(imgDataUrl, 'PNG', 0, 0, pgW, pgH, undefined, 'FAST');
         }
 
         if (!isAborted && newPdfDoc) {

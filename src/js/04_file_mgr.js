@@ -487,28 +487,7 @@
           const customH = isPaperCrop ? refH : cfg.customH;
           const paper = resolvePaperGeometry(sizeKey, isLandscape, refW, refH, customW, customH);
 
-          // 미자르기 기준 전체 용지 크기 산출 (종이 연동 자르기 시에도 인쇄 배율/가로폭이 뻥튀기되지 않고 원본 비율과 1:1 일치하도록 기준점 확보)
-          const fullIsOrigLandscape = fullOrigW > fullOrigH;
-          const fullBaseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && fullIsOrigLandscape);
-          const fullIsLandscape = isPageRot90 ? !fullBaseLandscape : fullBaseLandscape;
-          const baseSizeKey = cfg.fit || cfg.pageSize || 'original';
-          const fullPaper = resolvePaperGeometry(baseSizeKey, fullIsLandscape, fullRefW, fullRefH, cfg.customW, cfg.customH);
-          let fullPaperW, fullPaperH;
-          if (baseSizeKey === 'original') {
-            fullPaperW = Math.round(fullRefW);
-            fullPaperH = Math.round(fullRefH);
-          } else if (baseSizeKey === 'custom') {
-            fullPaperW = Math.round(fullPaper.widthPx);
-            fullPaperH = Math.round(fullPaper.heightPx);
-          } else {
-            if (fullPaper.isLandscape) {
-              fullPaperW = Math.max(fullRefW, Math.round(fullRefH * fullPaper.ratio));
-              fullPaperH = Math.round(fullPaperW / fullPaper.ratio);
-            } else {
-              fullPaperH = Math.max(fullRefH, Math.round(fullRefW / fullPaper.ratio));
-              fullPaperW = Math.round(fullPaperH * fullPaper.ratio);
-            }
-          }
+          const outScale = getOutputPaperScale(p, cfg, scaleMul);
 
           let paperW, paperH;
           if (cfg.fit === 'original' || cfg.pageSize === 'original') {
@@ -533,25 +512,33 @@
           const pageItem = document.createElement('div');
           pageItem.className = 'print-page-item';
           {
-            // 페이지별 고정 mm 용지 크기 지정 (원본 전체 용지의 긴 변 297mm 기준 스케일을 유지하여, 종이 연동 자르기 후에도 가로 폭이 들쑥날쑥해지지 않도록 보장)
-            const pgLong = 297;
+            // [ADR-027] @page는 항상 '원래 용지' 크기·방향으로 고정 (잘린 결과물이 가로로 길어도 프린터가 용지를 눕히지 않음)
+            // 종이 연동 결과물은 원래 용지 위 실제 크기로 중앙 배치, 객체 자르기는 원래 용지 전체가 그대로 출력됨
             const cw = finalCanvas.width, ch = finalCanvas.height;
-            const mmPerPx = pgLong / Math.max(1, Math.max(fullPaperW, fullPaperH));
-            const pgW = Math.max(10, Math.round(cw * mmPerPx * 100) / 100);
-            const pgH = Math.max(10, Math.round(ch * mmPerPx * 100) / 100);
+            const mmPerPx = outScale.mmPerPx;
+            const pgW = Math.round(outScale.fullPaperW * mmPerPx * 100) / 100;
+            const pgH = Math.round(outScale.fullPaperH * mmPerPx * 100) / 100;
+            const contentMul = isPaperCrop ? outScale.imgFit : 1;
+            const imgWmm = Math.min(pgW, Math.round(cw * mmPerPx * contentMul * 100) / 100);
+            const imgHmm = Math.min(pgH, Math.round(ch * mmPerPx * contentMul * 100) / 100);
             const pgName = 'pg' + printPageSeq++;
             printStyleEl.textContent += '@page ' + pgName + ' { size: ' + pgW + 'mm ' + pgH + 'mm; margin: 0; }\n';
             pageItem.style.page = pgName;
             pageItem.style.width = pgW + 'mm';
             pageItem.style.height = pgH + 'mm';
             pageItem.style.overflow = 'hidden';
+            pageItem.style.display = 'flex';
+            pageItem.style.alignItems = 'center';
+            pageItem.style.justifyContent = 'center';
 
             // 크로미움 브라우저 인쇄 엔진 무결성을 위한 래스터 이미지(img) 변환 삽입
             const printImg = document.createElement('img');
             printImg.className = 'print-page-image';
             printImg.src = finalCanvas.toDataURL('image/png');
-            printImg.style.width = '100%';
-            printImg.style.height = '100%';
+            printImg.style.width = imgWmm + 'mm';
+            printImg.style.height = imgHmm + 'mm';
+            printImg.style.maxWidth = 'none';
+            printImg.style.maxHeight = 'none';
             printImg.style.objectFit = 'contain';
             printImg.style.display = 'block';
 

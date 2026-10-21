@@ -711,15 +711,9 @@
       const fullH = item ? (item.height || (item.imgObj ? (item.imgObj.naturalHeight || item.imgObj.height) : 1600)) : 1600;
 
       let origW, origH;
-      if (isPaperCrop) {
-        const effDims = (typeof getEffectiveImageDimensions === 'function' && item) ? getEffectiveImageDimensions(item) : { width: fullW, height: fullH };
-        origW = effDims.width;
-        origH = effDims.height;
-        fitKey = 'custom';
-      } else {
-        origW = fullW;
-        origH = fullH;
-      }
+      // [ADR-027] 종이 연동 자르기도 미니 시트는 원래 용지 비율을 유지 (메인 뷰어가 원래 용지 축척으로 잘린 용지를 표시)
+      origW = fullW;
+      origH = fullH;
 
       const basePaperW = (isPageRot90 ? origH : origW) + marginPx * 2;
       const basePaperH = (isPageRot90 ? origW : origH) + marginPx * 2;

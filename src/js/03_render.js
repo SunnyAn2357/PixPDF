@@ -41,6 +41,43 @@
       const fullW = item.width || (item.imgObj ? (item.imgObj.naturalWidth || item.imgObj.width) : 1200);
       const fullH = item.height || (item.imgObj ? (item.imgObj.naturalHeight || item.imgObj.height) : 1600);
 
+      // [ADR-027] 화면 표시(1·2·3열)에서 종이 연동 자르기 페이지는 확대하지 않고,
+      // 원래 용지(원본/A4 등) 축척 그대로 작아진 용지를 중앙에 표시하여 실제 크기를 다른 페이지와 비교 가능하게 함.
+      if (isPaperCrop && !(options.targetWidth && options.targetHeight)) {
+        const fullCfg = Object.assign({}, cfg, { crop: null });
+        const fullPaper = drawPaperWithImage(canvas, item, fullCfg, options);
+        if (!fullPaper) return null;
+        const cW = canvas.width, cH = canvas.height;
+        const mPx = cfg.margin || 0;
+        const vM = mPx * cW / (fullPaper.widthPx || cW);
+        const rFW = isImgRot90 ? fullH : fullW;
+        const rFH = isImgRot90 ? fullW : fullH;
+        const k = Math.min(Math.max(10, cW - vM * 2) / rFW, Math.max(10, cH - vM * 2) / rFH);
+        const eff = (typeof getEffectiveImageDimensions === 'function') ? getEffectiveImageDimensions(item) : { width: fullW, height: fullH };
+        const subW = Math.max(10, Math.min(cW, Math.round(((isPageRot90 ? eff.height : eff.width) * k) + vM * 2)));
+        const subH = Math.max(10, Math.min(cH, Math.round(((isPageRot90 ? eff.width : eff.height) * k) + vM * 2)));
+        let sub = document.createElement('canvas');
+        drawPaperWithImage(sub, item, cfg, { targetWidth: subW, targetHeight: subH });
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.filter = 'none';
+        // 원래 용지 영역 중 잘려 나간 부분은 연회색으로 표시하고, 잘린 용지는 얇은 테두리로 구분
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(0, 0, cW, cH);
+        const sx = Math.round((cW - subW) / 2), sy = Math.round((cH - subH) / 2);
+        if (!(((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false))) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(sx, sy, subW, subH);
+        } else {
+          ctx.clearRect(sx, sy, subW, subH);
+        }
+        ctx.drawImage(sub, sx, sy);
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = Math.max(1, Math.round(cW / 800));
+        ctx.strokeRect(sx + 0.5, sy + 0.5, subW - 1, subH - 1);
+        sub.width = 0; sub.height = 0; sub = null;
+        return fullPaper;
+      }
+
       // 1. 용지 바탕 치수 계산
       // - 종이 연동 (cropPaper: true): 바탕 종이 규격 자체가 잘라낸 이미지에 맞춰 1:1로 함께 축소됨.
       // - 객체 자르기 (cropPaper: false): 종이 규격(A4, 원본 등)은 절대 변하지 않고 온전히 유지되며, 종이 위에서 객체만 잘려 주변 여백이 보존됨.
