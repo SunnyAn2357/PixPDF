@@ -3188,7 +3188,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 PixPDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c✨ 현재 버전: v2.13.3 (카멜레온 v2 텍스트 획 선택 제거·15종 도형 & 5종 선·영역별 드롭·14종 폰트/자간·UI 정밀 개선)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c✨ 현재 버전: v2.13.4 (카멜레온 v2 텍스트 획 선택 제거·15종 도형 & 5종 선·영역별 드롭·14종 폰트/자간·UI 정밀 개선)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -8890,7 +8890,7 @@ const modal = document.getElementById('modalPdfPicker');
         const zip = new JSZip();
 
         const projectMeta = {
-          version: '2.13.3',
+          version: '2.13.4',
           appName: 'PixPDF',
           createdAt: new Date().toISOString(),
           fileName: docState.fileName || 'PixPDF_Project',
@@ -10216,7 +10216,7 @@ const modal = document.getElementById('modalPdfPicker');
       ctx.restore();
     }
 
-    // [핵심] 카멜레온 위장 배경 인페인팅 (주변 픽셀의 글자 잉크 노이즈를 제거하고 순수 종이/배경 4코너 그라데이션 합성)
+    // [핵심] 카멜레온 위장 배경 인페인팅 (15곳 5x3 다중 구역 배경색 샘플링 + 글자/표선 노이즈 배제 + 구간별 양선형 보간 합성)
     function drawChameleonBackground(ctx, canvasW, canvasH, cx, cy, boxW, boxH, rotRad) {
       try {
         const cos = Math.cos(rotRad);
@@ -10246,11 +10246,11 @@ const modal = document.getElementById('modalPdfPicker');
 
         const imgData = ctx.getImageData(minX, minY, rw, rh).data;
 
-        // 테두리 둘레 픽셀 샘플링 함수 (로컬 좌표 기준 테두리 바깥쪽 띠에서 추출)
+        // 지정된 로컬 사각형 구역(lx0~lx1, ly0~ly1)에서 글자 획/표선을 배제한 순수 배경색 추출
         function sampleRegionCleanColor(lx0, ly0, lx1, ly1) {
           const samples = [];
-          const stepsX = 10;
-          const stepsY = 6;
+          const stepsX = 7;
+          const stepsY = 5;
           for (let sy = 0; sy <= stepsY; sy++) {
             const ly = ly0 + (ly1 - ly0) * (sy / stepsY);
             for (let sx = 0; sx <= stepsX; sx++) {
@@ -10272,9 +10272,9 @@ const modal = document.getElementById('modalPdfPicker');
           }
           if (samples.length === 0) return { r: 255, g: 255, b: 255 };
 
-          // 어두운 글자 획(Outlier)을 배제하기 위해 밝기 상위 50~90% 구간의 대표 배경색 평균 산출
+          // 어두운 글자 획이나 표 테두리선(Outlier)을 배제하기 위해 밝기 상위 55~90% 구간의 대표 배경색 평균 산출
           samples.sort((a, b) => a.lum - b.lum);
-          const startIdx = Math.floor(samples.length * 0.50);
+          const startIdx = Math.floor(samples.length * 0.55);
           const endIdx = Math.max(startIdx + 1, Math.ceil(samples.length * 0.90));
           let sr = 0, sg = 0, sb = 0, cnt = 0;
           for (let i = startIdx; i < endIdx && i < samples.length; i++) {
@@ -10290,20 +10290,51 @@ const modal = document.getElementById('modalPdfPicker');
           };
         }
 
-        // 4개 모서리 주변의 깨끗한 배경색 추출
-        const cTL = sampleRegionCleanColor(-hw - pad, -hh - pad, 0, 0);
-        const cTR = sampleRegionCleanColor(0, -hh - pad, hw + pad, 0);
-        const cBL = sampleRegionCleanColor(-hw - pad, 0, 0, hh + pad);
-        const cBR = sampleRegionCleanColor(0, 0, hw + pad, hh + pad);
+        // 5x3 (총 15곳) 다중 제어점 격자에서 배경색 샘플링
+        const nodesX = 5; // 가로 5구간 제어점 (좌끝 ~ 우끝)
+        const nodesY = 3; // 세로 3구간 제어점 (상단, 중단, 하단)
+        const totalSpanW = boxW + pad * 1.4;
+        const totalSpanH = boxH + pad * 1.4;
+        const winW = totalSpanW / (nodesX - 1);
+        const winH = totalSpanH / (nodesY - 1);
 
-        // 4코너 양선형 보간(Bilinear Patch)으로 글상자 내부를 매끄럽게 위장 채우기
-        const gridN = 12;
-        const cellW = boxW / gridN;
-        const cellH = boxH / gridN;
-        for (let gy = 0; gy < gridN; gy++) {
-          const v = (gy + 0.5) / gridN;
-          for (let gx = 0; gx < gridN; gx++) {
-            const u = (gx + 0.5) / gridN;
+        const nodeColors = [];
+        for (let ny = 0; ny < nodesY; ny++) {
+          const row = [];
+          const cyLocal = -hh - pad * 0.4 + (ny / (nodesY - 1)) * (boxH + pad * 0.8);
+          for (let nx = 0; nx < nodesX; nx++) {
+            const cxLocal = -hw - pad * 0.4 + (nx / (nodesX - 1)) * (boxW + pad * 0.8);
+            row.push(sampleRegionCleanColor(
+              cxLocal - winW * 0.55,
+              cyLocal - winH * 0.55,
+              cxLocal + winW * 0.55,
+              cyLocal + winH * 0.55
+            ));
+          }
+          nodeColors.push(row);
+        }
+
+        // 구간별 양선형 보간(Piecewise Bilinear Patch)으로 24x12 고밀도 격자 채우기
+        const gridX = 24;
+        const gridY = 12;
+        const cellW = boxW / gridX;
+        const cellH = boxH / gridY;
+
+        for (let gy = 0; gy < gridY; gy++) {
+          const vTotal = (gy + 0.5) / gridY * (nodesY - 1);
+          const iy = Math.min(nodesY - 2, Math.floor(vTotal));
+          const v = vTotal - iy;
+
+          for (let gx = 0; gx < gridX; gx++) {
+            const uTotal = (gx + 0.5) / gridX * (nodesX - 1);
+            const ix = Math.min(nodesX - 2, Math.floor(uTotal));
+            const u = uTotal - ix;
+
+            const cTL = nodeColors[iy][ix];
+            const cTR = nodeColors[iy][ix + 1];
+            const cBL = nodeColors[iy + 1][ix];
+            const cBR = nodeColors[iy + 1][ix + 1];
+
             const r = Math.round((1 - u) * (1 - v) * cTL.r + u * (1 - v) * cTR.r + (1 - u) * v * cBL.r + u * v * cBR.r);
             const g = Math.round((1 - u) * (1 - v) * cTL.g + u * (1 - v) * cTR.g + (1 - u) * v * cBL.g + u * v * cBR.g);
             const b = Math.round((1 - u) * (1 - v) * cTL.b + u * (1 - v) * cTR.b + (1 - u) * v * cBL.b + u * v * cBR.b);
