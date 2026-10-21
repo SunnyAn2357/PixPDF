@@ -24,7 +24,7 @@
         const zip = new JSZip();
 
         const projectMeta = {
-          version: '2.13.2',
+          version: '2.13.3',
           appName: 'PixPDF',
           createdAt: new Date().toISOString(),
           fileName: docState.fileName || 'PixPDF_Project',

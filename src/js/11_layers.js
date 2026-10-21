@@ -1044,9 +1044,7 @@
       ctx.restore();
     }
 
-    // [핵심 v2] 카멜레온 픽셀 단위 텍스트 획 선택 제거 알고리즘 (Local Morphological Ink-Only Eraser)
-    // - 배경 픽셀은 원본 그대로 100% 보존(투명 글상자처럼 작동)하면서,
-    //   주변 국소 배경 대비 튀는 글자 획(잉크) 픽셀과 1px 안티앨리어싱 테두리만 국소 배경색으로 덮어써서 제거
+    // [핵심] 카멜레온 위장 배경 인페인팅 (주변 픽셀의 글자 잉크 노이즈를 제거하고 순수 종이/배경 4코너 그라데이션 합성)
     function drawChameleonBackground(ctx, canvasW, canvasH, cx, cy, boxW, boxH, rotRad) {
       try {
         const cos = Math.cos(rotRad);
@@ -1054,6 +1052,7 @@
         const hw = boxW / 2;
         const hh = boxH / 2;
 
+        // 로컬 좌표 (lx, ly)를 캔버스 픽셀 좌표로 변환하여 주변 샘플 추출
         const cornersLocal = [
           { x: -hw, y: -hh },
           { x: hw, y: -hh },
@@ -1065,201 +1064,81 @@
           y: cy + p.x * sin + p.y * cos
         }));
 
-        // 글자 두께를 넘어 주변 배경을 참조할 수 있도록 반경 설정
-        const radius = Math.max(5, Math.min(26, Math.round(Math.min(boxW, boxH) * 0.24)));
-        const minX = Math.max(0, Math.floor(Math.min(...cornersCanv.map(p => p.x)) - radius - 2));
-        const minY = Math.max(0, Math.floor(Math.min(...cornersCanv.map(p => p.y)) - radius - 2));
-        const maxX = Math.min(canvasW - 1, Math.ceil(Math.max(...cornersCanv.map(p => p.x)) + radius + 2));
-        const maxY = Math.min(canvasH - 1, Math.ceil(Math.max(...cornersCanv.map(p => p.y)) + radius + 2));
+        const pad = Math.max(3, Math.round(Math.min(boxW, boxH) * 0.12));
+        const minX = Math.max(0, Math.floor(Math.min(...cornersCanv.map(p => p.x)) - pad));
+        const minY = Math.max(0, Math.floor(Math.min(...cornersCanv.map(p => p.y)) - pad));
+        const maxX = Math.min(canvasW - 1, Math.ceil(Math.max(...cornersCanv.map(p => p.x)) + pad));
+        const maxY = Math.min(canvasH - 1, Math.ceil(Math.max(...cornersCanv.map(p => p.y)) + pad));
         const rw = Math.max(1, maxX - minX + 1);
         const rh = Math.max(1, maxY - minY + 1);
 
-        const imgDataObj = ctx.getImageData(minX, minY, rw, rh);
-        const data = imgDataObj.data;
-        const totalPx = rw * rh;
+        const imgData = ctx.getImageData(minX, minY, rw, rh).data;
 
-        // 1단계: 각 픽셀의 밝기(Luminance) 계산 및 밝은 배경(일반 문서) vs 어두운 배경(반전 라벨) 판별
-        const lumArr = new Uint8Array(totalPx);
-        let borderLumSum = 0;
-        let borderCnt = 0;
-        let innerDarkSum = 0;
-        let innerLightSum = 0;
-        let innerCnt = 0;
-
-        for (let py = 0; py < rh; py++) {
-          const gy = minY + py - cy;
-          for (let px = 0; px < rw; px++) {
-            const idx = py * rw + px;
-            const i4 = idx * 4;
-            const lum = (data[i4] * 77 + data[i4 + 1] * 150 + data[i4 + 2] * 29) >> 8;
-            lumArr[idx] = lum;
-
-            const gx = minX + px - cx;
-            const lx = gx * cos + gy * sin;
-            const ly = -gx * sin + gy * cos;
-            if (Math.abs(lx) <= hw + radius * 0.5 && Math.abs(ly) <= hh + radius * 0.5) {
-              if (Math.abs(lx) > hw * 0.82 || Math.abs(ly) > hh * 0.82) {
-                borderLumSum += lum;
-                borderCnt++;
-              } else {
-                innerCnt++;
-                if (lum < 128) innerDarkSum++;
-                else innerLightSum++;
-              }
-            }
-          }
-        }
-
-        const avgBorderLum = borderCnt > 0 ? (borderLumSum / borderCnt) : 240;
-        // 테두리 평균 밝기가 115 이상이면 '밝은 배경 위의 어두운 글자(일반 문서)', 아니면 '어두운 배경 위의 밝은 글자'
-        const isLightBg = avgBorderLum >= 115;
-
-        // 2단계: 2-Pass Separable 국소 모폴로지 배경 추정 (글자 획 너머의 순수 국소 배경 RGB 복원)
-        const step = Math.max(1, Math.floor(radius / 4));
-        const passR = new Uint8Array(totalPx);
-        const passG = new Uint8Array(totalPx);
-        const passB = new Uint8Array(totalPx);
-        const passL = new Uint8Array(totalPx);
-
-        // Pass H (가로 방향 윈도우에서 글자 잉크가 아닌 대표 배경 픽셀 추출)
-        for (let py = 0; py < rh; py++) {
-          const rowOff = py * rw;
-          for (let px = 0; px < rw; px++) {
-            let bestLum = isLightBg ? 0 : 255;
-            let secondLum = lumArr[rowOff + px];
-            let bestIdx = rowOff + px;
-            let secondIdx = bestIdx;
-
-            for (let dx = -radius; dx <= radius; dx += step) {
-              const nx = px + dx;
-              if (nx < 0 || nx >= rw) continue;
-              const nIdx = rowOff + nx;
-              const l = lumArr[nIdx];
-              if (isLightBg) {
-                if (l > bestLum) {
-                  secondLum = bestLum; secondIdx = bestIdx;
-                  bestLum = l; bestIdx = nIdx;
-                } else if (l > secondLum) {
-                  secondLum = l; secondIdx = nIdx;
-                }
-              } else {
-                if (l < bestLum) {
-                  secondLum = bestLum; secondIdx = bestIdx;
-                  bestLum = l; bestIdx = nIdx;
-                } else if (l < secondLum) {
-                  secondLum = l; secondIdx = nIdx;
+        // 테두리 둘레 픽셀 샘플링 함수 (로컬 좌표 기준 테두리 바깥쪽 띠에서 추출)
+        function sampleRegionCleanColor(lx0, ly0, lx1, ly1) {
+          const samples = [];
+          const stepsX = 10;
+          const stepsY = 6;
+          for (let sy = 0; sy <= stepsY; sy++) {
+            const ly = ly0 + (ly1 - ly0) * (sy / stepsY);
+            for (let sx = 0; sx <= stepsX; sx++) {
+              const lx = lx0 + (lx1 - lx0) * (sx / stepsX);
+              const px = Math.round(cx + lx * cos - ly * sin) - minX;
+              const py = Math.round(cy + lx * sin + ly * cos) - minY;
+              if (px >= 0 && px < rw && py >= 0 && py < rh) {
+                const idx = (py * rw + px) * 4;
+                const a = imgData[idx + 3];
+                if (a > 10) {
+                  const r = imgData[idx];
+                  const g = imgData[idx + 1];
+                  const b = imgData[idx + 2];
+                  const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                  samples.push({ r, g, b, lum });
                 }
               }
             }
-            const pick4 = secondIdx * 4;
-            const outIdx = rowOff + px;
-            passR[outIdx] = data[pick4];
-            passG[outIdx] = data[pick4 + 1];
-            passB[outIdx] = data[pick4 + 2];
-            passL[outIdx] = lumArr[secondIdx];
           }
+          if (samples.length === 0) return { r: 255, g: 255, b: 255 };
+
+          // 어두운 글자 획(Outlier)을 배제하기 위해 밝기 상위 50~90% 구간의 대표 배경색 평균 산출
+          samples.sort((a, b) => a.lum - b.lum);
+          const startIdx = Math.floor(samples.length * 0.50);
+          const endIdx = Math.max(startIdx + 1, Math.ceil(samples.length * 0.90));
+          let sr = 0, sg = 0, sb = 0, cnt = 0;
+          for (let i = startIdx; i < endIdx && i < samples.length; i++) {
+            sr += samples[i].r;
+            sg += samples[i].g;
+            sb += samples[i].b;
+            cnt++;
+          }
+          return {
+            r: Math.round(sr / cnt),
+            g: Math.round(sg / cnt),
+            b: Math.round(sb / cnt)
+          };
         }
 
-        // Pass V (세로 방향 윈도우에서 최종 국소 배경 bgR, bgG, bgB 확정)
-        const bgR = new Uint8Array(totalPx);
-        const bgG = new Uint8Array(totalPx);
-        const bgB = new Uint8Array(totalPx);
-        const bgL = new Uint8Array(totalPx);
+        // 4개 모서리 주변의 깨끗한 배경색 추출
+        const cTL = sampleRegionCleanColor(-hw - pad, -hh - pad, 0, 0);
+        const cTR = sampleRegionCleanColor(0, -hh - pad, hw + pad, 0);
+        const cBL = sampleRegionCleanColor(-hw - pad, 0, 0, hh + pad);
+        const cBR = sampleRegionCleanColor(0, 0, hw + pad, hh + pad);
 
-        for (let py = 0; py < rh; py++) {
-          for (let px = 0; px < rw; px++) {
-            let sumR = 0, sumG = 0, sumB = 0, sumL = 0, cnt = 0;
-            const centerL = passL[py * rw + px];
-            for (let dy = -radius; dy <= radius; dy += step) {
-              const ny = py + dy;
-              if (ny < 0 || ny >= rh) continue;
-              const nIdx = ny * rw + px;
-              const l = passL[nIdx];
-              // Pass H를 거친 후보 중 여전히 남아 있을 수 있는 잔여 획 픽셀 배제
-              if ((isLightBg && l >= centerL - 18) || (!isLightBg && l <= centerL + 18)) {
-                sumR += passR[nIdx];
-                sumG += passG[nIdx];
-                sumB += passB[nIdx];
-                sumL += l;
-                cnt++;
-              }
-            }
-            const outIdx = py * rw + px;
-            if (cnt > 0) {
-              bgR[outIdx] = (sumR / cnt) | 0;
-              bgG[outIdx] = (sumG / cnt) | 0;
-              bgB[outIdx] = (sumB / cnt) | 0;
-              bgL[outIdx] = (sumL / cnt) | 0;
-            } else {
-              bgR[outIdx] = passR[outIdx];
-              bgG[outIdx] = passG[outIdx];
-              bgB[outIdx] = passB[outIdx];
-              bgL[outIdx] = passL[outIdx];
-            }
+        // 4코너 양선형 보간(Bilinear Patch)으로 글상자 내부를 매끄럽게 위장 채우기
+        const gridN = 12;
+        const cellW = boxW / gridN;
+        const cellH = boxH / gridN;
+        for (let gy = 0; gy < gridN; gy++) {
+          const v = (gy + 0.5) / gridN;
+          for (let gx = 0; gx < gridN; gx++) {
+            const u = (gx + 0.5) / gridN;
+            const r = Math.round((1 - u) * (1 - v) * cTL.r + u * (1 - v) * cTR.r + (1 - u) * v * cBL.r + u * v * cBR.r);
+            const g = Math.round((1 - u) * (1 - v) * cTL.g + u * (1 - v) * cTR.g + (1 - u) * v * cBL.g + u * v * cBR.g);
+            const b = Math.round((1 - u) * (1 - v) * cTL.b + u * (1 - v) * cTR.b + (1 - u) * v * cBL.b + u * v * cBR.b);
+            ctx.fillStyle = `rgb(${r},${g},${b})`;
+            ctx.fillRect(-hw + gx * cellW - 0.5, -hh + gy * cellH - 0.5, cellW + 1, cellH + 1);
           }
         }
-
-        // 3단계: 글자 획(잉크) 픽셀 검출 마스크 생성 (배경과 유사한 픽셀은 0으로 두어 원본 배경 100% 보존)
-        const inkMask = new Uint8Array(totalPx);
-        for (let py = 0; py < rh; py++) {
-          const gy = minY + py - cy;
-          const rowOff = py * rw;
-          for (let px = 0; px < rw; px++) {
-            const gx = minX + px - cx;
-            const lx = gx * cos + gy * sin;
-            const ly = -gx * sin + gy * cos;
-            // 회전된 글상자 내부 영역만 마스킹 대상
-            if (lx < -hw || lx > hw || ly < -hh || ly > hh) continue;
-
-            const idx = rowOff + px;
-            const i4 = idx * 4;
-            const lumDiff = isLightBg ? (bgL[idx] - lumArr[idx]) : (lumArr[idx] - bgL[idx]);
-            const chromaDiff = (Math.abs(data[i4] - bgR[idx]) + Math.abs(data[i4 + 1] - bgG[idx]) + Math.abs(data[i4 + 2] - bgB[idx])) / 3;
-            const score = Math.max(0, lumDiff) + chromaDiff * 0.45;
-
-            if (score > 11) {
-              // 11~28 구간은 부드러운 안티앨리어싱 가중치, 28 이상은 100% 잉크 획으로 판정
-              inkMask[idx] = Math.min(255, Math.round(((score - 11) / 17) * 255));
-            }
-          }
-        }
-
-        // 4단계: 글자 테두리의 잔상(Anti-aliasing Halo)까지 깨끗이 지우기 위해 마스크 1px 팽창(Dilation) 후 국소 배경으로 치환
-        for (let py = 1; py < rh - 1; py++) {
-          const gy = minY + py - cy;
-          const rowOff = py * rw;
-          for (let px = 1; px < rw - 1; px++) {
-            const gx = minX + px - cx;
-            const lx = gx * cos + gy * sin;
-            const ly = -gx * sin + gy * cos;
-            if (lx < -hw || lx > hw || ly < -hh || ly > hh) continue;
-
-            const idx = rowOff + px;
-            // 3x3 이웃 중 최대 마스크 강도 취함 (1px 팽창 효과)
-            let maxM = inkMask[idx];
-            if (maxM < 255) {
-              const m1 = inkMask[idx - 1]; if (m1 > maxM) maxM = m1;
-              const m2 = inkMask[idx + 1]; if (m2 > maxM) maxM = m2;
-              const m3 = inkMask[idx - rw]; if (m3 > maxM) maxM = m3;
-              const m4 = inkMask[idx + rw]; if (m4 > maxM) maxM = m4;
-              const m5 = inkMask[idx - rw - 1] * 0.7; if (m5 > maxM) maxM = m5 | 0;
-              const m6 = inkMask[idx - rw + 1] * 0.7; if (m6 > maxM) maxM = m6 | 0;
-              const m7 = inkMask[idx + rw - 1] * 0.7; if (m7 > maxM) maxM = m7 | 0;
-              const m8 = inkMask[idx + rw + 1] * 0.7; if (m8 > maxM) maxM = m8 | 0;
-            }
-
-            if (maxM > 0) {
-              const i4 = idx * 4;
-              const alpha = maxM / 255;
-              data[i4]     = Math.round(data[i4] * (1 - alpha) + bgR[idx] * alpha);
-              data[i4 + 1] = Math.round(data[i4 + 1] * (1 - alpha) + bgG[idx] * alpha);
-              data[i4 + 2] = Math.round(data[i4 + 2] * (1 - alpha) + bgB[idx] * alpha);
-            }
-          }
-        }
-
-        // 변환된 ImageData를 캔버스 절대 픽셀 좌표에 즉시 반영
-        ctx.putImageData(imgDataObj, minX, minY);
       } catch (e) {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(-boxW / 2, -boxH / 2, boxW, boxH);
@@ -1267,16 +1146,14 @@
     }
 
     function drawTextLayerOnCanvas(ctx, canvasW, canvasH, layer, cx, cy, boxW, boxH, rotRad, refScale) {
-      const bgMode = layer.bgMode || 'chameleon';
-      if (bgMode === 'chameleon') {
-        drawChameleonBackground(ctx, canvasW, canvasH, cx, cy, boxW, boxH, rotRad);
-      }
-
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(rotRad);
 
-      if (bgMode === 'solid') {
+      const bgMode = layer.bgMode || 'chameleon';
+      if (bgMode === 'chameleon') {
+        drawChameleonBackground(ctx, canvasW, canvasH, cx, cy, boxW, boxH, rotRad);
+      } else if (bgMode === 'solid') {
         ctx.fillStyle = layer.bgColor || '#ffffff';
         ctx.fillRect(-boxW / 2, -boxH / 2, boxW, boxH);
       }
@@ -1992,4 +1869,18 @@
           applyEyedropperColor(sample.hex);
         }
       }, true);
+
+      // 선택된 추가 객체를 Delete 키로 즉시 삭제 (입력창 포커스 중에는 제외)
+      window.addEventListener('keydown', (e) => {
+        if (e.key !== 'Delete' && e.key !== 'Del') return;
+        const activeEl = document.activeElement;
+        if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT' || activeEl.isContentEditable)) {
+          return;
+        }
+        const sel = getSelectedLayer();
+        if (sel) {
+          e.preventDefault();
+          deleteSelectedLayer();
+        }
+      });
     })();

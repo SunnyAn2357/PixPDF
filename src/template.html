@@ -419,10 +419,6 @@
 
             <!-- [선택 객체 전용 상세 속성창 1: 카멜레온 글상자] -->
             <div id="layerInspectorText" class="layer-inspector" style="display: none;">
-              <div class="inspector-title-row">
-                <span>🔤 글상자 스타일 &amp; 카멜레온</span>
-                <button type="button" class="btn-layer-act" onclick="fitTextLayerBox()" title="글자 길이에 맞춰 글상자 크기 자동 조절">크기 맞춤</button>
-              </div>
               <textarea id="txtLayerContent" class="layer-textarea" rows="2" placeholder="내용을 입력하세요 (줄바꿈 지원)" oninput="onTextLayerPropChange('text', this.value)"></textarea>
               <div class="inspector-row">
                 <span class="inspector-lbl" title="글상자 배경 처리 방식">배경</span>
@@ -431,6 +427,7 @@
                   <button type="button" class="bg-pill" id="btnTextBgSolid" onclick="onTextLayerPropChange('bgMode', 'solid')" title="지정한 단색으로 글상자 배경을 채웁니다">🎨 단색</button>
                   <button type="button" class="bg-pill" id="btnTextBgTrans" onclick="onTextLayerPropChange('bgMode', 'transparent')" title="배경 없이 글자만 표시합니다">⬜ 투명</button>
                 </div>
+                <button type="button" class="btn-layer-act" style="margin-left:auto;" onclick="fitTextLayerBox()">크기 맞춤</button>
               </div>
               <div class="inspector-row" style="gap: 6px;">
                 <div class="color-pick-group" style="flex: 1;">
@@ -445,21 +442,21 @@
                 </div>
               </div>
               <div class="inspector-row" style="gap: 5px;">
-                <select id="selLayerFontFamily" class="inspector-select" style="flex: 1.35;" onchange="onTextLayerPropChange('fontFamily', this.value)" title="글꼴 선택 (14종)">
-                  <option value="'Dotum', '돋움', 'Apple SD Gothic Neo', sans-serif">돋움체 (문서 기본)</option>
-                  <option value="'HCR Dotum', '함초롬돋움', 'Dotum', '돋움', sans-serif">함초롬돋움 (한글문서)</option>
+                <select id="selLayerFontFamily" class="inspector-select" style="flex: 1.35;" onchange="onTextLayerPropChange('fontFamily', this.value)" title="글꼴 선택">
+                  <option value="'Dotum', '돋움', 'Apple SD Gothic Neo', sans-serif">돋움체</option>
+                  <option value="'HCR Dotum', '함초롬돋움', 'Dotum', '돋움', sans-serif">함초롬돋움</option>
                   <option value="'Malgun Gothic', '맑은 고딕', sans-serif">맑은 고딕</option>
                   <option value="'NanumGothic', '나눔고딕', 'Malgun Gothic', sans-serif">나눔고딕</option>
-                  <option value="'Noto Sans KR', '본고딕', 'Malgun Gothic', sans-serif">본고딕 (Noto Sans)</option>
-                  <option value="'Gulim', '굴림', sans-serif">굴림체 (고전 공문서)</option>
-                  <option value="'Batang', '바탕', serif">바탕체 (명조 기본)</option>
-                  <option value="'HCR Batang', '함초롬바탕', 'Batang', '바탕', serif">함초롬바탕 (한글명조)</option>
+                  <option value="'Noto Sans KR', '본고딕', 'Malgun Gothic', sans-serif">본고딕</option>
+                  <option value="'Gulim', '굴림', sans-serif">굴림체</option>
+                  <option value="'Batang', '바탕', serif">바탕체</option>
+                  <option value="'HCR Batang', '함초롬바탕', 'Batang', '바탕', serif">함초롬바탕</option>
                   <option value="'NanumMyeongjo', '나눔명조', 'Batang', serif">나눔명조</option>
-                  <option value="'Gungsuh', '궁서', serif">궁서체 (붓글씨)</option>
-                  <option value="'HYHeadline-Medium', 'HY헤드라인M', 'Impact', 'Arial Black', sans-serif">헤드라인 (굵은제목)</option>
-                  <option value="'Consolas', 'D2Coding', 'Courier New', monospace">고정폭 (코딩/숫자표)</option>
-                  <option value="'Nanum Pen Script', '휴먼편지체', 'Segoe Print', cursive">손글씨 (펜글씨)</option>
-                  <option value="'Times New Roman', Georgia, serif">영문 명조 (Times)</option>
+                  <option value="'Gungsuh', '궁서', serif">궁서체</option>
+                  <option value="'HYHeadline-Medium', 'HY헤드라인M', 'Impact', 'Arial Black', sans-serif">헤드라인</option>
+                  <option value="'Consolas', 'D2Coding', 'Courier New', monospace">고정폭</option>
+                  <option value="'Nanum Pen Script', '휴먼편지체', 'Segoe Print', cursive">손글씨</option>
+                  <option value="'Times New Roman', Georgia, serif">영문 명조</option>
                 </select>
                 <div class="font-size-stepper" style="flex: 1;">
                   <button type="button" class="btn-step" onclick="stepTextLayerFontSize(-2)" title="글자 크기 작게">-</button>
@@ -477,11 +474,11 @@
                 </div>
                 <div style="display: flex; align-items: center; gap: 4px;">
                   <span class="inspector-lbl" title="글자와 글자 사이의 간격(자간) 조절">자간</span>
-                  <select id="selLayerLetterSpacing" class="inspector-select" style="width: 58px; padding: 2px 3px;" onchange="onTextLayerPropChange('letterSpacing', this.value)" title="글자 사이 간격(자간) 미세 조절">
+                  <select id="selLayerLetterSpacing" class="inspector-select" style="width: 54px; padding: 2px 3px;" onchange="onTextLayerPropChange('letterSpacing', this.value)" title="글자 사이 간격 미세 조절">
                     <option value="-3">더좁게</option>
-                    <option value="-1.5" selected>조밀(-)</option>
-                    <option value="0">보통(0)</option>
-                    <option value="2">넓게(+)</option>
+                    <option value="-1.5" selected>조밀</option>
+                    <option value="0">보통</option>
+                    <option value="2">넓게</option>
                     <option value="5">더넓게</option>
                   </select>
                   <span class="inspector-lbl">여백</span>
@@ -496,9 +493,6 @@
 
             <!-- [선택 객체 전용 상세 속성창 2: 15종 도형] -->
             <div id="layerInspectorShape" class="layer-inspector" style="display: none;">
-              <div class="inspector-title-row">
-                <span>⭐ 도형 종류 (15종) &amp; 면/선 스타일</span>
-              </div>
               <div class="shape-grid-14" id="shapeTypeGrid">
                 <!-- 1행: 필수 기본 프레임 5종 -->
                 <button type="button" class="btn-shape-type active" data-shape="rect" onclick="onShapeLayerPropChange('shapeType', 'rect')" title="직사각형 (테두리 박스·가림막)">▭ 직사각</button>
@@ -522,7 +516,7 @@
               <div class="inspector-row" style="justify-content: space-between; gap: 6px;">
                 <label class="chk-fill-trans" title="체크하면 도형 내부를 칠하지 않고 투명한 테두리 액자처럼 표시합니다">
                   <input type="checkbox" id="chkShapeFillTrans" checked onchange="onShapeLayerPropChange('fillTransparent', this.checked)">
-                  <span>면색 없음(투명)</span>
+                  <span>면색 없음</span>
                 </label>
                 <div class="color-pick-group" id="grpShapeFillColor">
                   <span class="inspector-lbl">면색</span>
