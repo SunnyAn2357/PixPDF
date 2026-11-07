@@ -1392,6 +1392,7 @@
     /* [데스크톱 모드 정상화] 861px 이상 기본 상태에서는 모바일 전용 헤더 및 닫기 버튼 완벽 숨김 */
     .mobile-control-header { display: none !important; }
     .mobile-close-btn { display: none !important; }
+    .btn-mobile-back { display: none !important; }
 
     @keyframes fadeInDown {
       from { opacity: 0; transform: translateY(-8px); }
@@ -4189,16 +4190,6 @@
 
     <!-- 3열: 우측 컨트롤 패널 (컴팩트 압축) -->
     <div class="col-control" id="colControl">
-      <!-- 모바일 전용 상단 헤더 바 (모바일에서 열렸을 때 페이지 정보 및 닫기 버튼 표출) -->
-      <div class="mobile-control-header" id="mobileControlHeader">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 13px; font-weight: 700; color: #0f766e;">페이지 설정 및 변환</span>
-          <span id="mobilePageIndicator" style="font-size: 11.5px; font-weight: 600; color: #64748b; background: #e2e8f0; padding: 2px 7px; border-radius: 10px;">1 / 1</span>
-        </div>
-        <button type="button" class="mobile-close-btn" onclick="toggleMobileControl(false)" title="편집 패널 닫기 (메인 썸네일로 돌아가기)">
-          <span>✕ 닫기</span>
-        </button>
-      </div>
 
       <!-- 3열 상단 툴바: 1열(전체선택/+삽입), 2열(이전/다음/확대/축소/리셋/100%)과 완벽하게 수평 1줄 일치 -->
       <div class="control-top-toolbar" id="controlTopToolbar" style="display: flex !important; align-items: center !important; justify-content: space-between !important; padding: 0 8px !important;">
@@ -4223,6 +4214,13 @@
           <button type="button" class="btn-layer-add" onclick="addLayerShape()" title="사각형·원·화살표·별 등 14종 도형 추가">+ 도형</button>
           <button type="button" class="btn-layer-add" onclick="triggerAddLayerFile()" title="현재 페이지 위에 이미지 또는 PDF 조각 추가">+ PDF/이미지</button>
         </div>
+        <!-- [모바일 전용] 목록으로 돌아가기 버튼 -->
+        <button type="button" class="btn-mobile-back" id="btnMobileBackToList" onclick="toggleMobileControl(false)" title="왼쪽 썸네일 목록으로 돌아가기">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>목록으로 돌아가기</span>
+        </button>
       </div>
       <div class="control-body">
 
@@ -4784,6 +4782,7 @@
           <div style="display: flex; flex-direction: column; gap: 2px;">
             <div style="display: flex; align-items: center; gap: 6px;">
               <span style="font-size: 12px; font-weight: 700; color: var(--text-main);">MY PDF</span>
+              <span style="font-size: 11px; font-weight: 500; color: #94a3b8;">v1.0.0</span>
             </div>
             <div style="font-size: 10.5px; color: #64748b; line-height: 1.35;">
               PDF와 이미지의 상호 변환 및 간편 편집 도구
