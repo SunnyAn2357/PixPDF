@@ -1,5 +1,13 @@
 ﻿# Changelog
 
+## [v2.74.0] - 2026-11-07 13:28
+### 젠(Zen) 스타일 종료 확인 모달(#modalExitConfirm) 및 작업 유실 방어 연동
+- **종료 확인 팝업(#modalExitConfirm) 및 뒤로가기(popstate)/ESC 보호 연동**:
+  - 실수로 인한 브라우저 탭/앱 종료 시 작업 유실 방어.
+  - 작업 중인 페이지 수 배지 표출 및 [프로젝트(.mypdf) 저장 후 종료] 지원.
+- **Service Worker 캐시 v2.74.0 갱신**:
+  - CACHE_NAME = 'pixpdf-cache-v2.74.0'
+
 ## [v2.73.6] - 2026-11-07 13:16
 ### PWA v2.73.6 캐시 갱신 및 코드 무결성 검증 완료
 - **Service Worker 캐시 v2.73.6 동기화**:
