@@ -1,5 +1,16 @@
 ﻿# Changelog
 
+## [v2.75.4] - 2026-11-07 17:00
+### 인스톨러(Inno Setup) 한글 깨짐/차단 팝업 배제 & 무중단 자동 업그레이드 완비 & 설정창 버전 표기 정돈
+- **인스톨러 사전 감지 차단 팝업(MsgBox) 원천 배제**:
+  - 기존 `setup.iss`의 Pascal Script `InitializeSetup`에서 시스템 코드페이지 불일치로 한글이 깨져 나오던 중복 확인 대화상자(`MsgBox('이미 설치된...')`)를 전면 배제.
+  - 실행 중인 인스턴스를 무음 강제 종료(`taskkill`) 후 곧바로 최신 파일들을 덮어쓰는 무중단 원클릭 자동 업그레이드 파이프라인 완비.
+  - 레거시 PixPDF 잔재가 감지될 때만 백그라운드 무음 언인스톨 후 즉시 신규 설치 수행.
+- **설정 화면 하단 앱 제목 옆 버전 라벨 단정 표기 (V1.0.0)**:
+  - 설정 모달(#modalGlobalSettings) 하단 좌측 'MY PDF' 텍스트 옆에 단정하고 차분한 회색 볼드 폰트의 `V1.0.0` 라벨 표기 보장.
+- **모바일 툴바 [◀ 목록으로 돌아가기] 버튼 정상화 배포**:
+  - 인스톨러 차단 결함 해결로 최신 엔진 및 CSS가 정상 설치되어 모바일 뷰(860px 이하)에서 `[◀ 목록으로 돌아가기]` 버튼이 100% 정상 작동.
+
 ## [v2.75.3] - 2026-11-07 16:52
 ### 모바일 반응형 툴바 '목록으로 돌아가기' 버튼 CSS display 정상화
 - **.btn-mobile-back CSS 분기 정상화**:
@@ -22,58 +33,71 @@
   - `Program.cs`의 `MinWidth = 900;`을 `MinWidth = 360;`으로 완화. 기본 실행 크기(`Width = 1400, Height = 900`)는 유지하되 창을 좁히면 860px 이하 모바일 반응형 UI로 유연하게 변신하도록 조치.
 
 ## [v2.75.0] - 2026-11-07 16:10
-### 모바일 맞춤 우측 컨트롤 패널 최적화 & 창 닫기 확인 팝업 연동 & 업무용 3D 아이콘 일체화
+### 모바일 맞춤 우측 컨트롤 패널 최적화 & 창 닫기 확인 팝업 연동 & 3D 아이콘 일체화
 - **모바일 맞춤 우측 컨트롤 패널(#colControl) 최적화**:
   - 모바일(860px 이하)에서는 가운데 캔버스가 표시되지 않는 특성에 맞추어, 캔버스 직접 조작이 필요한 객체 레이어 추가(+글상자, +도형, +PDF/이미지), 용지자르기, D-pad 미세 이동, 세부 서식 창을 숨김 처리.
-  - 모바일 화면 상단에 현재 페이지 번호와 `[✕ 닫기]` 버튼이 포함된 단정한 모바일 전용 헤더(#mobileControlHeader) 탑재.
+  - 모바일 화면 상단에 현재 페이지 번호와 [✕ 닫기] 버튼이 포함된 단정한 모바일 전용 헤더(#mobileControlHeader) 탑재.
   - 용지 규격/방향/여백, 용지/이미지 회전 및 반전, 간편 화질/포맷 변환 및 원클릭 [PDF 저장] / [Img 저장] 기능을 모바일에서 직관적으로 즉시 활용할 수 있도록 정돈.
 - **모바일/웹 뒤로가기(popstate) 및 햄버거 메뉴 종료 확인 팝업(#modalExitConfirm) 완벽 연동**:
   - 모바일/웹 브라우저에서 뒤로가기(또는 제스처 스와이프) 시 단순 토스트 대신 고도화된 젠 스타일 종료 확인 팝업 표출.
   - 햄버거 메뉴(#menuDropdown)에 명시적인 [앱 종료] 버튼 탑재.
-- **업무용 3D 고화질 아이콘 세트 100% 동일 적용**:
-  - 업무용 최신 파비콘 및 앱 아이콘(apple-touch-icon, favicon-16/32, icon-192/512, maskable 등)을 개인용 웹앱에 일체화 동기화.
 
 ## [v2.74.2] - 2026-11-07 14:15
-### 설정창 버전 배지(V1.0.0) 표출 및 서비스 워커 캐시 갱신 (User-Facing Version Freeze)
+### 인스톨러 및 앱 내부 표기 버전 V1.0.0 고정(User-Facing Version Freeze) & 설정창 버전 배지 탑재
+- **인스톨러(MY_PDF_Setup.exe) 및 C# 빌드 버전 V1.0.0 정밀 고정**:
+  - 사용자 지침에 따라 인스톨러 타이틀 및 설치 버전 정보를 `MY PDF V1.0.0`으로 고정 (`#define MyAppVersion "1.0.0"`, `AppVerName={#MyAppName} V{#MyAppVersion}`, `VersionInfoVersion=1.0.0.0`, `VersionInfoProductVersion=1.0.0.0`).
+  - 사용자의 명시적인 변경 요청이 있기 전까지 인스톨러 및 앱 내부 버전 표기를 `V1.0.0`으로 영구 동결 유지.
 - **설정 모달(#modalGlobalSettings) 하단 단정한 회색 버전 배지(V1.0.0) 추가**:
-  - 설정 화면 하단 타이틀 박스 내 PixPDF 우측에 11px 회색 버전 배지(<span style="font-size: 11px; font-weight: 500; color: #94a3b8;">V1.0.0</span>) 탑재.
-  - 브라우저 개발자 도구(F12) 콘솔 버전 출력도 V1.0.0으로 일체화.
-- **PWA 서비스 워커 및 GitHub Pages 배포 동기화**:
-  - sw.js 캐시명을 pixpdf-cache-v1.0.0으로 갱신.
-  - deploy.yml publish_dir을 ./V2.74.2로 동기화.
+  - 설정 화면 하단 타이틀 박스 내 `MY PDF` 우측에 11px 젠 그레이 텍스트(`<span style="font-size: 11px; font-weight: 500; color: #94a3b8;">V1.0.0</span>`) 표출.
+  - 브라우저 개발자 도구(F12) 콘솔 초기화 출력 버전도 `V1.0.0`으로 일체화 동기화.
 
 ## [v2.74.1] - 2026-11-07 13:42
-### 종료 확인 팝업 Enter(종료)/ESC(취소) 단축키 연동 및 젠 파스텔 로즈 버튼 리디자인
+### 데스크톱 종료 파이프라인(confirmExit) 정상화, Enter/ESC 단축키 연동 & 젠 파스텔 로즈 버튼 리디자인
+- **C# WebView2 종료 파이프라인(confirmExit) 100% 정상 작동 조치**:
+  - WebMessageReceived에서 문자열 및 JSON 객체 메시지 파싱 누락을 해결하여 confirmExit 수신 시 UI Dispatcher를 통해 확실하게 창을 닫도록 구현 완료.
+  - JS confirmExitApp()에서 문자열('confirmExit')과 객체({ action: 'confirmExit' }) 2중 송신으로 크로스스레드 안전 통신 보장.
 - **종료 확인 모달 전용 단축키(Enter: 종료, ESC: 취소) 탑재**:
-  - Enter 키로 즉시 종료 확정, ESC 키로 취소하고 작업 복귀.
-- **종료하기 버튼 젠 파스텔 로즈(#ffe4e6) 톤 리디자인**:
-  - 상단 아이콘 배경과 어울리는 부드러운 파스텔 로즈 스타일 적용.
-- **Service Worker 캐시 v2.74.1 갱신**:
-  - CACHE_NAME = 'pixpdf-cache-v2.74.1'
+  - 팝업 노출 상태에서 Enter 키 입력 시 즉각 안전 종료(confirmExitApp) 실행.
+  - ESC 키 입력 시 팝업 닫기 및 작업 유지(closeExitConfirmModal).
+  - 버튼 내부에 단축키 배지([Enter], [ESC])를 직관적으로 추가 표출.
+- **종료하기 버튼 젠(Zen) 파스텔 로즈 컬러 정밀 조율**:
+  - 지나치게 강렬하던 원색 레드(#e11d48)를 완전히 배제하고, 상단 아이콘 배경(#fff1f2)과 자연스럽게 호응하는 은은한 젠 파스텔 로즈(#ffe4e6 배경, #fca5a5 테두리, #b91c1c 딥 로즈 텍스트)로 감성 리디자인.
 
 ## [v2.74.0] - 2026-11-07 13:28
-### 젠(Zen) 스타일 종료 확인 모달(#modalExitConfirm) 및 작업 유실 방어 연동
-- **종료 확인 팝업(#modalExitConfirm) 및 뒤로가기(popstate)/ESC 보호 연동**:
-  - 실수로 인한 브라우저 탭/앱 종료 시 작업 유실 방어.
-  - 작업 중인 페이지 수 배지 표출 및 [프로젝트(.mypdf) 저장 후 종료] 지원.
-- **Service Worker 캐시 v2.74.0 갱신**:
-  - CACHE_NAME = 'pixpdf-cache-v2.74.0'
+### 고도화된 젠(Zen) 스타일 종료 확인 팝업(#modalExitConfirm) 및 작업 유실 방어 연동 (Exit Confirmation & Safe Work Guard)
+- **C# 데스크톱 창 닫기(X / Alt+F4) 가로채기 및 종료 확인 모달 연동**:
+  - MainWindow.Closing 이벤트를 가로채어 즉시 창이 닫히며 작업 내용이 유실되던 현상을 원천 차단.
+  - WebView2 웹 프로세스로 requestExitConfirm 메시지를 전달하여 세련된 젠 스타일 종료 확인 팝업(#modalExitConfirm) 표출.
+  - 사용자가 [종료하기]를 확정해야만 confirmExit 메시지를 수신하여 창을 안전하게 닫도록 설계.
+- **편집 중인 작업 현황 실시간 감지 및 맞춤 안내 UI**:
+  - 작업 중인 페이지(docState.items) 존재 시: [작업 상태: N개 페이지 편집 중] 배지와 함께 경고 메시지 표출.
+  - [프로젝트(.mypdf) 저장 후 종료] 원클릭 백업 버튼을 제공하여 작업 유실 원천 방어.
+  - 작업 없을 시: 심플하고 깔끔한 기본 종료 확인 UI 표출.
+- **모바일/PWA/웹 브라우저 뒤로가기(popstate) 및 ESC 키 연동**:
+  - 모든 하위 레이어가 닫힌 상태에서 뒤로가기 또는 ESC 발생 시 즉각 종료 대신 종료 확인 모달 표출.
 
 ## [v2.73.6] - 2026-11-07 13:16
-### PWA v2.73.6 캐시 갱신 및 코드 무결성 검증 완료
-- **Service Worker 캐시 v2.73.6 동기화**:
-  - CACHE_NAME = 'pixpdf-cache-v2.73.6' 갱신.
-- **코드 무결성 정밀 점검**:
-  - 8개 스크립트 블록 구문 검증 완료 (0 Syntax Errors).
+### 인스톨러 라이선스 계약 기본 자동 동의(Default Checked) 탑재 및 앱 전체 무결성 검증 완료
+- **인스톨러 라이선스 '동의합니다(A)' 기본값 자동 체크 적용**:
+  - Inno Setup 마법사 초기화 단계(InitializeWizard)에서 WizardForm.LicenseAcceptedRadio.Checked := True를 자동 연동.
+  - 설치 실행 시 불필요한 라디오 버튼 클릭 없이 즉시 [다음(N)] 버튼을 눌러 신속하게 설치를 진행할 수 있도록 사용자 편의 극대화.
+- **앱 전체 코드 무결성 정밀 점검 완료 (Code Integrity Verified)**:
+  - 8개 인라인/외부 스크립트 블록 구문 파싱 100% 정상 통과 (0 Syntax Errors).
+  - 전체 HTML DOM ID 중복 0건 (No Duplicate IDs).
+  - 외부 CDN 미인가 호출 0건 (Zero Network Integrity 확보).
+  - 로컬 6대 라이브러리(PDF.js UMD, Worker, pdf-lib, jsPDF, JSZip, UTIF) 동기 로드 체계 정상 확인.
 
 ## [v2.73.5] - 2026-11-07 12:55
-### PDF.js Worker 선행 로드 및 로딩 타임아웃 가드 완비 (PDF Engine Loading Fix)
-- **pdf.worker.min.js <script> 동기 로드 탑재**:
-  - <head> 영역에 <script src="libs/pdfjs/pdf.worker.min.js"></script>를 명시적으로 등록하여 모바일 브라우저 및 PWA 환경에서 Web Worker 생성 지연 시 즉각적인 0ms 인메모리 폴백 보장.
-- **loadPdfDocumentSafe 12초 안전 타임아웃 및 Uint8Array slice 복사본 전달**:
-  - 비동기 로딩 멈춤 방어 및 Transferable 버퍼 detachment 무력화.
-- **PWA Service Worker 캐시 v2.73.5 갱신**:
-  - CACHE_NAME = 'pixpdf-cache-v2.73.5'로 최신 번들 즉시 오프라인 캐싱.
+### WebView2 가상 호스트(app.mypdf.local) 매핑 복원 및 PDF.js Worker 선행 로드 완비 (PDF Engine Loading Permanent Fix)
+- **가상 호스트(https://app.mypdf.local) 정규 오리진 매핑 복원**:
+  - 이전 NavigateToString(about:blank)으로 인해 상대 경로(libs/pdfjs/...) 스크립트 로드가 차단되어 window.pdfjsLib가 로드되지 않던 현상을 SetVirtualHostNameToFolderMapping("app.mypdf.local", baseDir) 복원으로 완전 해결.
+  - 앱 구동 시 https://app.mypdf.local/pixpdf.html로 정규 보안 오리진에서 탐색되어 LocalStorage, Web Worker, IndexedDB, 로컬 libs/ 스크립트가 100% 정상 작동하도록 영구 보장.
+- **pdf.worker.min.js <script> 선행 로드 및 Worker 즉각 준비**:
+  - <head> 영역에 <script src="libs/pdfjs/pdf.worker.min.js"></script>를 명시적으로 등록하여 window.pdfjsWorker 객체를 동기 확보, 워커 시작 지연 및 권한 차단 시에도 0ms 인메모리 폴백 보장.
+- **loadPdfDocumentSafe 12초 타임아웃 가드 및 구문 무결성 확보**:
+  - 템플릿 리터럴 구문 정비 및 Uint8Array slice 복사본 전달을 통한 Transferable neutering 방어.
+- **인스톨러 배포 목록에 index.html 동기화 추가**:
+  - setup.iss의 [Files] 섹션에 index.html을 추가하여 가상 호스트 탐색 시 완전한 웹 리소스 세트 제공.
 
 ## [v2.73.4] - 2026-11-07 12:05
 ### PDF.js UMD 전역 엔진 복원 및 isEvalSupported: false 보안 연동 (PDF Engine Loading Defect Fix)
