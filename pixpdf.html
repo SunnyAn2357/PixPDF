@@ -1283,7 +1283,7 @@
       z-index: 60;
     }
 
-    /* 모바일 반응형 (860px 이하) - 100% 풀스크린 편집 패널 & PC와 동일한 정률 레이아웃 */
+    /* 모바일 반응형 (860px 이하) - 가운데 창 배제 맞춤 최적화 & 100% 풀스크린 편집 패널 */
     @media (max-width: 860px) {
       .col-viewer, .col-resizer { display: none !important; }
       .col-thumb {
@@ -1292,6 +1292,23 @@
         border-right: none;
       }
       .mobile-fab.has-files { display: block !important; }
+
+      /* [모바일 최적화] 가운데 창 없이 조작 불가능한 객체 레이어 추가 및 자르기/D-pad/서식 블록 숨김 */
+      .layer-add-btn-group { display: none !important; } /* +글상자, +도형, +PDF/이미지 */
+      #btnFitPaperToContent, #btnResetPaperFit { display: none !important; } /* 용지자르기 */
+      #layerManagerBar { display: none !important; } /* 다중 레이어 순서/복제 바 */
+      #layerInspectorText, #layerInspectorShape, #layerInspectorImage { display: none !important; } /* 객체 서식 */
+      .dpad-wrap { display: none !important; } /* 미세 이동 패드 */
+      .perspective-btn-group { display: none !important; } /* 투시 변환 */
+      #viewerCropToolbar { display: none !important; }
+
+      /* 모바일 상단 툴바 정돈 (되돌리기/복구하기만 유지) */
+      .control-top-toolbar {
+        padding: 6px 12px !important;
+        background: #f8fafc !important;
+        border-bottom: 1px solid var(--border) !important;
+      }
+
       .preview-body-split {
         align-items: flex-start !important;
         gap: 12px !important;
@@ -1301,7 +1318,7 @@
         min-width: 0 !important;
       }
       .preview-sheet-stage {
-        height: 180px !important; /* PC와 동일한 180px 정률 비율 유지 (찌그러짐/늘어남 방지) */
+        height: 180px !important;
       }
       .preview-right-pane {
         width: auto !important;
@@ -1310,7 +1327,6 @@
         flex-direction: column !important;
         justify-content: flex-start !important;
       }
-      /* 모바일 환경에서는 자르기 비활성화 (PC 전용 기능) */
       #btnToggleCrop,
       #btnResetCropCurrent,
       #btnTogglePaperCrop {
@@ -1318,14 +1334,7 @@
         cursor: not-allowed !important;
         pointer-events: none !important;
       }
-      #viewerCropToolbar {
-        display: none !important;
-      }
-      .dpad-wrap {
-        margin-top: 6px !important; /* 메뉴 버튼 바로 아래 밀착 배치 (빈 공간 제거) */
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-      }
+
       .col-control {
         position: fixed !important;
         top: 0 !important;
@@ -1339,36 +1348,47 @@
         height: 100% !important;
         height: 100dvh !important;
         z-index: 150 !important;
-        display: none;
+        display: none !important;
         background: var(--panel-bg);
         border-left: none !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
       }
-      .col-control.mobile-open { display: flex !important; }
+      .col-control.mobile-open {
+        display: flex !important;
+        flex-direction: column !important;
+      }
       .mobile-control-header {
         display: flex !important;
-        align-items: center;
-        justify-content: space-between;
-        padding-bottom: 8px;
-        border-bottom: 1px solid var(--border-light);
-        margin-bottom: 6px;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 10px 14px !important;
+        background: #ffffff !important;
+        border-bottom: 1px solid var(--border) !important;
+        flex-shrink: 0 !important;
       }
       .mobile-close-btn {
         display: inline-flex !important;
-        align-items: center;
-        gap: 4px;
-        padding: 6px 12px;
-        background: #f1f5f9;
-        border: 1px solid var(--border);
-        border-radius: 6px;
-        font-weight: 700;
-        font-size: 13px;
-        color: var(--text-main);
-        cursor: pointer;
+        align-items: center !important;
+        gap: 4px !important;
+        padding: 6px 14px !important;
+        background: #f1f5f9 !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 6px !important;
+        font-weight: 700 !important;
+        font-size: 13px !important;
+        color: var(--text-main) !important;
+        cursor: pointer !important;
+      }
+      .control-body {
+        padding: 12px 14px 40px 14px !important;
+        gap: 12px !important;
+      }
+      .control-card-box {
+        border-radius: 10px !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
       }
     }
-    .mobile-control-header { display: none; }
-    .mobile-close-btn { display: none; }
-
     @keyframes fadeInDown {
       from { opacity: 0; transform: translateY(-8px); }
       to { opacity: 1; transform: translateY(0); }
@@ -4044,6 +4064,11 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           <span>문서 닫기</span>
         </button>
+        <button class="menu-item danger" onclick="closeMenuDropdown(); showExitConfirmModal();" style="border-top: 1px solid var(--border-light); margin-top: 4px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          <span>앱 종료</span>
+        </button>
+
       </div>
 
       <div style="display:flex; align-items:center; gap:8px;">
@@ -4160,6 +4185,17 @@
 
     <!-- 3열: 우측 컨트롤 패널 (컴팩트 압축) -->
     <div class="col-control" id="colControl">
+      <!-- 모바일 전용 상단 헤더 바 (모바일에서 열렸을 때 페이지 정보 및 닫기 버튼 표출) -->
+      <div class="mobile-control-header" id="mobileControlHeader">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 13px; font-weight: 700; color: #0f766e;">페이지 설정 및 변환</span>
+          <span id="mobilePageIndicator" style="font-size: 11.5px; font-weight: 600; color: #64748b; background: #e2e8f0; padding: 2px 7px; border-radius: 10px;">1 / 1</span>
+        </div>
+        <button type="button" class="mobile-close-btn" onclick="toggleMobileControl(false)" title="편집 패널 닫기 (메인 썸네일로 돌아가기)">
+          <span>✕ 닫기</span>
+        </button>
+      </div>
+
       <!-- 3열 상단 툴바: 1열(전체선택/+삽입), 2열(이전/다음/확대/축소/리셋/100%)과 완벽하게 수평 1줄 일치 -->
       <div class="control-top-toolbar" id="controlTopToolbar" style="display: flex !important; align-items: center !important; justify-content: space-between !important; padding: 0 8px !important;">
         <!-- [되돌리기 / 복구하기] 왼쪽 벽쪽 정렬 동그란 화살표 버튼 2개 -->
