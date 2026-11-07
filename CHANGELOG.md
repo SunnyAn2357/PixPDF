@@ -1,5 +1,12 @@
 ﻿# Changelog
 
+## [v2.73.6] - 2026-11-07 13:16
+### PWA v2.73.6 캐시 갱신 및 코드 무결성 검증 완료
+- **Service Worker 캐시 v2.73.6 동기화**:
+  - CACHE_NAME = 'pixpdf-cache-v2.73.6' 갱신.
+- **코드 무결성 정밀 점검**:
+  - 8개 스크립트 블록 구문 검증 완료 (0 Syntax Errors).
+
 ## [v2.73.5] - 2026-11-07 12:55
 ### PDF.js Worker 선행 로드 및 로딩 타임아웃 가드 완비 (PDF Engine Loading Fix)
 - **pdf.worker.min.js <script> 동기 로드 탑재**:
