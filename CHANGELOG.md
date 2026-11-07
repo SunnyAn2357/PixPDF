@@ -1,5 +1,14 @@
 ﻿# Changelog
 
+## [v2.74.2] - 2026-11-07 14:15
+### 설정창 버전 배지(V1.0.0) 표출 및 서비스 워커 캐시 갱신 (User-Facing Version Freeze)
+- **설정 모달(#modalGlobalSettings) 하단 단정한 회색 버전 배지(V1.0.0) 추가**:
+  - 설정 화면 하단 타이틀 박스 내 PixPDF 우측에 11px 회색 버전 배지(<span style="font-size: 11px; font-weight: 500; color: #94a3b8;">V1.0.0</span>) 탑재.
+  - 브라우저 개발자 도구(F12) 콘솔 버전 출력도 V1.0.0으로 일체화.
+- **PWA 서비스 워커 및 GitHub Pages 배포 동기화**:
+  - sw.js 캐시명을 pixpdf-cache-v1.0.0으로 갱신.
+  - deploy.yml publish_dir을 ./V2.74.2로 동기화.
+
 ## [v2.74.1] - 2026-11-07 13:42
 ### 종료 확인 팝업 Enter(종료)/ESC(취소) 단축키 연동 및 젠 파스텔 로즈 버튼 리디자인
 - **종료 확인 모달 전용 단축키(Enter: 종료, ESC: 취소) 탑재**:
