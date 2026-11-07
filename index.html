@@ -4849,13 +4849,15 @@
           <span id="exitActiveWorkCount" style="font-weight: 700; color: #0f766e; background: #ccfbf1; padding: 2px 10px; border-radius: 12px;">0개 페이지</span>
         </div>
 
-        <!-- 주 액션 버튼 2단 (취소 / 종료하기) -->
+        <!-- 주 액션 버튼 2단 (취소 / 종료하기) - 젠 파스텔 로즈 및 단축키 배지 -->
         <div style="display: flex; gap: 10px; width: 100%;">
-          <button type="button" id="btnCancelExit" onclick="closeExitConfirmModal()" style="flex: 1; height: 42px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; outline: none;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#ffffff'">
-            취소 (계속 작업)
+          <button type="button" id="btnCancelExit" onclick="closeExitConfirmModal()" style="flex: 1; height: 42px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; outline: none; display: flex; align-items: center; justify-content: center; gap: 6px;" onmouseover="this.style.background='#f1f5f9';" onmouseout="this.style.background='#ffffff';">
+            <span>취소</span>
+            <span style="font-size: 10.5px; font-weight: 600; opacity: 0.65; padding: 1px 5px; border-radius: 4px; background: #e2e8f0;">ESC</span>
           </button>
-          <button type="button" id="btnConfirmExit" onclick="confirmExitApp()" style="flex: 1; height: 42px; border-radius: 8px; border: none; background: #e11d48; color: #ffffff; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; box-shadow: 0 4px 10px rgba(225, 29, 72, 0.25); outline: none;" onmouseover="this.style.background='#be123c'" onmouseout="this.style.background='#e11d48'">
-            종료하기
+          <button type="button" id="btnConfirmExit" onclick="confirmExitApp()" style="flex: 1; height: 42px; border-radius: 8px; border: 1px solid #fca5a5; background: #ffe4e6; color: #b91c1c; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; outline: none; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 2px 6px rgba(244, 63, 94, 0.08);" onmouseover="this.style.background='#fecdd3'; this.style.borderColor='#f87171';" onmouseout="this.style.background='#ffe4e6'; this.style.borderColor='#fca5a5';">
+            <span>종료하기</span>
+            <span style="font-size: 10.5px; font-weight: 600; opacity: 0.75; padding: 1px 5px; border-radius: 4px; background: rgba(185, 28, 28, 0.1);">Enter</span>
           </button>
         </div>
 
@@ -7772,10 +7774,11 @@
       isAppExiting = true;
       closeExitConfirmModal();
 
-      // 1. C# WebView2 데스크톱 종료 메시지 전송
+      // 1. C# WebView2 데스크톱 종료 메시지 전송 (문자열 및 객체 2중 전송으로 100% 수신 보장)
       try {
         if (window.chrome && window.chrome.webview && typeof window.chrome.webview.postMessage === 'function') {
-          window.chrome.webview.postMessage(JSON.stringify({ action: 'confirmExit' }));
+          try { window.chrome.webview.postMessage('confirmExit'); } catch (e) {}
+          try { window.chrome.webview.postMessage({ action: 'confirmExit' }); } catch (e) {}
           return;
         }
       } catch (e) {}
@@ -10561,6 +10564,23 @@ if (e.target.closest('.layer-item-box')) return;
 
     // 키보드 네비게이션 (상하좌우 이전/다음) 및 ESC 닫기
     window.addEventListener('keydown', (e) => {
+      // [V2.74.1] 종료 확인 모달 노출 중 단축키 즉각 처리 (Enter: 종료하기, ESC: 취소)
+      const exitModal = document.getElementById('modalExitConfirm');
+      if (exitModal && exitModal.classList.contains('show')) {
+        if (e.key === 'Escape' || e.key === 'Esc') {
+          e.preventDefault();
+          e.stopPropagation();
+          closeExitConfirmModal();
+          return;
+        }
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.stopPropagation();
+          confirmExitApp();
+          return;
+        }
+      }
+
       // 1. ESC 키: 자르기 취소, 팝업 모달, 햄버거 메뉴 및 모바일 패널 닫기 (최상위 레이어부터 순차 닫기)
       if (e.key === 'Escape') {
         if (typeof isCropActive !== 'undefined' && isCropActive && typeof cancelCrop === 'function') {
