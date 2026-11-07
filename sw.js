@@ -1,5 +1,5 @@
-// PixPDF Service Worker - 100% ·ÎÄÃ ¿ÀÇÁ¶óÀÎ ±¸µ¿ º¸Àå
-const CACHE_NAME = 'pixpdf-cache-v2.74.1';
+// PixPDF Service Worker - 100% ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+const CACHE_NAME = 'pixpdf-cache-v1.0.0';
 
 const PRECACHE_ASSETS = [
   './',
@@ -30,7 +30,7 @@ self.addEventListener('install', (event) => {
         try {
           await cache.add(asset);
         } catch (err) {
-          console.warn('[PixPDF SW] »çÀü Ä³½Ã ½ºÅµ:', asset, err);
+          console.warn('[PixPDF SW] ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ ï¿½ï¿½Åµ:', asset, err);
         }
       }
     }).then(() => self.skipWaiting())
@@ -43,7 +43,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            console.log('[PixPDF SW] ±¸¹öÀü Ä³½Ã Á¤¸®:', key);
+            console.log('[PixPDF SW] ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ä³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½:', key);
             return caches.delete(key);
           }
         })
