@@ -159,3 +159,20 @@
   - `setup.iss`에서 차단 및 깨짐을 유발하던 이전 버전 재설치 확인 대화상자(`MsgBox`)를 완전히 배제하고, 무음 자동 갱신(In-place Upgrade) 파이프라인으로 전환.
   - 설정창 하단 앱 명칭 우측 회색 텍스트 라벨을 대문자 `V1.0.0` 규격으로 명확히 동기화.
   - `V2.75.4` 신규 빌드 수행 및 `MY_PDF_Setup.exe` 3곳(루트, D:\Setups, C:\Setups) 일괄 재배포.
+
+### 2026-11-07 17:09:00 - [PWA 기능개선/배포] PWA 자동 업데이트 및 즉시 자동 새로고침(Auto-Reload) 완비
+- **요청 내용**: "PWA는 왜 자동으로 새로고침이 안될까? 기다려도 업데이트가 안되네. 자동으로 업데이트 되게 바꿔줘."
+- **원인 분석**:
+  1. `sw.js`에서 페이지가 전송한 `skipWaiting` 메시지를 수신하는 `message` 이벤트 리스너가 누락되어 새 서비스 워커가 대기(waiting) 상태에 머무름.
+  2. HTML 문서에 대해 캐시 우선(Cache-First) 전략이 적용되어 있어 브라우저가 새 버전을 내려받지 않고 로컬 구버전 캐시를 우선 반환함.
+  3. 서비스 워커 갱신 확인(`reg.update()`)이 주기적이나 탭 활성화 시점에 실행되지 않아 백그라운드 자동 감지가 지연됨.
+- **조치 사항**:
+  1. `sw.js`를 최신 규격으로 전면 개편:
+     - `install` 즉시 `self.skipWaiting()` 강제 적용.
+     - `activate` 즉시 `self.clients.claim()` 및 구버전 캐시 일괄 삭제.
+     - `message` 리스너를 추가하여 `skipWaiting` 즉시 처리.
+     - HTML 문서 요청은 Network-First(오프라인 시 캐시 폴백)로 전환하여 최신 코드 즉각 제공.
+  2. `pixpdf.html` 및 `index.html` 클라이언트 로직 고도화:
+     - 로드 즉시 `reg.update()`, 60초 주기 폴링, 탭 복귀(`visibilitychange`) 시 자동 검사.
+     - `controllerchange` 이벤트 발생 시 `window.location.reload()`를 트리거하여 최신 버전으로 자동 새로고침.
+  3. `V2.75.5` 증분 버전업 및 온라인 GitHub Pages 배포 완료.
