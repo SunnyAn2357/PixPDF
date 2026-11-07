@@ -1283,6 +1283,8 @@
       z-index: 60;
     }
 
+
+    .btn-mobile-back { display: none; }
     /* 모바일 반응형 (860px 이하) - 가운데 창 배제 맞춤 최적화 & 100% 풀스크린 편집 패널 */
     @media (max-width: 860px) {
       .col-viewer, .col-resizer { display: none !important; }
@@ -1301,6 +1303,34 @@
       .dpad-wrap { display: none !important; } /* 미세 이동 패드 */
       .perspective-btn-group { display: none !important; } /* 투시 변환 */
       #viewerCropToolbar { display: none !important; }
+      /* [모바일 전용] 우측 상단 툴바의 '목록으로 돌아가기' 깔끔 텍스트 버튼 */
+      .btn-mobile-back {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        height: 28px !important;
+        padding: 0 10px 0 8px !important;
+        background: #ffffff !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 6px !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        color: #0f766e !important;
+        cursor: pointer !important;
+        transition: all 0.15s ease !important;
+        white-space: nowrap !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+      }
+      .btn-mobile-back:hover {
+        background: #f0fdfa !important;
+        border-color: #0f766e !important;
+        color: #0d9488 !important;
+      }
+      .btn-mobile-back:active {
+        background: #ccfbf1 !important;
+        transform: scale(0.97) !important;
+      }
+
 
       /* 모바일 상단 툴바 정돈 (되돌리기/복구하기만 유지) */
       .control-top-toolbar {
@@ -1392,7 +1422,6 @@
     /* [데스크톱 모드 정상화] 861px 이상 기본 상태에서는 모바일 전용 헤더 및 닫기 버튼 완벽 숨김 */
     .mobile-control-header { display: none !important; }
     .mobile-close-btn { display: none !important; }
-    .btn-mobile-back { display: none !important; }
 
     @keyframes fadeInDown {
       from { opacity: 0; transform: translateY(-8px); }
