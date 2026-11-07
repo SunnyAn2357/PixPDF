@@ -82,6 +82,7 @@
 
   <!-- 클라이언트 로컬 전용 라이브러리 (브라우저 메모리 내 100% 처리 & 완전 오프라인 UMD 단독 구동) -->
   <script src="libs/pdfjs/pdf.min.js"></script>
+  <script src="libs/pdfjs/pdf.worker.min.js"></script>
   <script src="libs/pdf-lib.min.js"></script>
   <script src="libs/jspdf.umd.min.js"></script>
   <script src="libs/jszip.min.js"></script>
@@ -6716,43 +6717,74 @@
     async function loadPdfDocumentSafe(pdfEngine, arrayBuf, fileName = '문서') {
       return new Promise((resolve, reject) => {
         let isHandled = false;
-        const loadingTask = pdfEngine.getDocument({
-          data: arrayBuf,
-          cMapUrl: './libs/pdfjs/cmaps/',
-          cMapPacked: true,
-          isEvalSupported: false
-        });
 
-        // 비밀번호를 요구하는 암호화 PDF 감지 시 브라우저 열람 권장 토스트 표출 후 즉시 안전 중단
-        loadingTask.onPassword = function (updatePassword, reason) {
+        // 12초 안전 타임아웃 가드 (엔진 프리징 방어)
+        const timeoutTimer = setTimeout(() => {
           if (!isHandled) {
             isHandled = true;
-            showActionToast('암호 설정이 있는 문서입니다. 브라우저에서 열어 주세요.');
-            try { updatePassword(new Error('PASSWORD_PROTECTED')); } catch (e) {}
-            reject(new Error('암호 설정이 있는 문서입니다. 브라우저에서 열어 주세요.'));
+            console.warn('[PDF] 문서 로딩 타임아웃 발생 (12초 초과):', fileName);
+            showActionToast(`${fileName} 로딩 시간이 초과되었습니다. 다시 시도해 주세요.`);
+            reject(new Error('PDF_LOAD_TIMEOUT'));
           }
-        };
+        }, 12000);
 
-        loadingTask.promise.then(doc => {
-          if (!isHandled) {
-            isHandled = true;
-            resolve(doc);
-          }
-        }).catch(err => {
-          if (!isHandled) {
-            isHandled = true;
-            const isPwdErr = err && (
-              err.name === 'PasswordException' ||
-              (err.message && /password|encrypted|SecurityHandler/i.test(err.message))
-            );
-            if (isPwdErr) {
+        try {
+          // Uint8Array 버퍼 복사본 생성하여 Transferable neutering 방어
+          const uint8Data = (arrayBuf instanceof Uint8Array)
+            ? arrayBuf
+            : new Uint8Array(arrayBuf.slice ? arrayBuf.slice(0) : arrayBuf);
+
+          const loadingTask = pdfEngine.getDocument({
+            data: uint8Data,
+            cMapUrl: './libs/pdfjs/cmaps/',
+            cMapPacked: true,
+            isEvalSupported: false
+          });
+
+          // 비밀번호를 요구하는 암호화 PDF 감지 시 브라우저 열람 권장 토스트 표출 후 즉시 안전 중단
+          loadingTask.onPassword = function (updatePassword, reason) {
+            if (!isHandled) {
+              isHandled = true;
+              clearTimeout(timeoutTimer);
               showActionToast('암호 설정이 있는 문서입니다. 브라우저에서 열어 주세요.');
+              try { updatePassword(new Error('PASSWORD_PROTECTED')); } catch (e) {}
               reject(new Error('암호 설정이 있는 문서입니다. 브라우저에서 열어 주세요.'));
-            } else {
-              reject(err);
             }
+          };
+
+          loadingTask.promise.then(doc => {
+            if (!isHandled) {
+              isHandled = true;
+              clearTimeout(timeoutTimer);
+              resolve(doc);
+            }
+          }).catch(err => {
+            if (!isHandled) {
+              isHandled = true;
+              clearTimeout(timeoutTimer);
+              console.error('[PDF] loadPdfDocumentSafe 로드 실패:', err);
+              const isPwdErr = err && (
+                err.name === 'PasswordException' ||
+                (err.message && /password|encrypted|SecurityHandler/i.test(err.message))
+              );
+              if (isPwdErr) {
+                showActionToast('암호 설정이 있는 문서입니다. 브라우저에서 열어 주세요.');
+                reject(new Error('암호 설정이 있는 문서입니다. 브라우저에서 열어 주세요.'));
+              } else {
+                showActionToast(`${fileName} 로드 실패: ${err.message || '알 수 없는 오류'}`);
+                reject(err);
+              }
+            }
+          });
+        } catch (syncErr) {
+          if (!isHandled) {
+            isHandled = true;
+            clearTimeout(timeoutTimer);
+            console.error('[PDF] getDocument 동기 예외 발생:', syncErr);
+            showActionToast(`${fileName} 로드 실패: ${syncErr.message || '엔진 오류'}`);
+            reject(syncErr);
           }
-        });
+        }
       });
     }
 

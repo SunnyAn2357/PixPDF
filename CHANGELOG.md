@@ -1,5 +1,14 @@
 ﻿# Changelog
 
+## [v2.73.5] - 2026-11-07 12:55
+### PDF.js Worker 선행 로드 및 로딩 타임아웃 가드 완비 (PDF Engine Loading Fix)
+- **pdf.worker.min.js <script> 동기 로드 탑재**:
+  - <head> 영역에 <script src="libs/pdfjs/pdf.worker.min.js"></script>를 명시적으로 등록하여 모바일 브라우저 및 PWA 환경에서 Web Worker 생성 지연 시 즉각적인 0ms 인메모리 폴백 보장.
+- **loadPdfDocumentSafe 12초 안전 타임아웃 및 Uint8Array slice 복사본 전달**:
+  - 비동기 로딩 멈춤 방어 및 Transferable 버퍼 detachment 무력화.
+- **PWA Service Worker 캐시 v2.73.5 갱신**:
+  - CACHE_NAME = 'pixpdf-cache-v2.73.5'로 최신 번들 즉시 오프라인 캐싱.
+
 ## [v2.73.4] - 2026-11-07 12:05
 ### PDF.js UMD 전역 엔진 복원 및 isEvalSupported: false 보안 연동 (PDF Engine Loading Defect Fix)
 - **Top-level await 및 ES 모듈 MIME 타입 충돌 원천 해결**:
