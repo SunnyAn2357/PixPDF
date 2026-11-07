@@ -1,5 +1,5 @@
-﻿// PixPDF Service Worker - 100% 로컬 및 오프라인 구동 보장
-const CACHE_NAME = 'pixpdf-cache-v2.13.4';
+﻿// PixPDF Service Worker - 100% 로컬 오프라인 구동 보장
+const CACHE_NAME = 'pixpdf-cache-v2.73.4';
 
 const PRECACHE_ASSETS = [
   './',
@@ -15,11 +15,12 @@ const PRECACHE_ASSETS = [
   './icon-512.png',
   './icon-maskable-192.png',
   './icon-maskable-512.png',
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/utif/3.1.0/UTIF.min.js'
+  './libs/pdfjs/pdf.min.js',
+  './libs/pdfjs/pdf.worker.min.js',
+  './libs/pdf-lib.min.js',
+  './libs/jspdf.umd.min.js',
+  './libs/jszip.min.js',
+  './libs/UTIF.min.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -40,7 +41,12 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            console.log('[PixPDF SW] 구버전 캐시 정리:', key);
+            return caches.delete(key);
+          }
+        })
       );
     }).then(() => self.clients.claim())
   );
@@ -48,34 +54,21 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, networkResponse.clone());
-            });
-          }
-        }).catch(() => {});
-        return cachedResponse;
-      }
-
-      return fetch(event.request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-          return networkResponse;
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(event.request).then((response) => {
+        if (!response || response.status !== 200 || response.type !== 'basic') {
+          return response;
         }
-
-        const responseToCache = networkResponse.clone();
+        const toCache = response.clone();
         caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
+          cache.put(event.request, toCache);
         });
-
-        return networkResponse;
+        return response;
       }).catch(() => {
-        if (event.request.headers.get('accept')?.includes('text/html')) {
-          return caches.match('./index.html');
+        if (event.request.mode === 'navigate') {
+          return caches.match('./index.html') || caches.match('./pixpdf.html');
         }
       });
     })
