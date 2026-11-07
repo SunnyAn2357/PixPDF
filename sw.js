@@ -1,5 +1,5 @@
 // PixPDF Service Worker - 100% ���� �������� ���� ����
-const CACHE_NAME = 'pixpdf-cache-v1.0.0-m3';
+const CACHE_NAME = 'pixpdf-cache-v1.0.0-m4';
 
 const PRECACHE_ASSETS = [
   './',
