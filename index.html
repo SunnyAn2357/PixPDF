@@ -1389,6 +1389,10 @@
         box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
       }
     }
+    /* [데스크톱 모드 정상화] 861px 이상 기본 상태에서는 모바일 전용 헤더 및 닫기 버튼 완벽 숨김 */
+    .mobile-control-header { display: none !important; }
+    .mobile-close-btn { display: none !important; }
+
     @keyframes fadeInDown {
       from { opacity: 0; transform: translateY(-8px); }
       to { opacity: 1; transform: translateY(0); }
