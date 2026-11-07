@@ -1,5 +1,13 @@
 ﻿# Changelog
 
+## [v2.75.1] - 2026-11-07 16:35
+### 데스크톱 우측 패널 모바일 전용 헤더 숨김 처리 & 창 너비 하한선(MinWidth=360) 반응형 완화
+- **데스크톱 우측 패널 모바일 전용 헤더(#mobileControlHeader) 완벽 숨김 처리**:
+  - 기본 데스크톱 CSS(861px 이상)에 `.mobile-control-header { display: none !important; }`, `.mobile-close-btn { display: none !important; }`를 명시적으로 적용하여 데스크톱에서 상단 툴바와 겹치던 결함을 완벽히 해결.
+  - 모바일(`@media (max-width: 860px)`)에서만 자연스럽게 `display: flex !important;`로 표출되도록 반응형 CSS 분기 정상화.
+- **데스크톱 창 크기 하한선(MinWidth) 완화 (360px 연동)**:
+  - `Program.cs`의 `MinWidth = 900;`을 `MinWidth = 360;`으로 완화. 기본 실행 크기(`Width = 1400, Height = 900`)는 유지하되 창을 좁히면 860px 이하 모바일 반응형 UI로 유연하게 변신하도록 조치.
+
 ## [v2.75.0] - 2026-11-07 16:10
 ### 모바일 맞춤 우측 컨트롤 패널 최적화 & 창 닫기 확인 팝업 연동 & 업무용 3D 아이콘 일체화
 - **모바일 맞춤 우측 컨트롤 패널(#colControl) 최적화**:
