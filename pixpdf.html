@@ -5036,25 +5036,47 @@
           navigator.serviceWorker.register('./sw.js').then((reg) => {
             console.log('%c✅ 서비스 워커 등록 완료! Scope: ' + reg.scope, 'color: #10b981; font-weight: bold;');
 
+            // 1. 페이지 로드 즉시 서버에 신규 버전 확인 강제 요청
+            try { reg.update(); } catch(e) {}
+
+            // 2. 이미 대기 중(waiting)인 서비스 워커가 있으면 즉시 활성화 요청
+            if (reg.waiting) {
+              reg.waiting.postMessage({ action: 'skipWaiting' });
+            }
+
+            // 3. 신규 서비스 워커 설치 감지 시 skipWaiting 트리거
             reg.addEventListener('updatefound', () => {
               const newWorker = reg.installing;
               if (newWorker) {
                 newWorker.addEventListener('statechange', () => {
                   if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    console.log('%c🔄 [MY PDF PWA] 새 버전 감지: 자동 갱신 적용', 'color: #0d9488; font-weight: bold;');
+                    console.log('%c🔄 [PWA] 새 버전 감지: 즉시 자동 갱신 적용', 'color: #0d9488; font-weight: bold;');
                     newWorker.postMessage({ action: 'skipWaiting' });
                   }
                 });
               }
             });
+
+            // 4. 주기적(60초마다) 및 탭 활성화(visibilitychange) 시 백그라운드 업데이트 자동 확인
+            setInterval(() => {
+              try { reg.update(); } catch(e) {}
+            }, 60000);
+
+            document.addEventListener('visibilitychange', () => {
+              if (document.visibilityState === 'visible') {
+                try { reg.update(); } catch(e) {}
+              }
+            });
           }).catch((err) => {
-            console.warn('[MY PDF PWA] 서비스 워커 등록 스킵:', err);
+            console.warn('[PWA] 서비스 워커 등록 스킵:', err);
           });
 
+          // 5. 새 서비스 워커가 제어권을 잡으면(controllerchange) 자동으로 페이지 새로고침!
           let refreshing = false;
           navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (!refreshing) {
               refreshing = true;
+              console.log('%c🚀 [PWA] 최신 버전 활성화 -> 페이지 자동 새로고침 수행', 'color: #10b981; font-weight: bold;');
               window.location.reload();
             }
           });
