@@ -1,5 +1,5 @@
 // MY PDF / PixPDF Service Worker - 100% 로컬 오프라인 구동 및 원클릭 무중단 자동 업데이트
-const CACHE_NAME = 'mypdf-cache-v2.75.5';
+const CACHE_NAME = 'mypdf-cache-v1.0.0';
 
 const PRECACHE_ASSETS = [
   './',
@@ -15,12 +15,12 @@ const PRECACHE_ASSETS = [
   './icon-512.png',
   './icon-maskable-192.png',
   './icon-maskable-512.png',
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/utif/3.1.0/UTIF.min.js'
+  './libs/pdfjs/pdf.min.js',
+  './libs/pdfjs/pdf.worker.min.js',
+  './libs/pdf-lib.min.js',
+  './libs/jszip.min.js',
+  './libs/jspdf.umd.min.js',
+  './libs/UTIF.min.js'
 ];
 
 // 1. 설치(install) 즉시 이전 버전 대기 없이 강제 활성화 (skipWaiting)

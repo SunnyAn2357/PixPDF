@@ -176,3 +176,27 @@
      - 로드 즉시 `reg.update()`, 60초 주기 폴링, 탭 복귀(`visibilitychange`) 시 자동 검사.
      - `controllerchange` 이벤트 발생 시 `window.location.reload()`를 트리거하여 최신 버전으로 자동 새로고침.
   3. `V2.75.5` 증분 버전업 및 온라인 GitHub Pages 배포 완료.
+
+### 2026-11-08 09:42:00 - [정식출시/아키텍처/보안] 정식 출시 V1.0.0 리셋, 폴더/문서 대청소 및 SAC 디지털 서명 빌드 자동화 완비
+- **요청 내용**: "폴더와 파일이 너무 복잡해서 딱 보기가 싫어. 지금까지 했던 모든 이전 버전들과 필요없는 폴더와 파일들을 Backups에 폴더를 만들어서 다 옮기고, 루트에는 V1.0.0을 하나 새로 만들어서 최신 파일을 넣어줘. 이제 출시전 새로 시작하는 거야. 루트에는 V1.0.0을 수정하는데 필요한 파일들만 남기자. 아, 온라인 버전은 여기에 없나? 그것도 잊지 말고 항상 챙겨야 해. 그리고, 중구난방으로 흩어져 있는 md파일도 깔끔하게 종류별로 정리해서 루트에 놔둬. 중복되는 건 없애고. 앱을 만들고 나면 앱에 SAC용 인증서 주입하는 것도 절대 잊지 말고."
+- **조치 사항**:
+  1. **과거 버전 및 임시 파일 `Backups/` 격리**:
+     - 누적된 91개 구버전 폴더(`V2.13.4` ~ `V2.75.6`)를 `Backups/versions/`로 일괄 이동.
+     - 불필요한 임시 빌드 폴더(`build/`, `payload/`, `installer_source/`, `아이콘/`, `MY_PDF_Setup.spec`)를 `Backups/temp/`로 이동.
+     - 중복/임시 마크다운 문서(`ADS_INSTALLER_GUIDE.md`, `README01.md`, `VIBE_CODING_RULES.md`, `용지자르기 코드.md` 등)를 `Backups/docs/`로 이동.
+  2. **루트 마크다운(.md) 표준 체계 확립**:
+     - `AGENTS.md`(최신 글로벌 헌장 제10조 사내/온라인 인증 분리 반영), `GEMINI.md`, `VERSION_RULES.md`, `FEATURE_REGISTRY.md`, `ARCHITECTURE.md`, `DECISIONS.md`, `CHANGELOG.md`, `README.md`로 깔끔하게 최신화 및 통합.
+  3. **온라인 웹/PWA(`V1.0.0`) 무결성 및 매니페스트 복원**:
+     - 루트에 누락되어 있던 `manifest.json`을 최신 `MY PDF` 규격으로 복원 배치하고, `sw.js` 캐시 버전을 `mypdf-cache-v1.0.0` 및 로컬 `libs/` 프리캐시 구조로 업데이트.
+     - 온라인 웹 소스(`pixpdf.html`, `index.html`, `sw.js`)에는 MY Apps 보안인증서 코드가 단 1줄도 들어가지 않도록 순수 클라이언트 구조 100% 보존.
+  4. **빌드 스크립트(`build_installer.bat`) 내 SAC 디지털 서명 자동 주입 완비**:
+     - `signtool.exe`와 `D:\coding\Utility\office\ADS Software\ADS_CodeSign_Private.pfx` (`ads1234!`)를 연동하여 `dist\MY_PDF.exe` 본체 및 `MY_PDF_Setup.exe` 인스톨러 양쪽 모두에 SHA256 디지털 서명 및 타임스탬프를 자동 주입하도록 `build_installer.bat` 업데이트.
+  5. **정식 출시 `V1.0.0/` 스냅샷 폴더 신설 및 `Setups` 배포 동기화 완료**.
+
+
+### 2026-11-08 15:14:00 - [버전정책/규정개정] V1.0.0 고정 유지 공식 해제 및 정규 3단계 버전업(VX.Y.Z) 전면 개시
+- **요청 내용**: "일단 루트에 있는 README.md, AGENTS.md 등 md 파일들을 좀 쭉 전부 훑어봐 줄래? 이제부터는 버전업을 개시할 거야. 그동안 고정되어 있던 V1.0.0은 해제야. 기록해줘."
+- **조치 사항**:
+  1. `AGENTS.md`의 "표시 버전 고정 원칙(V1.0.0 고정)"을 "정규 3단계 버전업 전면 개시 (V1.0.0 고정 해제)"로 개정.
+  2. `VERSION_RULES.md` 내 인스톨러 및 앱 버전 'V1.0.0' 고정 유지 특별 지침을 공식 해제하고, 향후 작업 성격(Major/Minor/Patch)에 따른 정규 판올림 및 인스톨러(`setup.iss`), 메타데이터, 앱 설정 UI 표기 실시간 동기화 규칙으로 갱신.
+  3. 향후 신규 작업 발생 시 `V1.0.0/`을 복제한 차기 버전 폴더(예: `V1.0.1` 또는 `V1.1.0`) 생성 및 전체 배포 파이프라인 가동 준비 완료.
