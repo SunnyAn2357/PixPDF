@@ -4964,7 +4964,7 @@
           <div style="display: flex; flex-direction: column; gap: 2px;">
             <div style="display: flex; align-items: center; gap: 6px;">
               <span style="font-size: 12px; font-weight: 700; color: var(--text-main);">MY PDF</span>
-              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.3.7</span>
+              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.3.8</span>
             </div>
             <div style="font-size: 10.5px; color: #64748b; line-height: 1.35;">
               PDF와 이미지의 상호 변환 및 간편 편집 도구
@@ -5166,7 +5166,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 MY PDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c⚡ 현재 버전: V1.3.7 (무손실 렌더링 고속화: 바탕 오프스크린 캐시 · 썸네일 중복 제거 · 고속 복사 · 디바운스)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c⚡ 현재 버전: V1.3.8 (대량 페이지 썸네일 지연 렌더링 & 임시 캔버스 풀링)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -5811,6 +5811,7 @@
         const cfg = getEffectiveItemSettings(curIdx);
         if (canvas && item) {
           drawPaperWithImage(canvas, item, cfg, { isThumbnail: false });
+          canvas.dataset.renderedIdx = String(curIdx);
         }
       });
     }
@@ -6315,10 +6316,10 @@
         let uploadSrc = imgSource;
         const srcW = imgSource.naturalWidth || imgSource.width || outW;
         const srcH = imgSource.naturalHeight || imgSource.height || outH;
-        let tmpCanvas = null;
         if (srcW > maxTex || srcH > maxTex) {
           const r = Math.min(maxTex / srcW, maxTex / srcH);
-          tmpCanvas = document.createElement('canvas');
+          if (!window._webglUploadTmpCanvas) window._webglUploadTmpCanvas = document.createElement('canvas');
+          const tmpCanvas = window._webglUploadTmpCanvas;
           tmpCanvas.width = Math.max(1, Math.floor(srcW * r));
           tmpCanvas.height = Math.max(1, Math.floor(srcH * r));
           tmpCanvas.getContext('2d').drawImage(imgSource, 0, 0, tmpCanvas.width, tmpCanvas.height);
@@ -6328,7 +6329,6 @@
         gl.bindTexture(gl.TEXTURE_2D, tex);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, uploadSrc);
-        if (tmpCanvas) { tmpCanvas.width = 0; tmpCanvas.height = 0; }
 
         gl.uniformMatrix3fv(locInvH, false, invH);
         gl.uniform2f(locOutSize, outW, outH);
@@ -6718,7 +6718,8 @@
       if (fineAngle === 0) {
         await page.render({ canvasContext: ctx, viewport: vp }).promise;
       } else {
-        const offCanvas = document.createElement('canvas');
+        if (!window._pdfFineRotOffCanvas) window._pdfFineRotOffCanvas = document.createElement('canvas');
+        const offCanvas = window._pdfFineRotOffCanvas;
         offCanvas.width = vp.width;
         offCanvas.height = vp.height;
         const offCtx = offCanvas.getContext('2d');
@@ -6731,7 +6732,6 @@
         ctx.rotate((fineAngle * Math.PI) / 180);
         ctx.drawImage(offCanvas, -vp.width / 2, -vp.height / 2);
         ctx.restore();
-        offCanvas.width = 0; offCanvas.height = 0;
       }
       return vp;
     }
@@ -7270,6 +7270,8 @@
       const wrap = canvas.closest('.thumb-canvas-wrap');
       const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
       if (wrap) wrap.classList.toggle('checkerboard-bg', isTransparent);
+      const card = canvas.closest('.thumb-card');
+      if (card) card.dataset.thumbRendered = '1';
     }
 
     // 슬라이더 바 직접 드래그 시 선택된 타겟(페이지 및/또는 이미지)에 각도 즉시 독립 적용
@@ -8996,6 +8998,54 @@
         return;
       }
 
+      if (container._thumbObserver) {
+        container._thumbObserver.disconnect();
+        container._thumbObserver = null;
+      }
+      if (container._thumbIdleTimer) {
+        clearTimeout(container._thumbIdleTimer);
+        container._thumbIdleTimer = null;
+      }
+
+      const renderToken = (container._thumbRenderToken = (container._thumbRenderToken || 0) + 1);
+      const lazyQueue = [];
+
+      const renderThumbCardNow = async (card, item, idx) => {
+        if (!card || card.dataset.thumbRendered === '1' || card.dataset.thumbRendering === '1') return;
+        if (container._thumbRenderToken !== renderToken) return;
+        card.dataset.thumbRendering = '1';
+        try {
+          const thumbCanvas = document.getElementById(`thumb-canvas-${idx}`);
+          const thumbCanvasWrap = thumbCanvas ? thumbCanvas.closest('.thumb-canvas-wrap') : null;
+          if (!thumbCanvas) return;
+          const cfg = getEffectiveItemSettings(idx);
+          if (item.type === 'pdf' && !item.imgObj) {
+            await ensureItemCanvas(item);
+          }
+          if (container._thumbRenderToken !== renderToken) return;
+          drawPaperWithImage(thumbCanvas, item, cfg, { isThumbnail: true });
+          const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
+          if (thumbCanvasWrap) thumbCanvasWrap.classList.toggle('checkerboard-bg', isTransparent);
+          card.dataset.thumbRendered = '1';
+        } finally {
+          card.dataset.thumbRendering = '0';
+        }
+      };
+
+      const useLazyRender = docState.items.length > 8 && typeof IntersectionObserver === 'function';
+      if (useLazyRender) {
+        container._thumbObserver = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            const c = entry.target;
+            const cIdx = Number(c.dataset.idx);
+            const it = docState.items[cIdx];
+            if (it) renderThumbCardNow(c, it, cIdx);
+            if (container._thumbObserver) container._thumbObserver.unobserve(c);
+          });
+        }, { root: container, rootMargin: '350px 0px' });
+      }
+
       docState.items.forEach((item, idx) => {
         const card = document.createElement('div');
         card.className = `thumb-card ${idx === docState.currentIndex ? 'active' : ''}`;
@@ -9130,17 +9180,31 @@
         card.appendChild(thumbCanvasWrap);
         container.appendChild(card);
 
-        // 비동기 고화질 썸네일 렌더링 (모바일 및 고해상도 열람 시 칼같은 가독성 보장)
-        (async () => {
-          const cfg = getEffectiveItemSettings(idx);
-          if (item.type === 'pdf' && !item.imgObj) {
-            await ensureItemCanvas(item);
-          }
-          drawPaperWithImage(thumbCanvas, item, cfg, { isThumbnail: true });
-          const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
-          if (thumbCanvasWrap) thumbCanvasWrap.classList.toggle('checkerboard-bg', isTransparent);
-        })();
+        if (!useLazyRender || idx === docState.currentIndex || idx < 6) {
+          renderThumbCardNow(card, item, idx);
+        } else {
+          container._thumbObserver.observe(card);
+          lazyQueue.push({ card, item, idx });
+        }
       });
+
+      if (lazyQueue.length > 0) {
+        const pumpLazyQueue = () => {
+          if (container._thumbRenderToken !== renderToken) return;
+          while (lazyQueue.length > 0) {
+            const next = lazyQueue.shift();
+            if (next.card && next.card.dataset.thumbRendered !== '1' && next.card.dataset.thumbRendering !== '1') {
+              renderThumbCardNow(next.card, next.item, next.idx).then(() => {
+                if (lazyQueue.length > 0 && container._thumbRenderToken === renderToken) {
+                  container._thumbIdleTimer = setTimeout(pumpLazyQueue, 35);
+                }
+              });
+              return;
+            }
+          }
+        };
+        container._thumbIdleTimer = setTimeout(pumpLazyQueue, 80);
+      }
 
       updateThumbCounts();
     }
