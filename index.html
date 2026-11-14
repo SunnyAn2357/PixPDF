@@ -1948,15 +1948,15 @@
       user-select: none;
     }
 
-    /* [V2.55.0] 용지자르기 전용 버튼 (초록 글자 + 초록 외곽선 + 흰 배경, 활성 시 반전) */
+    /* [V1.2.0] 용지자르기 전용 파스텔 옐로우 강조 버튼 (Zen 톤 조화, 활성 시 반전) */
     .btn-paper-crop {
       height: 26px;
       padding: 0 10px;
       font-size: 11.5px;
       font-weight: 700;
-      color: var(--primary, #0f766e);
-      border: 1px solid var(--primary, #0f766e);
-      background: #ffffff;
+      color: #854d0e;
+      border: 1px solid #eab308;
+      background: #fef9c3;
       border-radius: var(--radius-sm, 4px);
       cursor: pointer;
       white-space: nowrap;
@@ -1967,12 +1967,12 @@
       user-select: none;
       caret-color: transparent;
     }
-    .btn-paper-crop:hover { background: #f0fdfa; border-color: #0d9488; color: #0d9488; }
+    .btn-paper-crop:hover { background: #fef08a; border-color: #ca8a04; color: #713f12; }
     .btn-paper-crop.active {
-      background: var(--primary, #0f766e) !important;
+      background: #eab308 !important;
       color: #ffffff !important;
-      border-color: var(--primary, #0f766e) !important;
-      box-shadow: 0 1px 3px rgba(15, 118, 110, 0.25);
+      border-color: #ca8a04 !important;
+      box-shadow: 0 1px 3px rgba(202, 138, 4, 0.28);
     }
 
     /* 크롭 (자르기) 오버레이 & 조절 핸들 & 플로팅 바 */
@@ -3711,6 +3711,20 @@
       border-color: var(--primary, #0f766e) !important;
       color: #ffffff !important;
     }
+    /* [V1.2.0] 용지에 맞춤 전용 파스텔 옐로우 강조 버튼 */
+    .btn-office.btn-tf-col.btn-pastel-yellow {
+      background: #fef9c3 !important;
+      border-color: #eab308 !important;
+      color: #854d0e !important;
+    }
+    .btn-office.btn-tf-col.btn-pastel-yellow:hover {
+      background: #fef08a !important;
+      border-color: #ca8a04 !important;
+      color: #713f12 !important;
+    }
+    .btn-office.btn-tf-col.btn-pastel-yellow .btn-tf-lbl {
+      font-weight: 700 !important;
+    }
     .btn-office.btn-tf-col .btn-tf-ico {
       font-size: 10px !important;
       line-height: 1 !important;
@@ -4402,7 +4416,7 @@
                 <button type="button" class="btn-office btn-tf-col" onclick="toggleFlipVertical()" title="선택한 이미지 상하 반전">
                   <span class="btn-tf-ico">⇅</span><span class="btn-tf-lbl">상하반전</span>
                 </button>
-                <button type="button" class="btn-office btn-tf-col" onclick="fitActiveObjectToPaper()" title="선택한 이미지를 용지 크기에 맞춤">
+                <button type="button" class="btn-office btn-tf-col btn-pastel-yellow" id="btnFitActiveObjectToPaper" onclick="fitActiveObjectToPaper()" title="선택한 이미지를 용지 크기에 맞춤">
                   <span class="btn-tf-ico">⊡</span><span class="btn-tf-lbl">용지에 맞춤</span>
                 </button>
               </div>
@@ -4835,7 +4849,7 @@
           <div style="display: flex; flex-direction: column; gap: 2px;">
             <div style="display: flex; align-items: center; gap: 6px;">
               <span style="font-size: 12px; font-weight: 700; color: var(--text-main);">MY PDF</span>
-              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.0.0</span>
+              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.2.0</span>
             </div>
             <div style="font-size: 10.5px; color: #64748b; line-height: 1.35;">
               PDF와 이미지의 상호 변환 및 간편 편집 도구
@@ -5037,7 +5051,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 MY PDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c⚡ 현재 버전: V1.1.0 (워커 스크립트 전역 프리로드 및 안전 버퍼 전송 완비)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c⚡ 현재 버전: V1.2.0 (고해상도 무손실 저장 파이프라인 & 파스텔 옐로우 핵심 버튼 강조)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -6158,10 +6172,66 @@
       return null;
     }
 
+    // [V1.2.0] 내보내기(Img 저장/PDF 저장/MY 노트 반영) 시 목표 DPI 배율로 PDF를 직접 고해상도 렌더링
+    async function renderPdfPageForExport(item, targetScale) {
+      if (!item || item.type !== 'pdf' || !item.doc || !item.pageNum) return null;
+      const safeScale = Math.max(2.5, Math.min(4.5, targetScale || 3.0));
+      const page = await item.doc.getPage(item.pageNum);
+      const vp = page.getViewport({ scale: safeScale });
+      const hiCanvas = document.createElement('canvas');
+      hiCanvas.width = Math.round(vp.width);
+      hiCanvas.height = Math.round(vp.height);
+      const hiCtx = hiCanvas.getContext('2d');
+      hiCtx.imageSmoothingEnabled = true;
+      hiCtx.imageSmoothingQuality = 'high';
+      hiCtx.fillStyle = '#ffffff';
+      hiCtx.fillRect(0, 0, hiCanvas.width, hiCanvas.height);
+      await page.render({ canvasContext: hiCtx, viewport: vp }).promise;
+      return hiCanvas;
+    }
+
+    // [V1.2.0] 이미지/PDF 내보내기 배율 통합 산출 (원본 1:1 픽셀 보존 및 PDF 72DPI 축소 방지)
+    function resolveExportScaleMul(item, cfg, scaleOption, isPdfExport) {
+      const opt = normalizeQualityOption(scaleOption);
+      const origW = item.width || (item.imgObj ? (item.imgObj.naturalWidth || item.imgObj.width) : 1200);
+      const origH = item.height || (item.imgObj ? (item.imgObj.naturalHeight || item.imgObj.height) : 1600);
+      const fitKey = (cfg && (cfg.fit || cfg.pageSize)) || 'original';
+
+      if (item.type === 'pdf') {
+        if (isPdfExport) {
+          if (opt === 'screen') return 1.5;
+          if (opt === 'original') return 2.5;
+          if (opt === 'print') return 3.0;
+          return 4.0;
+        }
+        // Img 저장 / MY 노트 반영: p.width는 72DPI 포인트 단위이므로 실제 고해상도 배율 적용
+        if (opt === 'screen') return 2.0;
+        if (opt === 'original') return 3.0;
+        if (opt === 'print') return 4.0;
+        return 4.17;
+      }
+
+      // 일반 이미지: '원본' 모드에서는 강제 리사이징 없이 1:1 원본 픽셀 유지
+      if (opt === 'screen') {
+        return Math.min(1.0, getImagePageFactor(origW, origH));
+      }
+      if (opt === 'original') {
+        return 1.0;
+      }
+      if (opt === 'print') {
+        return (origW * origH > 6000000) ? 1.0 : 1.5;
+      }
+      // 'high'
+      if (fitKey === 'original' || origW * origH > 6000000) return 1.0;
+      return 2.0;
+    }
+
     // [핵심] 바탕 용지(Paper) 규격/방향/여백 위에 내용물(Image)의 위치/회전/스케일/필터/투시변환을 합성하여 캔버스에 렌더링
     function drawPaperWithImage(canvas, item, cfg, options = {}) {
       if (!canvas || !item || !item.imgObj) return null;
       const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
 
       const { rotImg, isPageRot90 } = getResolvedRotations(cfg);
       const rotRad = (rotImg * Math.PI) / 180;
@@ -9372,8 +9442,7 @@ const modal = document.getElementById('modalPdfPicker');
         const origH = p.height || (p.imgObj ? (p.imgObj.naturalHeight || p.imgObj.height) : 1600);
         const baseOrigW = isPageRot90 ? origH : origW;
         const baseOrigH = isPageRot90 ? origW : origH;
-        const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
-        const scaleMul = (p.type === 'pdf') ? qComp.scaleMulImg : (imgF * qComp.scaleMulImg);
+        const scaleMul = resolveExportScaleMul(p, cfg, activeScaleOpt, false);
         const refW = baseOrigW * scaleMul, refH = baseOrigH * scaleMul;
         const isOrigLandscape = origW > origH;
         const orientOpt = cfg.orient || 'auto';
@@ -9404,8 +9473,16 @@ const modal = document.getElementById('modalPdfPicker');
         const isTrans = (rawFmtVal === 'png');
         const effCfg = Object.assign({}, cfg, { format: 'png', transparentBg: isTrans });
 
+        let hiResPdfCanvas = null;
+        let renderItem = p;
+        if (p.type === 'pdf' && scaleMul > 2.5) {
+          hiResPdfCanvas = await renderPdfPageForExport(p, scaleMul);
+          if (hiResPdfCanvas) renderItem = Object.assign({}, p, { imgObj: hiResPdfCanvas });
+        }
+
         const finalCanvas = document.createElement('canvas');
-        drawPaperWithImage(finalCanvas, p, effCfg, { targetWidth: paperW, targetHeight: paperH });
+        drawPaperWithImage(finalCanvas, renderItem, effCfg, { targetWidth: paperW, targetHeight: paperH });
+        if (hiResPdfCanvas) { hiResPdfCanvas.width = 0; hiResPdfCanvas.height = 0; }
         const blob = await new Promise(r => finalCanvas.toBlob(r, 'image/png'));
         finalCanvas.width = 0; finalCanvas.height = 0;
         if (!blob) throw new Error('PNG 인코딩 실패');
@@ -9492,8 +9569,7 @@ const modal = document.getElementById('modalPdfPicker');
 
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
-          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
-          const scaleMul = (p.type === 'pdf') ? qComp.scaleMulImg : (imgF * qComp.scaleMulImg);
+          const scaleMul = resolveExportScaleMul(p, cfg, activeScaleOpt, false);
           const refW = baseOrigW * scaleMul, refH = baseOrigH * scaleMul;
           const isOrigLandscape = origW > origH;
           const orientOpt = cfg.orient || 'auto';
@@ -9526,8 +9602,16 @@ const modal = document.getElementById('modalPdfPicker');
             transparentBg: isTrans
           });
 
+          let hiResPdfCanvas = null;
+          let renderItem = p;
+          if (p.type === 'pdf' && scaleMul > 2.5) {
+            hiResPdfCanvas = await renderPdfPageForExport(p, scaleMul);
+            if (hiResPdfCanvas) renderItem = Object.assign({}, p, { imgObj: hiResPdfCanvas });
+          }
+
           let finalCanvas = document.createElement('canvas');
-          drawPaperWithImage(finalCanvas, p, effCfg, { targetWidth: paperW, targetHeight: paperH });
+          drawPaperWithImage(finalCanvas, renderItem, effCfg, { targetWidth: paperW, targetHeight: paperH });
+          if (hiResPdfCanvas) { hiResPdfCanvas.width = 0; hiResPdfCanvas.height = 0; }
           const fctx = finalCanvas.getContext('2d');
 
           let blob;
@@ -9683,6 +9767,43 @@ const modal = document.getElementById('modalPdfPicker');
       return true;
     }
 
+    // [V1.2.0] 무편집 PNG 이미지의 PDF 저장 시 원본 바이너리 무손실 통과(Pass-through) 판별
+    function isImageCleanForPngPassThrough(item, cfg, activeScaleOpt) {
+      if (!item || item.type !== 'image' || !item.file) return false;
+      if (typeof window.PDFLib === 'undefined' || !window.PDFLib.PDFDocument) return false;
+      if (activeScaleOpt === 'screen') return false;
+      const fileType = (item.file.type || '').toLowerCase();
+      const fileName = (item.file.name || '').toLowerCase();
+      if (fileType !== 'image/png' && !fileName.endsWith('.png')) return false;
+      if (item.layers && item.layers.length > 0) return false;
+      if (item._paperCropSnapshot || item.cropPaperSnapshot) return false;
+      const fitKey = cfg.fit || cfg.pageSize || 'original';
+      if (fitKey !== 'original') return false;
+      if ((parseInt(cfg.margin, 10) || 0) !== 0) return false;
+      if ((parseInt(cfg.rotPage, 10) || 0) % 360 !== 0) return false;
+      if (cfg.crop && cfg.crop.active) return false;
+      if (cfg.corners && !isDefaultCorners(cfg.corners)) return false;
+      if ((parseInt(cfg.rotImg, 10) || 0) !== 0) return false;
+      if (cfg.flipH || cfg.flipV) return false;
+      const scaleVal = parseFloat(cfg.scale);
+      if (!isNaN(scaleVal) && Math.abs(scaleVal - 1.0) > 0.01) return false;
+      const contentScale = parseFloat(cfg.contentScale);
+      if (!isNaN(contentScale) && Math.abs(contentScale - 1.0) > 0.01) return false;
+      const scaleX = parseFloat(cfg.scaleX);
+      if (!isNaN(scaleX) && Math.abs(scaleX - 1.0) > 0.01) return false;
+      if (Math.abs(parseFloat(cfg.offsetX) || 0) > 1 || Math.abs(parseFloat(cfg.offsetY) || 0) > 1) return false;
+      if (cfg.bw || (parseInt(cfg.bwThreshold, 10) || 0) > 0) return false;
+      const contrast = parseInt(cfg.contrast, 10);
+      if (!isNaN(contrast) && contrast !== 100) return false;
+      const brightness = parseInt(cfg.brightness, 10);
+      if (!isNaN(brightness) && brightness !== 100) return false;
+      const saturation = parseInt(cfg.saturation, 10);
+      if (!isNaN(saturation) && saturation !== 100) return false;
+      const opacity = parseInt(cfg.opacity, 10);
+      if (!isNaN(opacity) && opacity !== 100) return false;
+      return true;
+    }
+
     function dataUrlToUint8Array(dataUrl) {
       const parts = dataUrl.split(',');
       const base64 = parts[1] || parts[0];
@@ -9814,6 +9935,28 @@ const modal = document.getElementById('modalPdfPicker');
               }
             }
 
+            // [V1.2.0] 무편집 PNG 이미지 원본 바이너리 무손실 삽입 (재인코딩 0%)
+            if (isImageCleanForPngPassThrough(p, cfg, activeScaleOpt)) {
+              try {
+                updateStatusMsg(`PDF 생성 중: [${idx + 1} / ${selectedIndices.length}] (${pct}%) ⚡ 무손실 원본 PNG 보존...`);
+                const rawPngBytes = await p.file.arrayBuffer();
+                const embeddedPng = await mergedPdf.embedPng(rawPngBytes);
+                const origW = p.width || embeddedPng.width;
+                const origH = p.height || embeddedPng.height;
+                const outScale = getOutputPaperScale(p, cfg, 1.0);
+                const pgW_mm = Math.max(1, Math.round(origW * outScale.mmPerPx * 100) / 100);
+                const pgH_mm = Math.max(1, Math.round(origH * outScale.mmPerPx * 100) / 100);
+                const pgW_pt = pgW_mm * 2.83465;
+                const pgH_pt = pgH_mm * 2.83465;
+                const newPage = mergedPdf.addPage([pgW_pt, pgH_pt]);
+                newPage.drawImage(embeddedPng, { x: 0, y: 0, width: pgW_pt, height: pgH_pt });
+                losslessCount++;
+                continue;
+              } catch (pngPassErr) {
+                console.warn('[PDFLib] 원본 PNG 직접 임베딩 실패, 고화질 캔버스 렌더링으로 전환:', pngPassErr);
+              }
+            }
+
             // 그래픽 편집 / 이미지 / 화면용 압축 렌더링 파이프라인
             updateStatusMsg(`PDF 생성 중: [${idx + 1} / ${selectedIndices.length}] (${pct}%) 🎨 고화질 렌더링...`);
             renderedCount++;
@@ -9827,12 +9970,11 @@ const modal = document.getElementById('modalPdfPicker');
 
             const baseOrigW = isPageRot90 ? origH : origW;
             const baseOrigH = isPageRot90 ? origW : origH;
-            const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
 
             const qComp = resolveQualityCompression(activeScaleOpt);
-            let scaleMul = (p.type === 'pdf') ? qComp.scaleMulPdf : (imgF * qComp.scaleMulPdf);
-            if (activeScaleOpt !== 'screen' && scaleMul < 2.0) {
-              scaleMul = 2.0; // 300 DPI 초고화질 가독성 철저 보장
+            let scaleMul = resolveExportScaleMul(p, cfg, activeScaleOpt, true);
+            if (p.type === 'pdf' && activeScaleOpt !== 'screen' && scaleMul < 2.5) {
+              scaleMul = 2.5;
             }
 
             const refW = baseOrigW * scaleMul, refH = baseOrigH * scaleMul;
@@ -9861,8 +10003,16 @@ const modal = document.getElementById('modalPdfPicker');
               }
             }
 
+            let hiResPdfCanvas = null;
+            let renderItem = p;
+            if (p.type === 'pdf' && scaleMul > 2.5) {
+              hiResPdfCanvas = await renderPdfPageForExport(p, scaleMul);
+              if (hiResPdfCanvas) renderItem = Object.assign({}, p, { imgObj: hiResPdfCanvas });
+            }
+
             const finalCanvas = document.createElement('canvas');
-            drawPaperWithImage(finalCanvas, p, cfg, { targetWidth: paperW, targetHeight: paperH });
+            drawPaperWithImage(finalCanvas, renderItem, cfg, { targetWidth: paperW, targetHeight: paperH });
+            if (hiResPdfCanvas) { hiResPdfCanvas.width = 0; hiResPdfCanvas.height = 0; }
 
             const outScale = getOutputPaperScale(p, cfg, scaleMul);
             const pgW_mm = Math.max(1, Math.round(paperW * outScale.mmPerPx * 100) / 100);
@@ -9880,10 +10030,12 @@ const modal = document.getElementById('modalPdfPicker');
               jCanvas.width = paperW;
               jCanvas.height = paperH;
               const jctx = jCanvas.getContext('2d');
+              jctx.imageSmoothingEnabled = true;
+              jctx.imageSmoothingQuality = 'high';
               jctx.fillStyle = '#ffffff';
               jctx.fillRect(0, 0, paperW, paperH);
               jctx.drawImage(finalCanvas, 0, 0);
-              const jpgQuality = activeScaleOpt === 'screen' ? 0.82 : Math.max(0.92, qComp.pdfQuality);
+              const jpgQuality = activeScaleOpt === 'screen' ? 0.82 : Math.max(0.95, qComp.pdfQuality);
               const dataUrl = jCanvas.toDataURL('image/jpeg', jpgQuality);
               const imgBytes = dataUrlToUint8Array(dataUrl);
               embeddedImg = await mergedPdf.embedJpg(imgBytes);
@@ -9956,12 +10108,14 @@ const modal = document.getElementById('modalPdfPicker');
 
           const baseOrigW = isPageRot90 ? origH : origW;
           const baseOrigH = isPageRot90 ? origW : origH;
-          const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
 
-          // [V2.28.0] 선택된 화질 4대 모드(화면용, 원본, 인쇄용, 고화질)에 따른 실질적 배율 및 압축 연동
+          // [V1.2.0] 통합 고화질 배율 및 동적 PDF 재렌더링 연동 (jsPDF 폴백 경로 일원화)
           const activeScaleOpt = document.getElementById('selScale')?.value || docState.globalSettings.scale || cfg.scale || 'original';
           const qComp = resolveQualityCompression(activeScaleOpt);
-          const scaleMul = (p.type === 'pdf') ? qComp.scaleMulPdf : (imgF * qComp.scaleMulPdf);
+          let scaleMul = resolveExportScaleMul(p, cfg, activeScaleOpt, true);
+          if (p.type === 'pdf' && activeScaleOpt !== 'screen' && scaleMul < 2.5) {
+            scaleMul = 2.5;
+          }
 
           const refW = baseOrigW * scaleMul, refH = baseOrigH * scaleMul;
           const isOrigLandscape = origW > origH;
@@ -9989,8 +10143,16 @@ const modal = document.getElementById('modalPdfPicker');
             }
           }
 
+          let hiResPdfCanvas = null;
+          let renderItem = p;
+          if (p.type === 'pdf' && scaleMul > 2.5) {
+            hiResPdfCanvas = await renderPdfPageForExport(p, scaleMul);
+            if (hiResPdfCanvas) renderItem = Object.assign({}, p, { imgObj: hiResPdfCanvas });
+          }
+
           let finalCanvas = document.createElement('canvas');
-          drawPaperWithImage(finalCanvas, p, cfg, { targetWidth: paperW, targetHeight: paperH });
+          drawPaperWithImage(finalCanvas, renderItem, cfg, { targetWidth: paperW, targetHeight: paperH });
+          if (hiResPdfCanvas) { hiResPdfCanvas.width = 0; hiResPdfCanvas.height = 0; }
 
           // [V2.29.0] 화질 모드에 따른 고효율 압축 인코딩 (PDF 용지는 표준 Opaque 종이이므로 투명 PNG 오염을 원천 제거)
           // 화면용/원본/인쇄용: 순수 흰색 바탕 위 고효율 JPEG 스트림 인코딩, 고화질: 무손실 PNG
@@ -10005,10 +10167,13 @@ const modal = document.getElementById('modalPdfPicker');
             jCanvas.width = paperW;
             jCanvas.height = paperH;
             const jctx = jCanvas.getContext('2d');
+            jctx.imageSmoothingEnabled = true;
+            jctx.imageSmoothingQuality = 'high';
             jctx.fillStyle = '#ffffff';
             jctx.fillRect(0, 0, paperW, paperH);
             jctx.drawImage(finalCanvas, 0, 0);
-            imgDataUrl = jCanvas.toDataURL('image/jpeg', qComp.pdfQuality);
+            const jpgQuality = activeScaleOpt === 'screen' ? 0.82 : Math.max(0.95, qComp.pdfQuality);
+            imgDataUrl = jCanvas.toDataURL('image/jpeg', jpgQuality);
             jCanvas.width = 0; jCanvas.height = 0;
             imgEmbedFmt = 'JPEG';
           }
@@ -11482,7 +11647,14 @@ if (e.target.closest('.layer-item-box')) return;
       }
 
       // 2) 현재 보이는 그대로(WYSIWYG) 용지 전체를 렌더링 후 지정 영역만 오려내기
-      const longFull = Math.min(6000, Math.max(2000, Math.round(2000 / Math.max(0.05, box.w, box.h))));
+      const origLong = Math.max(
+        item.width || 0,
+        item.height || 0,
+        (item.imgObj && (item.imgObj.naturalWidth || item.imgObj.width)) || 0,
+        (item.imgObj && (item.imgObj.naturalHeight || item.imgObj.height)) || 0
+      );
+      const baseLong = Math.max(2000, origLong);
+      const longFull = Math.min(6000, Math.round(baseLong / Math.max(0.05, box.w, box.h)));
       const Wf = paper.ratio >= 1 ? longFull : Math.max(50, Math.round(longFull * paper.ratio));
       const Hf = paper.ratio >= 1 ? Math.max(50, Math.round(longFull / paper.ratio)) : longFull;
       const off = document.createElement('canvas');
@@ -11497,7 +11669,10 @@ if (e.target.closest('.layer-item-box')) return;
       const bw = Math.round(sw * up), bh = Math.round(sh * up);
       const baked = document.createElement('canvas');
       baked.width = bw; baked.height = bh;
-      baked.getContext('2d').drawImage(off, sx, sy, sw, sh, 0, 0, bw, bh);
+      const bakedCtx = baked.getContext('2d');
+      bakedCtx.imageSmoothingEnabled = true;
+      bakedCtx.imageSmoothingQuality = 'high';
+      bakedCtx.drawImage(off, sx, sy, sw, sh, 0, 0, bw, bh);
       off.width = 0; off.height = 0;
 
       // 3) 새 비트맵으로 교체하고 모든 변형 수치를 기본값으로 리셋
@@ -16204,9 +16379,9 @@ if (e.target.closest('.layer-item-box')) return;
           opt: 'original',
           scaleMulImg: 1.0,
           scaleMulPdf: 1.35,
-          qualityVal: 0.85,
+          qualityVal: 0.95,
           pdfFormat: 'JPEG',
-          pdfQuality: 0.85
+          pdfQuality: 0.95
         };
       }
       if (opt === 'print') {
