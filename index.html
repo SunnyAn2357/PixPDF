@@ -4895,7 +4895,7 @@
           <div style="display: flex; flex-direction: column; gap: 2px;">
             <div style="display: flex; align-items: center; gap: 6px;">
               <span style="font-size: 12px; font-weight: 700; color: var(--text-main);">MY PDF</span>
-              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.3.2</span>
+              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.3.3</span>
             </div>
             <div style="font-size: 10.5px; color: #64748b; line-height: 1.35;">
               PDF와 이미지의 상호 변환 및 간편 편집 도구
@@ -5097,7 +5097,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 MY PDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c⚡ 현재 버전: V1.3.2 (투시 모드 버튼 잠금·회색영역 종료·반전/자르기/페이지전환 충돌 해소)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c⚡ 현재 버전: V1.3.3 (연속 붙여넣기 계단식 오프셋 배치 개선)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -13851,9 +13851,14 @@ if (e.target.closest('.layer-item-box')) return;
       if (typeof showActionToast === 'function') showActionToast('작업이 다시 실행되었습니다. (Redo)');
     }
 
+    let globalLayerPasteCount = 0;
+    let globalLayerPastePageIdx = -1;
+
     function copySelectedLayerToClipboard() {
       const sel = getSelectedLayer();
       if (!sel) return false;
+      globalLayerPasteCount = 0;
+      globalLayerPastePageIdx = -1;
 
       if (sel.id === '__base__') {
         const curIdx = docState.currentIndex;
@@ -13927,9 +13932,20 @@ if (e.target.closest('.layer-item-box')) return;
       newLayer.id = (globalLayerClipboard.type === 'group' ? 'group_' : 'layer_') + Date.now() + '_' + (layerSeqCounter++);
       newLayer.name = (globalLayerClipboard.name || '객체') + ' (사본)';
 
-      // 약간 오프셋 위치 배치 (동일 위치에 겹치지 않게)
-      newLayer.x = Math.min(0.92, (globalLayerClipboard.x !== undefined ? globalLayerClipboard.x + 0.03 : 0.5));
-      newLayer.y = Math.min(0.92, (globalLayerClipboard.y !== undefined ? globalLayerClipboard.y + 0.03 : 0.5));
+      // [V1.3.3] 연속 붙여넣기 시 매번 조금씩 이동 배치 (같은 자리 겹침 방지)
+      if (globalLayerPastePageIdx !== curIdx) {
+        globalLayerPasteCount = 0;
+        globalLayerPastePageIdx = curIdx;
+      }
+      globalLayerPasteCount += 1;
+      const baseX = globalLayerClipboard.x !== undefined ? globalLayerClipboard.x : 0.5;
+      const baseY = globalLayerClipboard.y !== undefined ? globalLayerClipboard.y : 0.5;
+      const step = 0.03 * globalLayerPasteCount;
+      const rawX = baseX + step;
+      const rawY = baseY + step;
+      const span = 0.84;
+      newLayer.x = rawX <= 0.92 ? rawX : (0.08 + ((rawX - 0.08) % span));
+      newLayer.y = rawY <= 0.92 ? rawY : (0.08 + ((rawY - 0.08) % span));
 
       if (globalLayerClipboard.type === 'group' && Array.isArray(globalLayerClipboard.children)) {
         newLayer.w = Math.max(0.02, Math.min(1.2, Number(globalLayerClipboard.w) || 0.3));
