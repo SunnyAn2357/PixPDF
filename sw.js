@@ -1,5 +1,5 @@
 // MY PDF / PixPDF Service Worker - 100% 로컬 오프라인 구동 및 원클릭 무중단 자동 업데이트
-const CACHE_NAME = 'mypdf-cache-v1.2.1';
+const CACHE_NAME = 'mypdf-cache-v1.3.0';
 
 const PRECACHE_ASSETS = [
   './',
