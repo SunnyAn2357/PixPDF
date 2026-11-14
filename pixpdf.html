@@ -3677,6 +3677,17 @@
       gap: 4px !important;
       align-items: stretch !important;
     }
+    .office-grid-5col {
+      display: grid !important;
+      grid-template-columns: repeat(5, 1fr) !important;
+      gap: 3px !important;
+      align-items: stretch !important;
+    }
+    .office-grid-5col .btn-office.btn-tf-col {
+      padding: 0 2px !important;
+      font-size: 9.5px !important;
+      letter-spacing: -0.4px !important;
+    }
     .btn-office.btn-tf-col {
       display: flex !important;
       align-items: center !important;
@@ -3710,6 +3721,17 @@
       background: var(--primary, #0f766e) !important;
       border-color: var(--primary, #0f766e) !important;
       color: #ffffff !important;
+    }
+    /* [V1.3.0] 이미지 변형 리셋 버튼 전용 회색 스타일 */
+    .btn-office.btn-tf-col.btn-tf-reset {
+      background: #f1f5f9 !important;
+      border-color: #cbd5e1 !important;
+      color: #475569 !important;
+    }
+    .btn-office.btn-tf-col.btn-tf-reset:hover {
+      background: #e2e8f0 !important;
+      border-color: #94a3b8 !important;
+      color: #1e293b !important;
     }
     /* [V1.2.0] 용지에 맞춤 전용 파스텔 옐로우 강조 버튼 */
     .btn-office.btn-tf-col.btn-pastel-yellow {
@@ -4208,6 +4230,16 @@
           <!-- [V2.72.0] 스마트 자석 스냅(Smart Snap) 가이드라인 -->
           <div id="snapGuideH" class="snap-guide-line snap-h"></div>
           <div id="snapGuideV" class="snap-guide-line snap-v"></div>
+          <!-- 4모서리 투시 변환(Corner Pinning) 오버레이 -->
+          <div id="perspectiveOverlay" class="perspective-overlay" style="display: none;">
+            <svg id="perspectiveSvg" class="perspective-svg">
+              <polygon id="perspectivePoly" points="" />
+            </svg>
+            <div id="pinTL" class="corner-pin" data-pin="tl" title="좌상 모서리 투시 조절 (드래그)">TL</div>
+            <div id="pinTR" class="corner-pin" data-pin="tr" title="우상 모서리 투시 조절 (드래그)">TR</div>
+            <div id="pinBR" class="corner-pin" data-pin="br" title="우하 모서리 투시 조절 (드래그)">BR</div>
+            <div id="pinBL" class="corner-pin" data-pin="bl" title="좌하 모서리 투시 조절 (드래그)">BL</div>
+          </div>
           <!-- 크롭(자르기) 오버레이 -->
           <div id="cropOverlay" class="crop-overlay" style="display: none;">
             <svg id="cropSvg" class="crop-svg">
@@ -4399,40 +4431,46 @@
                 🔗 도형 묶기 (Ctrl+G)
               </button>
             </div>
-            <!-- 1. [이미지 변형] 서브 그룹 (음영 박스 & 4열 2행 단정 배치) -->
+            <!-- 1. [이미지 변형] 서브 그룹 (음영 박스 & 5열 2행 단정 배치) -->
             <div class="office-subgroup">
               <div class="office-subgroup-header">
                 <span class="office-subgroup-title">이미지 변형</span>
-                <button type="button" class="btn-office-reset-all" onclick="resetAllImageTransforms()" title="자르기, 크기, 위치, 각도, 반전을 모두 원본 상태로 일괄 초기화">전체리셋</button>
+                <button type="button" class="btn-office-reset-all" onclick="resetAllImageTransforms()" title="자르기, 투시, 크기, 위치, 각도, 기울기, 반전을 모두 원본 상태로 일괄 초기화">전체리셋</button>
               </div>
-              <!-- 1행: 일반 변형 액션 (✂ 자르기, ⇄ 좌우반전, ⇅ 상하반전, ⊡ 용지맞춤) -->
-              <div class="office-grid-4col">
+              <!-- 1행: 일반 변형 액션 (✂ 자르기, ⏢ 투시, ⇄ 좌우, ⇅ 상하, ⊡ 용지맞춤) -->
+              <div class="office-grid-5col">
                 <button type="button" class="btn-office btn-tf-col" id="btnToggleCrop" onclick="toggleCropMode()" title="불필요한 영역을 자릅니다">
                   <span class="btn-tf-ico">✂</span><span class="btn-tf-lbl">자르기</span>
                 </button>
+                <button type="button" class="btn-office btn-tf-col" id="btnTogglePerspective" onclick="togglePerspectiveMode()" title="4모서리 핀을 끌어 투시·사다리꼴 왜곡을 보정합니다">
+                  <span class="btn-tf-ico">⏢</span><span class="btn-tf-lbl">투시</span>
+                </button>
                 <button type="button" class="btn-office btn-tf-col" onclick="toggleFlipHorizontal()" title="선택한 이미지 좌우 반전">
-                  <span class="btn-tf-ico">⇄</span><span class="btn-tf-lbl">좌우반전</span>
+                  <span class="btn-tf-ico">⇄</span><span class="btn-tf-lbl">좌우</span>
                 </button>
                 <button type="button" class="btn-office btn-tf-col" onclick="toggleFlipVertical()" title="선택한 이미지 상하 반전">
-                  <span class="btn-tf-ico">⇅</span><span class="btn-tf-lbl">상하반전</span>
+                  <span class="btn-tf-ico">⇅</span><span class="btn-tf-lbl">상하</span>
                 </button>
                 <button type="button" class="btn-office btn-tf-col btn-pastel-yellow" id="btnFitActiveObjectToPaper" onclick="fitActiveObjectToPaper()" title="선택한 이미지를 용지 크기에 맞춤">
-                  <span class="btn-tf-ico">⊡</span><span class="btn-tf-lbl">용지에 맞춤</span>
+                  <span class="btn-tf-ico">⊡</span><span class="btn-tf-lbl">용지맞춤</span>
                 </button>
               </div>
-              <!-- 2행: 변형 리셋 액션 (⟲ 자르기, ⟲ 크기, ⟲ 이동, ⟲ 회전) -->
-              <div class="office-grid-4col" style="margin-top: 5px;">
-                <button type="button" class="btn-office btn-tf-col" id="btnResetCropCurrent" onclick="resetCropCurrentItem()" title="선택된 이미지 내부 자르기(오려내기) 영역 초기화 (※ 용지 자르기 복원은 상단 [용지자르기] 옆 [리셋] 클릭)">
-                  <span class="btn-tf-ico">⟲</span><span class="btn-tf-lbl">자르기 Rst</span>
+              <!-- 2행: 변형 리셋 액션 (회색 톤 통일: ⟲ 자르기, ⟲ 투시, ⟲ 크기, ⟲ 이동, ⟲ 회전) -->
+              <div class="office-grid-5col" style="margin-top: 5px;">
+                <button type="button" class="btn-office btn-tf-col btn-tf-reset" id="btnResetCropCurrent" onclick="resetCropCurrentItem()" title="선택된 이미지 내부 자르기(오려내기) 영역 초기화 (※ 용지 자르기 복원은 상단 [용지자르기] 옆 [리셋] 클릭)">
+                  <span class="btn-tf-ico">⟲</span><span class="btn-tf-lbl">자르기</span>
                 </button>
-                <button type="button" class="btn-office btn-tf-col" onclick="resetActiveObjectScale()" title="크기를 100% 1:1로 리셋">
-                  <span class="btn-tf-ico">⟲</span><span class="btn-tf-lbl">크기 Rst</span>
+                <button type="button" class="btn-office btn-tf-col btn-tf-reset" id="btnResetPerspectiveCurrent" onclick="resetActiveObjectPerspective()" title="4모서리 투시 변형 초기화">
+                  <span class="btn-tf-ico">⟲</span><span class="btn-tf-lbl">투시</span>
                 </button>
-                <button type="button" class="btn-office btn-tf-col" onclick="resetActiveObjectOffset()" title="위치를 정중앙으로 리셋">
-                  <span class="btn-tf-ico">⟲</span><span class="btn-tf-lbl">이동 Rst</span>
+                <button type="button" class="btn-office btn-tf-col btn-tf-reset" onclick="resetActiveObjectScale()" title="크기를 100% 1:1로 리셋">
+                  <span class="btn-tf-ico">⟲</span><span class="btn-tf-lbl">크기</span>
                 </button>
-                <button type="button" class="btn-office btn-tf-col" onclick="resetActiveObjectRotation()" title="각도를 0도로 리셋">
-                  <span class="btn-tf-ico">⟲</span><span class="btn-tf-lbl">회전 Rst</span>
+                <button type="button" class="btn-office btn-tf-col btn-tf-reset" onclick="resetActiveObjectOffset()" title="위치를 정중앙으로 리셋">
+                  <span class="btn-tf-ico">⟲</span><span class="btn-tf-lbl">이동</span>
+                </button>
+                <button type="button" class="btn-office btn-tf-col btn-tf-reset" onclick="resetActiveObjectRotation()" title="회전 각도 및 기울기(Skew)를 0도로 리셋">
+                  <span class="btn-tf-ico">⟲</span><span class="btn-tf-lbl">회전</span>
                 </button>
               </div>
             </div>
@@ -4849,7 +4887,7 @@
           <div style="display: flex; flex-direction: column; gap: 2px;">
             <div style="display: flex; align-items: center; gap: 6px;">
               <span style="font-size: 12px; font-weight: 700; color: var(--text-main);">MY PDF</span>
-              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.2.1</span>
+              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.3.0</span>
             </div>
             <div style="font-size: 10.5px; color: #64748b; line-height: 1.35;">
               PDF와 이미지의 상호 변환 및 간편 편집 도구
@@ -5051,7 +5089,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 MY PDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c⚡ 현재 버전: V1.2.1 (객체·도형·글상자·회전·페이지 이동 툴팁 정확도 개선)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c⚡ 현재 버전: V1.3.0 (마우스 기울이기 Skew & WebGL 고해상도 4모서리 투시변형)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -5421,6 +5459,10 @@
         cfg.offsetY = 0;
         cfg.rotImg = 0;
         cfg.rot = 0;
+        cfg.skewX = 0;
+        cfg.skewY = 0;
+        cfg.corners = null;
+        cfg.trapezoid = 0;
         cfg.flipH = false;
         cfg.flipV = false;
         if (cfg.crop) cfg.crop = null;
@@ -5429,6 +5471,9 @@
         l.x = 0.5;
         l.y = 0.5;
         l.rot = 0;
+        l.skewX = 0;
+        l.skewY = 0;
+        l.corners = null;
         l.flipH = false;
         l.flipV = false;
         l.crop = null;
@@ -5449,12 +5494,15 @@
       requestViewerRedraw();
       updateThumbnailAsync(curIdx);
       updateLayerStageOverlay();
+      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive && typeof updateCornerPins === 'function') {
+        updateCornerPins();
+      }
       const curItem = docState.items[curIdx];
       if (active.isBase && curItem && curItem._paperCropSnapshot) {
         updateStatusMsg('이미지 변형이 초기화되었습니다. (용지 자르기를 취소하려면 기본 페이지 설정의 [리셋]을 누르세요)');
         if (typeof showActionToast === 'function') showActionToast('이미지 변형 초기화됨 (용지 자르기 복원은 상단 [리셋] 클릭)');
       } else {
-        updateStatusMsg('이미지 변형(자르기, 크기, 위치, 각도, 반전)이 모두 초기화되었습니다.');
+        updateStatusMsg('이미지 변형(자르기, 투시, 크기, 위치, 각도, 기울기, 반전)이 모두 초기화되었습니다.');
       }
     }
 
@@ -5580,13 +5628,41 @@
       if (active.isBase) {
         active.target.rotImg = 0;
         active.target.rot = 0;
+        active.target.skewX = 0;
+        active.target.skewY = 0;
       } else {
         active.target.rot = 0;
+        active.target.skewX = 0;
+        active.target.skewY = 0;
       }
       requestViewerRedraw();
       updateThumbnailAsync(curIdx);
       updateLayerStageOverlay();
-      updateStatusMsg('객체 회전 각도를 0°로 초기화했습니다.');
+      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive && typeof updateCornerPins === 'function') {
+        updateCornerPins();
+      }
+      updateStatusMsg('객체 회전 각도와 기울기(Skew)를 0°로 초기화했습니다.');
+    }
+
+    function resetActiveObjectPerspective() {
+      const curIdx = docState.currentIndex;
+      const active = getActiveEditableTarget();
+      if (!active) {
+        updateStatusMsg('먼저 화면의 객체(이미지/글상자/도형)를 클릭하여 선택하세요.');
+        return;
+      }
+      active.target.corners = null;
+      if (active.isBase) {
+        active.target.trapezoid = 0;
+      }
+      if (typeof savePageLayerHistory === 'function') savePageLayerHistory(curIdx);
+      requestViewerRedraw();
+      updateThumbnailAsync(curIdx);
+      updateLayerStageOverlay();
+      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive && typeof updateCornerPins === 'function') {
+        updateCornerPins();
+      }
+      updateStatusMsg('4모서리 투시 변형을 초기화했습니다.');
     }
 
     function resetActiveObjectScale() {
@@ -5977,7 +6053,196 @@
       }
     }
 
-    // [핵심] 사각 투시 변환(Perspective Warp / 4-Corner Pinning) 12x12 메쉬 아핀 매핑 렌더링
+    // [V1.3.0] 싱글톤 WebGL 호모그래피(3x3 투시 행렬) 엔진 — 격자 이음새/화질 저하 없는 고해상도 투시 변환
+    let _perspGlState = null;
+    function getPerspectiveWebGLState() {
+      if (_perspGlState === false) return null;
+      if (_perspGlState) return _perspGlState;
+      try {
+        const c = document.createElement('canvas');
+        const gl = c.getContext('webgl', { alpha: true, premultipliedAlpha: true, preserveDrawingBuffer: true }) ||
+                   c.getContext('experimental-webgl', { alpha: true, premultipliedAlpha: true, preserveDrawingBuffer: true });
+        if (!gl) { _perspGlState = false; return null; }
+
+        const vsSrc = `
+          attribute vec2 aPos;
+          void main() {
+            gl_Position = vec4(aPos, 0.0, 1.0);
+          }
+        `;
+        const fsSrc = `
+          precision highp float;
+          uniform sampler2D uTex;
+          uniform mat3 uInvH;
+          uniform vec2 uOutSize;
+          void main() {
+            vec2 frag = vec2(gl_FragCoord.x, uOutSize.y - gl_FragCoord.y);
+            vec3 p = uInvH * vec3(frag, 1.0);
+            if (abs(p.z) < 1e-6) { discard; }
+            vec2 uv = p.xy / p.z;
+            if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
+              gl_FragColor = vec4(0.0);
+            } else {
+              gl_FragColor = texture2D(uTex, uv);
+            }
+          }
+        `;
+        const compile = (type, src) => {
+          const sh = gl.createShader(type);
+          gl.shaderSource(sh, src);
+          gl.compileShader(sh);
+          if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+            gl.deleteShader(sh);
+            return null;
+          }
+          return sh;
+        };
+        const vs = compile(gl.VERTEX_SHADER, vsSrc);
+        const fs = compile(gl.FRAGMENT_SHADER, fsSrc);
+        if (!vs || !fs) { _perspGlState = false; return null; }
+
+        const prog = gl.createProgram();
+        gl.attachShader(prog, vs);
+        gl.attachShader(prog, fs);
+        gl.linkProgram(prog);
+        if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { _perspGlState = false; return null; }
+
+        const posBuf = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+
+        const tex = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+        _perspGlState = {
+          canvas: c,
+          gl,
+          prog,
+          tex,
+          posBuf,
+          locPos: gl.getAttribLocation(prog, 'aPos'),
+          locInvH: gl.getUniformLocation(prog, 'uInvH'),
+          locOutSize: gl.getUniformLocation(prog, 'uOutSize'),
+          maxTex: gl.getParameter(gl.MAX_TEXTURE_SIZE) || 4096
+        };
+        return _perspGlState;
+      } catch (e) {
+        _perspGlState = false;
+        return null;
+      }
+    }
+
+    function solveUnitToQuadHomographyInv(p0, p1, p2, p3) {
+      // 단위 정사각형 (0,0),(1,0),(1,1),(0,1) -> 목적지 사각형 p0,p1,p2,p3 호모그래피 H
+      const dx1 = p1.x - p2.x, dx2 = p3.x - p2.x, dx3 = p0.x - p1.x + p2.x - p3.x;
+      const dy1 = p1.y - p2.y, dy2 = p3.y - p2.y, dy3 = p0.y - p1.y + p2.y - p3.y;
+      let a, b, c, d, e, f, g, h;
+      const denom = dx1 * dy2 - dx2 * dy1;
+      if (Math.abs(denom) < 1e-8) return null;
+      if (Math.abs(dx3) < 1e-6 && Math.abs(dy3) < 1e-6) {
+        a = p1.x - p0.x; b = p2.x - p1.x; c = p0.x;
+        d = p1.y - p0.y; e = p2.y - p1.y; f = p0.y;
+        g = 0; h = 0;
+      } else {
+        g = (dx3 * dy2 - dx2 * dy3) / denom;
+        h = (dx1 * dy3 - dx3 * dy1) / denom;
+        a = p1.x - p0.x + g * p1.x;
+        b = p3.x - p0.x + h * p3.x;
+        c = p0.x;
+        d = p1.y - p0.y + g * p1.y;
+        e = p3.y - p0.y + h * p3.y;
+        f = p0.y;
+      }
+      // 3x3 H (row-major: [a,b,c; d,e,f; g,h,1]) -> H^-1 (column-major for WebGL mat3)
+      const A = e - f * h, B = c * h - b, C = b * f - c * e;
+      const D = f * g - d, E = a - c * g, F = c * d - a * f;
+      const G = d * h - e * g, H2 = b * g - a * h, I = a * e - b * d;
+      const det = a * A + b * D + c * G;
+      if (Math.abs(det) < 1e-9) return null;
+      const invDet = 1 / det;
+      return new Float32Array([
+        A * invDet, D * invDet, G * invDet,
+        B * invDet, E * invDet, H2 * invDet,
+        C * invDet, F * invDet, I * invDet
+      ]);
+    }
+
+    function renderPerspectiveWebGL(ctx, imgSource, pTL, pTR, pBR, pBL) {
+      const st = getPerspectiveWebGLState();
+      if (!st) return false;
+      const { gl, canvas: glCanvas, prog, tex, posBuf, locPos, locInvH, locOutSize, maxTex } = st;
+
+      const minX = Math.floor(Math.min(pTL.x, pTR.x, pBR.x, pBL.x)) - 2;
+      const minY = Math.floor(Math.min(pTL.y, pTR.y, pBR.y, pBL.y)) - 2;
+      const maxX = Math.ceil(Math.max(pTL.x, pTR.x, pBR.x, pBL.x)) + 2;
+      const maxY = Math.ceil(Math.max(pTL.y, pTR.y, pBR.y, pBL.y)) + 2;
+      const bbW = maxX - minX;
+      const bbH = maxY - minY;
+      if (bbW < 2 || bbH < 2) return true;
+
+      const limit = Math.min(maxTex, 4096);
+      const downRatio = Math.min(1, limit / bbW, limit / bbH);
+      const outW = Math.max(2, Math.round(bbW * downRatio));
+      const outH = Math.max(2, Math.round(bbH * downRatio));
+
+      const q0 = { x: (pTL.x - minX) * downRatio, y: (pTL.y - minY) * downRatio };
+      const q1 = { x: (pTR.x - minX) * downRatio, y: (pTR.y - minY) * downRatio };
+      const q2 = { x: (pBR.x - minX) * downRatio, y: (pBR.y - minY) * downRatio };
+      const q3 = { x: (pBL.x - minX) * downRatio, y: (pBL.y - minY) * downRatio };
+
+      const invH = solveUnitToQuadHomographyInv(q0, q1, q2, q3);
+      if (!invH) return false;
+
+      try {
+        if (glCanvas.width !== outW || glCanvas.height !== outH) {
+          glCanvas.width = outW;
+          glCanvas.height = outH;
+        }
+        gl.viewport(0, 0, outW, outH);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.useProgram(prog);
+        gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+        gl.enableVertexAttribArray(locPos);
+        gl.vertexAttribPointer(locPos, 2, gl.FLOAT, false, 0, 0);
+
+        // 소스 이미지가 MAX_TEXTURE_SIZE를 넘을 경우 안전 다운스케일
+        let uploadSrc = imgSource;
+        const srcW = imgSource.naturalWidth || imgSource.width || outW;
+        const srcH = imgSource.naturalHeight || imgSource.height || outH;
+        let tmpCanvas = null;
+        if (srcW > maxTex || srcH > maxTex) {
+          const r = Math.min(maxTex / srcW, maxTex / srcH);
+          tmpCanvas = document.createElement('canvas');
+          tmpCanvas.width = Math.max(1, Math.floor(srcW * r));
+          tmpCanvas.height = Math.max(1, Math.floor(srcH * r));
+          tmpCanvas.getContext('2d').drawImage(imgSource, 0, 0, tmpCanvas.width, tmpCanvas.height);
+          uploadSrc = tmpCanvas;
+        }
+
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, uploadSrc);
+        if (tmpCanvas) { tmpCanvas.width = 0; tmpCanvas.height = 0; }
+
+        gl.uniformMatrix3fv(locInvH, false, invH);
+        gl.uniform2f(locOutSize, outW, outH);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+        ctx.drawImage(glCanvas, 0, 0, outW, outH, minX, minY, bbW, bbH);
+        return true;
+      } catch (err) {
+        console.warn('[WebGL Perspective] Fallback to 2D mesh:', err);
+        return false;
+      }
+    }
+
+    // [핵심] 사각 투시 변환(Perspective Warp / 4-Corner Pinning) — WebGL 호모그래피 우선, 미지원 시 12x12 메쉬 Fallback
     function drawPerspectiveQuad(ctx, imgSource, dx, dy, dw, dh, corners, trapezoid) {
       const srcW = imgSource.naturalWidth || imgSource.width || dw;
       const srcH = imgSource.naturalHeight || imgSource.height || dh;
@@ -6000,24 +6265,32 @@
       // 사다리꼴 오프셋 계산 (상단 및 하단 각각 독립적 좌우 확장)
       const trapTopOffset = topExp / 2;
       const trapBotOffset = botExp / 2;
+      const isNorm = (c.unit === 'norm');
+      const mulX = isNorm ? dw : scalePxX;
+      const mulY = isNorm ? dh : scalePxY;
 
-      // 4개 코너 목적지 좌표 (dx, dy 기준 + 원본 픽셀 단위 1:1 오프셋 매핑)
+      // 4개 코너 목적지 좌표
       const pTL = {
-        x: dx - trapTopOffset + ((c.tl?.x || 0) * scalePxX),
-        y: dy + ((c.tl?.y || 0) * scalePxY)
+        x: dx - trapTopOffset + ((c.tl?.x || 0) * mulX),
+        y: dy + ((c.tl?.y || 0) * mulY)
       };
       const pTR = {
-        x: dx + dw + trapTopOffset + ((c.tr?.x || 0) * scalePxX),
-        y: dy + ((c.tr?.y || 0) * scalePxY)
+        x: dx + dw + trapTopOffset + ((c.tr?.x || 0) * mulX),
+        y: dy + ((c.tr?.y || 0) * mulY)
       };
       const pBR = {
-        x: dx + dw + trapBotOffset + ((c.br?.x || 0) * scalePxX),
-        y: dy + dh + ((c.br?.y || 0) * scalePxY)
+        x: dx + dw + trapBotOffset + ((c.br?.x || 0) * mulX),
+        y: dy + dh + ((c.br?.y || 0) * mulY)
       };
       const pBL = {
-        x: dx - trapBotOffset + ((c.bl?.x || 0) * scalePxX),
-        y: dy + dh + ((c.bl?.y || 0) * scalePxY)
+        x: dx - trapBotOffset + ((c.bl?.x || 0) * mulX),
+        y: dy + dh + ((c.bl?.y || 0) * mulY)
       };
+
+      // [V1.3.0] WebGL 고해상도 호모그래피 우선 실행 (격자 이음새/선명도 저하 0%)
+      if (renderPerspectiveWebGL(ctx, imgSource, pTL, pTR, pBR, pBL)) {
+        return;
+      }
 
       const gridX = 12;
       const gridY = 12;
@@ -6400,6 +6673,11 @@
 
         ctx.translate(cropCenterPaperX, cropCenterPaperY);
         ctx.rotate(rotRad);
+        const skX = Number(cfg.skewX) || 0;
+        const skY = Number(cfg.skewY) || 0;
+        if (skX !== 0 || skY !== 0) {
+          ctx.transform(1, Math.tan((skY * Math.PI) / 180), Math.tan((skX * Math.PI) / 180), 1, 0, 0);
+        }
 
         if (flipScaleX !== 1 || flipScaleY !== 1) {
           ctx.scale(flipScaleX, flipScaleY);
@@ -6409,20 +6687,28 @@
         ctx.rect(-cropW / 2, -cropH / 2, cropW, cropH);
         ctx.clip();
 
-        ctx.drawImage(
+        drawPerspectiveQuad(
+          ctx,
           effImgSource,
           -cropLocalX - drawLocalW / 2,
           -cropLocalY - drawLocalH / 2,
           drawLocalW,
-          drawLocalH
+          drawLocalH,
+          cfg.corners,
+          cfg.trapezoid
         );
       } else {
         ctx.translate(posX + finalW / 2, posY + finalH / 2);
         ctx.rotate(rotRad);
+        const skX = Number(cfg.skewX) || 0;
+        const skY = Number(cfg.skewY) || 0;
+        if (skX !== 0 || skY !== 0) {
+          ctx.transform(1, Math.tan((skY * Math.PI) / 180), Math.tan((skX * Math.PI) / 180), 1, 0, 0);
+        }
         if (flipScaleX !== 1 || flipScaleY !== 1) {
           ctx.scale(flipScaleX, flipScaleY);
         }
-        ctx.drawImage(effImgSource, -drawLocalW / 2, -drawLocalH / 2, drawLocalW, drawLocalH);
+        drawPerspectiveQuad(ctx, effImgSource, -drawLocalW / 2, -drawLocalH / 2, drawLocalW, drawLocalH, cfg.corners, cfg.trapezoid);
       }
       ctx.restore();
     }
@@ -9372,20 +9658,235 @@ const modal = document.getElementById('modalPdfPicker');
       // Deprecated in V2.14.0 for maximum desktop speed
     }
 
-    function togglePerspectiveMode() {
-      if (typeof showExitToast === 'function') {
-        showExitToast('투시변환 대신 객체 직접 회전(⟳) 및 8점 핸들을 사용하세요.');
+    // [V1.3.0] 4모서리 투시 변환(Corner Pinning) 대화형 편집 컨트롤러
+    function syncPerspectiveUI(active) {
+      const btn = document.getElementById('btnTogglePerspective');
+      if (btn) {
+        if (active) btn.classList.add('active');
+        else btn.classList.remove('active');
+      }
+      const overlay = document.getElementById('perspectiveOverlay');
+      if (overlay) {
+        overlay.style.display = active ? 'block' : 'none';
       }
     }
 
-    function resetCorners() {}
-    function updateCornerPins() {}
-    function syncPerspectiveUI() {}
-    function drawPerspectiveQuad(ctx, img, x, y, w, h) {
-      if (ctx && img) {
-        ctx.drawImage(img, x, y, w, h);
+    function getPerspectiveEditableTarget() {
+      const active = (typeof getActiveEditableTarget === 'function') ? getActiveEditableTarget() : null;
+      if (!active) return null;
+      if (active.isBase) return active;
+      if (active.target && active.target.type === 'image') return active;
+      return null;
+    }
+
+    function togglePerspectiveMode(forceState) {
+      const next = (typeof forceState === 'boolean') ? forceState : !isPerspectiveActive;
+      if (next) {
+        if (typeof isCropActive !== 'undefined' && isCropActive && typeof endCropUI === 'function') {
+          endCropUI();
+        }
+        let targetObj = getPerspectiveEditableTarget();
+        if (!targetObj && docState.items.length > 0) {
+          if (typeof selectLayer === 'function') selectLayer('__base__');
+          targetObj = getPerspectiveEditableTarget();
+        }
+        if (!targetObj) {
+          if (typeof updateStatusMsg === 'function') updateStatusMsg('투시변형은 바탕 이미지 또는 추가된 이미지 객체에서만 사용할 수 있습니다.');
+          return;
+        }
+        isPerspectiveActive = true;
+        syncPerspectiveUI(true);
+        updateCornerPins();
+        if (typeof updateStatusMsg === 'function') {
+          updateStatusMsg('⏢ 투시변형 활성: 4개 모서리 핀(TL/TR/BR/BL)을 드래그해 왜곡을 조절하세요 ([투시] 재클릭 또는 ESC로 완료)');
+        }
+      } else {
+        isPerspectiveActive = false;
+        syncPerspectiveUI(false);
+        if (typeof updateStatusMsg === 'function') updateStatusMsg('투시변형 모드 종료');
       }
     }
+
+    function resetCorners() {
+      resetActiveObjectPerspective();
+    }
+
+    function getActiveObjectScreenBox() {
+      const canvas = document.getElementById('mainViewerCanvas');
+      if (!canvas || docState.items.length === 0) return null;
+      const curIdx = docState.currentIndex;
+      const item = docState.items[curIdx];
+      const cfg = getEffectiveItemSettings(curIdx);
+      const paperRect = getActivePaperCanvasRect(canvas, item, cfg);
+      const scaleX = (canvas.clientWidth || canvas.offsetWidth) / canvas.width;
+      const scaleY = (canvas.clientHeight || canvas.offsetHeight) / canvas.height;
+
+      const targetInfo = getPerspectiveEditableTarget();
+      if (!targetInfo) return null;
+
+      if (targetInfo.isBase) {
+        const geom = getBaseImageVisualGeometry(item, cfg, canvas.width, canvas.height);
+        if (!geom) return null;
+        return {
+          targetInfo,
+          cx: (paperRect.sx + geom.x * paperRect.subW) * scaleX,
+          cy: (paperRect.sy + geom.y * paperRect.subH) * scaleY,
+          bw: geom.w * paperRect.subW * scaleX,
+          bh: geom.h * paperRect.subH * scaleY,
+          rot: geom.rot || 0,
+          skewX: Number(cfg.skewX) || 0,
+          skewY: Number(cfg.skewY) || 0
+        };
+      } else {
+        const layer = targetInfo.target;
+        const geom = getLayerVisualGeometry(layer, paperRect.subW, paperRect.subH);
+        return {
+          targetInfo,
+          cx: (paperRect.sx + geom.x * paperRect.subW) * scaleX,
+          cy: (paperRect.sy + geom.y * paperRect.subH) * scaleY,
+          bw: geom.w * paperRect.subW * scaleX,
+          bh: geom.h * paperRect.subH * scaleY,
+          rot: geom.rot || 0,
+          skewX: Number(layer.skewX) || 0,
+          skewY: Number(layer.skewY) || 0
+        };
+      }
+    }
+
+    function updateCornerPins() {
+      const overlay = document.getElementById('perspectiveOverlay');
+      if (!overlay) return;
+      if (!isPerspectiveActive) {
+        overlay.style.display = 'none';
+        return;
+      }
+      const box = getActiveObjectScreenBox();
+      if (!box) {
+        overlay.style.display = 'none';
+        return;
+      }
+      overlay.style.display = 'block';
+
+      const t = box.targetInfo.target;
+      const c = t.corners || { unit: 'norm', tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+      const isNorm = (c.unit === 'norm');
+      const mulX = isNorm ? box.bw : (box.bw / Math.max(1, (t.origW || box.bw)));
+      const mulY = isNorm ? box.bh : (box.bh / Math.max(1, (t.origH || box.bh)));
+
+      const localCorners = {
+        tl: { x: -box.bw / 2 + (c.tl?.x || 0) * mulX, y: -box.bh / 2 + (c.tl?.y || 0) * mulY },
+        tr: { x: box.bw / 2 + (c.tr?.x || 0) * mulX, y: -box.bh / 2 + (c.tr?.y || 0) * mulY },
+        br: { x: box.bw / 2 + (c.br?.x || 0) * mulX, y: box.bh / 2 + (c.br?.y || 0) * mulY },
+        bl: { x: -box.bw / 2 + (c.bl?.x || 0) * mulX, y: box.bh / 2 + (c.bl?.y || 0) * mulY }
+      };
+
+      const rotRad = (box.rot * Math.PI) / 180;
+      const cosR = Math.cos(rotRad);
+      const sinR = Math.sin(rotRad);
+      const tanX = Math.tan((box.skewX * Math.PI) / 180);
+      const tanY = Math.tan((box.skewY * Math.PI) / 180);
+
+      const toScreen = (pt) => {
+        const sx = pt.x + pt.y * tanX;
+        const sy = pt.x * tanY + pt.y;
+        return {
+          x: box.cx + sx * cosR - sy * sinR,
+          y: box.cy + sx * sinR + sy * cosR
+        };
+      };
+
+      const sTL = toScreen(localCorners.tl);
+      const sTR = toScreen(localCorners.tr);
+      const sBR = toScreen(localCorners.br);
+      const sBL = toScreen(localCorners.bl);
+
+      const poly = document.getElementById('perspectivePoly');
+      if (poly) {
+        poly.setAttribute('points', `${sTL.x},${sTL.y} ${sTR.x},${sTR.y} ${sBR.x},${sBR.y} ${sBL.x},${sBL.y}`);
+      }
+
+      const pinMap = { pinTL: sTL, pinTR: sTR, pinBR: sBR, pinBL: sBL };
+      Object.keys(pinMap).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.style.left = `${pinMap[id].x}px`;
+          el.style.top = `${pinMap[id].y}px`;
+        }
+      });
+    }
+
+    // 4모서리 핀 드래그 이벤트 초기화
+    (function initPerspectivePinEvents() {
+      const pinIds = ['pinTL', 'pinTR', 'pinBR', 'pinBL'];
+      let dragState = null;
+
+      pinIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('pointerdown', (ev) => {
+          if (ev.button !== 0 && ev.pointerType === 'mouse') return;
+          ev.stopPropagation();
+          ev.preventDefault();
+          const box = getActiveObjectScreenBox();
+          if (!box) return;
+          const pinKey = el.dataset.pin;
+          const t = box.targetInfo.target;
+          if (!t.corners || t.corners.unit !== 'norm') {
+            t.corners = { unit: 'norm', tl: { x: 0, y: 0 }, tr: { x: 0, y: 0 }, br: { x: 0, y: 0 }, bl: { x: 0, y: 0 } };
+          }
+          const zoom = docState.zoom || 1.0;
+          dragState = {
+            pinKey,
+            startX: ev.clientX,
+            startY: ev.clientY,
+            origCorner: { x: t.corners[pinKey]?.x || 0, y: t.corners[pinKey]?.y || 0 },
+            bw: Math.max(10, box.bw * zoom),
+            bh: Math.max(10, box.bh * zoom),
+            rot: box.rot,
+            target: t
+          };
+          isPinDragging = true;
+          el.style.cursor = 'grabbing';
+          window.addEventListener('pointermove', onPinMove);
+          window.addEventListener('pointerup', onPinUp);
+          window.addEventListener('pointercancel', onPinUp);
+        });
+      });
+
+      function onPinMove(e) {
+        if (!dragState) return;
+        const dx = e.clientX - dragState.startX;
+        const dy = e.clientY - dragState.startY;
+        const rad = (-dragState.rot * Math.PI) / 180;
+        const ldx = dx * Math.cos(rad) - dy * Math.sin(rad);
+        const ldy = dx * Math.sin(rad) + dy * Math.cos(rad);
+        const nx = Math.max(-0.6, Math.min(0.6, dragState.origCorner.x + ldx / dragState.bw));
+        const ny = Math.max(-0.6, Math.min(0.6, dragState.origCorner.y + ldy / dragState.bh));
+        dragState.target.corners[dragState.pinKey] = { x: nx, y: ny };
+        updateCornerPins();
+        requestViewerRedraw();
+        if (typeof updateHudBadge === 'function') {
+          updateHudBadge(`투시 ${dragState.pinKey.toUpperCase()}: X ${Math.round(nx * 100)}% Y ${Math.round(ny * 100)}%`, e.clientX, e.clientY);
+        }
+      }
+
+      function onPinUp() {
+        if (!dragState) return;
+        isPinDragging = false;
+        pinIds.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.style.cursor = 'grab';
+        });
+        window.removeEventListener('pointermove', onPinMove);
+        window.removeEventListener('pointerup', onPinUp);
+        window.removeEventListener('pointercancel', onPinUp);
+        dragState = null;
+        if (typeof hideHudBadge === 'function') hideHudBadge();
+        const curIdx = docState.currentIndex;
+        if (typeof savePageLayerHistory === 'function') savePageLayerHistory(curIdx);
+        updateThumbnailAsync(curIdx);
+      }
+    })();
 
     // // ==========================================================================
     // [MODULE] 07_export.js
@@ -10968,6 +11469,11 @@ if (e.target.closest('.layer-item-box')) return;
         if (typeof isCropActive !== 'undefined' && isCropActive && typeof cancelCrop === 'function') {
           e.preventDefault();
           cancelCrop();
+          return;
+        }
+        if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive && typeof togglePerspectiveMode === 'function') {
+          e.preventDefault();
+          togglePerspectiveMode(false);
           return;
         }
         if (typeof isEyedropperActive !== 'undefined' && isEyedropperActive && typeof cancelEyedropper === 'function') {
@@ -14772,6 +15278,11 @@ if (e.target.closest('.layer-item-box')) return;
 
         ctx.translate(cropCenterPaperX, cropCenterPaperY);
         ctx.rotate(rotRad);
+        const skX = Number(layer.skewX) || 0;
+        const skY = Number(layer.skewY) || 0;
+        if (skX !== 0 || skY !== 0) {
+          ctx.transform(1, Math.tan((skY * Math.PI) / 180), Math.tan((skX * Math.PI) / 180), 1, 0, 0);
+        }
         if (flipScaleX !== 1 || flipScaleY !== 1) {
           ctx.scale(flipScaleX, flipScaleY);
         }
@@ -14782,6 +15293,11 @@ if (e.target.closest('.layer-item-box')) return;
       } else {
         ctx.translate(cx, cy);
         ctx.rotate(rotRad);
+        const skX = Number(layer.skewX) || 0;
+        const skY = Number(layer.skewY) || 0;
+        if (skX !== 0 || skY !== 0) {
+          ctx.transform(1, Math.tan((skY * Math.PI) / 180), Math.tan((skX * Math.PI) / 180), 1, 0, 0);
+        }
         if (flipScaleX !== 1 || flipScaleY !== 1) {
           ctx.scale(flipScaleX, flipScaleY);
         }
@@ -15058,6 +15574,11 @@ if (e.target.closest('.layer-item-box')) return;
 
         ctx.translate(cropCenterPaperX, cropCenterPaperY);
         ctx.rotate(rotRad);
+        const skX = Number(layer.skewX) || 0;
+        const skY = Number(layer.skewY) || 0;
+        if (skX !== 0 || skY !== 0) {
+          ctx.transform(1, Math.tan((skY * Math.PI) / 180), Math.tan((skX * Math.PI) / 180), 1, 0, 0);
+        }
         if (flipScaleX !== 1 || flipScaleY !== 1) {
           ctx.scale(flipScaleX, flipScaleY);
         }
@@ -15068,6 +15589,11 @@ if (e.target.closest('.layer-item-box')) return;
       } else {
         ctx.translate(cx, cy);
         ctx.rotate(rotRad);
+        const skX = Number(layer.skewX) || 0;
+        const skY = Number(layer.skewY) || 0;
+        if (skX !== 0 || skY !== 0) {
+          ctx.transform(1, Math.tan((skY * Math.PI) / 180), Math.tan((skX * Math.PI) / 180), 1, 0, 0);
+        }
         if (flipScaleX !== 1 || flipScaleY !== 1) {
           ctx.scale(flipScaleX, flipScaleY);
         }
@@ -15242,6 +15768,11 @@ if (e.target.closest('.layer-item-box')) return;
 
         ctx.translate(cropCenterPaperX, cropCenterPaperY);
         ctx.rotate(rotRad);
+        const skX = Number(layer.skewX) || 0;
+        const skY = Number(layer.skewY) || 0;
+        if (skX !== 0 || skY !== 0) {
+          ctx.transform(1, Math.tan((skY * Math.PI) / 180), Math.tan((skX * Math.PI) / 180), 1, 0, 0);
+        }
 
         if (flipScaleX !== 1 || flipScaleY !== 1) {
           ctx.scale(flipScaleX, flipScaleY);
@@ -15249,14 +15780,19 @@ if (e.target.closest('.layer-item-box')) return;
 
         // [V2.45.0] effSrc는 getLayerEffectiveImageSource에서 이미 잘려진 캔버스이므로
         // 이중 클리핑/비율 왜곡을 원천 배제하고 잘려진 크기(cropW x cropH)에 1:1로 직접 렌더링
-        ctx.drawImage(effSrc, -cropW / 2, -cropH / 2, cropW, cropH);
+        drawPerspectiveQuad(ctx, effSrc, -cropW / 2, -cropH / 2, cropW, cropH, layer.corners, 0);
       } else {
         ctx.translate(cx, cy);
         ctx.rotate(rotRad);
+        const skX = Number(layer.skewX) || 0;
+        const skY = Number(layer.skewY) || 0;
+        if (skX !== 0 || skY !== 0) {
+          ctx.transform(1, Math.tan((skY * Math.PI) / 180), Math.tan((skX * Math.PI) / 180), 1, 0, 0);
+        }
         if (flipScaleX !== 1 || flipScaleY !== 1) {
           ctx.scale(flipScaleX, flipScaleY);
         }
-        ctx.drawImage(effSrc, -boxW / 2, -boxH / 2, boxW, boxH);
+        drawPerspectiveQuad(ctx, effSrc, -boxW / 2, -boxH / 2, boxW, boxH, layer.corners, 0);
       }
       ctx.restore();
     }
@@ -15492,6 +16028,8 @@ if (e.target.closest('.layer-item-box')) return;
           w: baseGeom.visualW,
           h: baseGeom.visualH,
           rot: baseGeom.rot,
+          skewX: cfg.skewX || 0,
+          skewY: cfg.skewY || 0,
           _geom: baseGeom
         };
 
@@ -15532,7 +16070,7 @@ if (e.target.closest('.layer-item-box')) return;
             boxEl.style.top = `${cy - bh / 2}px`;
             boxEl.style.width = `${bw}px`;
             boxEl.style.height = `${bh}px`;
-            boxEl.style.transform = `rotate(${obj.rot || 0}deg)`;
+            boxEl.style.transform = `rotate(${obj.rot || 0}deg) skew(${obj.skewX || 0}deg, ${obj.skewY || 0}deg)`;
             // [V2.48.0] 회전 드래그 중에도 8방향 핸들 커서 방향 실시간 갱신
             boxEl.querySelectorAll('.layer-resize-handle').forEach(hEl => {
               const hKey = hEl.dataset.handle;
@@ -15561,10 +16099,10 @@ if (e.target.closest('.layer-item-box')) return;
         boxEl.style.top = `${cy - bh / 2}px`;
         boxEl.style.width = `${bw}px`;
         boxEl.style.height = `${bh}px`;
-        boxEl.style.transform = `rotate(${obj.rot || 0}deg)`;
+        boxEl.style.transform = `rotate(${obj.rot || 0}deg) skew(${obj.skewX || 0}deg, ${obj.skewY || 0}deg)`;
         boxEl.title = isLocked
           ? `${obj.name} (🔒 잠김 - 이동/변형 불가, 🔒 버튼으로 해제)`
-          : (isSel ? `${obj.name} (드래그: 이동, 모서리: 비율확대, Shift+모서리: 자유변형, Ctrl+모서리: 대칭변형, ⟳: 회전)` : `${obj.name} (클릭하여 편집 선택, Shift+클릭: 다중선택)`);
+          : (isSel ? `${obj.name} (드래그: 이동, 모서리: 비율확대(Shift: 자유, Ctrl: 대칭), Alt+변: 기울이기, ⟳: 회전)` : `${obj.name} (클릭하여 편집 선택, Shift+클릭: 다중선택)`);
 
         // [V2.25.0] 바탕 이미지 선택 중에도 상위 객체 클릭 선택 100% 보장:
         // 바탕 이미지는 항상 바닥(10), 그 위의 부유 객체들은 20 + objIdx 부여.
@@ -15718,6 +16256,8 @@ if (e.target.closest('.layer-item-box')) return;
             origVisualW: obj.w,
             origVisualH: obj.h,
             origRot: obj.rot || 0,
+            origSkewX: obj.isBase ? (cfg.skewX || 0) : (selRawLayer ? (selRawLayer.skewX || 0) : 0),
+            origSkewY: obj.isBase ? (cfg.skewY || 0) : (selRawLayer ? (selRawLayer.skewY || 0) : 0),
             geom,
             multiOrig,
             clientW,
@@ -15894,10 +16434,47 @@ if (e.target.closest('.layer-item-box')) return;
         const minH = 0.02;
 
         const isCorner = (d.handle === 'tl' || d.handle === 'tr' || d.handle === 'bl' || d.handle === 'br');
+        const isEdge = (d.handle === 't' || d.handle === 'b' || d.handle === 'l' || d.handle === 'r');
+        const isShift = Boolean(e.shiftKey);
+
+        // [V1.3.0] Alt + 변(Edge) 핸들 드래그: 마우스 직관적 기울이기 (Skew X / Skew Y, Shift 시 5° 단위 스냅)
+        if (isEdge && e.altKey) {
+          const targetObj = d.isBase ? cfg : getSelectedLayer();
+          if (!targetObj || (!d.isBase && targetObj.id !== d.layerId)) return;
+          const halfH = Math.max(10, (d.origVisualH * d.pScreenH) / 2);
+          const halfW = Math.max(10, (d.origVisualW * d.pScreenW) / 2);
+          if (d.handle === 't' || d.handle === 'b') {
+            const sign = (d.handle === 't') ? -1 : 1;
+            const deltaDeg = (Math.atan2(sign * localDxPx, halfH) * 180) / Math.PI;
+            let nextSkewX = Math.max(-45, Math.min(45, (d.origSkewX || 0) + deltaDeg));
+            if (isShift) nextSkewX = Math.round(nextSkewX / 5) * 5;
+            targetObj.skewX = Math.round(nextSkewX * 10) / 10;
+            updateHudBadge(`기울기(Skew X): ${targetObj.skewX}°${isShift ? ' (5° 스냅)' : ''}`, e.clientX, e.clientY);
+          } else {
+            const sign = (d.handle === 'r') ? 1 : -1;
+            const deltaDeg = (Math.atan2(sign * localDyPx, halfW) * 180) / Math.PI;
+            let nextSkewY = Math.max(-45, Math.min(45, (d.origSkewY || 0) + deltaDeg));
+            if (isShift) nextSkewY = Math.round(nextSkewY / 5) * 5;
+            targetObj.skewY = Math.round(nextSkewY * 10) / 10;
+            updateHudBadge(`기울기(Skew Y): ${targetObj.skewY}°${isShift ? ' (5° 스냅)' : ''}`, e.clientX, e.clientY);
+          }
+          const nowTs = performance.now();
+          if (nowTs - lastLayerDragRenderTime >= DRAG_RENDER_INTERVAL_MS) {
+            lastLayerDragRenderTime = nowTs;
+            requestViewerRedraw();
+          }
+          if (dragTrailingRenderTimer) clearTimeout(dragTrailingRenderTimer);
+          dragTrailingRenderTimer = setTimeout(() => { requestViewerRedraw(); }, DRAG_RENDER_INTERVAL_MS + 10);
+          updateLayerStageOverlay(true);
+          if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive && typeof updateCornerPins === 'function') {
+            updateCornerPins();
+          }
+          return;
+        }
+
         // [V2.72.0] 조작감 혁신: 모서리는 기본이 종횡비(정비율) 고정! Shift 누르면 자유 비율(왜곡)
         // 변(Edge)은 기본이 1축 리사이즈! Shift 누르면 정비율 연동
         const isCtrl = Boolean(e.ctrlKey || e.metaKey);
-        const isShift = Boolean(e.shiftKey);
         const shouldKeepRatio = isCorner ? !isShift : isShift;
         const origRatio = d.origVisualW / Math.max(0.001, d.origVisualH);
 
