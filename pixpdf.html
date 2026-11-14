@@ -4895,7 +4895,7 @@
           <div style="display: flex; flex-direction: column; gap: 2px;">
             <div style="display: flex; align-items: center; gap: 6px;">
               <span style="font-size: 12px; font-weight: 700; color: var(--text-main);">MY PDF</span>
-              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.3.3</span>
+              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.3.4</span>
             </div>
             <div style="font-size: 10.5px; color: #64748b; line-height: 1.35;">
               PDF와 이미지의 상호 변환 및 간편 편집 도구
@@ -5097,7 +5097,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 MY PDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c⚡ 현재 버전: V1.3.3 (연속 붙여넣기 계단식 오프셋 배치 개선)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c⚡ 현재 버전: V1.3.4 (그룹 복사·붙여넣기·복제·Undo/Redo 이미지 보존 및 중첩 그룹 평탄화)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -6827,6 +6827,8 @@
               drawShapeLayerOnCanvas(ctx, ch, childCx, childCy, childW, childH, childRotRad, refScale);
             } else if (ch.type === 'image' && ch.imgObj) {
               drawImageLayerOnCanvas(ctx, ch, childCx, childCy, childW, childH, childRotRad, isMainViewer);
+            } else if (ch.type === 'group' && Array.isArray(ch.children)) {
+              drawGroupLayerOnCanvas(ctx, canvasW, canvasH, ch, childCx, childCy, childW, childH, childRotRad, refScale, isMainViewer, options);
             }
           } catch (childErr) {
             console.warn('[drawGroupLayerOnCanvas] 개별 자식 렌더링 예외 무시:', childErr);
@@ -13784,6 +13786,31 @@ if (e.target.closest('.layer-item-box')) return;
 
     const pageLayerRedoStack = {};
 
+    // [V1.3.4] 그룹 children 포함 이미지/캔버스 레퍼런스를 재귀적으로 보존하는 안전 복제 헬퍼
+    function cloneLayerDeep(src, regenerateIds = false) {
+      if (!src || typeof src !== 'object') return src;
+      let copy;
+      try {
+        copy = JSON.parse(JSON.stringify({
+          ...src,
+          imgObj: undefined,
+          _croppedCanvas: undefined,
+          children: undefined
+        }));
+      } catch (e) {
+        copy = { ...src };
+      }
+      if (regenerateIds) {
+        copy.id = (src.type === 'group' ? 'group_' : 'layer_') + Date.now() + '_' + (layerSeqCounter++);
+      }
+      if (src.imgObj) copy.imgObj = src.imgObj;
+      if (src._croppedCanvas) copy._croppedCanvas = src._croppedCanvas;
+      if (src.type === 'group' && Array.isArray(src.children)) {
+        copy.children = src.children.map(ch => cloneLayerDeep(ch, regenerateIds));
+      }
+      return copy;
+    }
+
     function savePageLayerHistory(pageIdx) {
       if (pageIdx === undefined) pageIdx = docState.currentIndex;
       const item = docState.items[pageIdx];
@@ -13791,7 +13818,7 @@ if (e.target.closest('.layer-item-box')) return;
       const layers = getCurrentItemLayers(pageIdx);
       if (!pageLayerUndoStack[pageIdx]) pageLayerUndoStack[pageIdx] = [];
       const stack = pageLayerUndoStack[pageIdx];
-      stack.push(JSON.parse(JSON.stringify(layers.map(l => ({ ...l, imgObj: undefined, _croppedCanvas: undefined })))));
+      stack.push(layers.map(l => cloneLayerDeep(l, false)));
       if (stack.length > 30) stack.shift();
       if (!pageLayerRedoStack[pageIdx]) pageLayerRedoStack[pageIdx] = [];
       pageLayerRedoStack[pageIdx].length = 0;
@@ -13808,7 +13835,7 @@ if (e.target.closest('.layer-item-box')) return;
       }
       const currentLayers = getCurrentItemLayers(curIdx);
       if (!pageLayerRedoStack[curIdx]) pageLayerRedoStack[curIdx] = [];
-      pageLayerRedoStack[curIdx].push(JSON.parse(JSON.stringify(currentLayers.map(l => ({ ...l, imgObj: undefined, _croppedCanvas: undefined })))));
+      pageLayerRedoStack[curIdx].push(currentLayers.map(l => cloneLayerDeep(l, false)));
 
       const prevLayers = stack.pop();
       item.layers = prevLayers;
@@ -13829,21 +13856,9 @@ if (e.target.closest('.layer-item-box')) return;
       }
       const currentLayers = getCurrentItemLayers(curIdx);
       if (!pageLayerUndoStack[curIdx]) pageLayerUndoStack[curIdx] = [];
-      pageLayerUndoStack[curIdx].push(JSON.parse(JSON.stringify(currentLayers.map(l => ({ ...l, imgObj: undefined, _croppedCanvas: undefined })))));
+      pageLayerUndoStack[curIdx].push(currentLayers.map(l => cloneLayerDeep(l, false)));
 
       const nextLayers = redoStack.pop();
-      // [V2.71.1] 이미지 레이어 imgObj 및 _croppedCanvas 레퍼런스 보존 복원
-      const existingRedoMap = new Map();
-      currentLayers.forEach(l => {
-        if (l.id && l.imgObj) existingRedoMap.set(l.id, { imgObj: l.imgObj, _croppedCanvas: l._croppedCanvas });
-      });
-      nextLayers.forEach(l => {
-        if (existingRedoMap.has(l.id)) {
-          const rec = existingRedoMap.get(l.id);
-          l.imgObj = rec.imgObj;
-          l._croppedCanvas = rec._croppedCanvas;
-        }
-      });
       item.layers = nextLayers;
       selectedLayerId = (nextLayers.length > 0) ? nextLayers[nextLayers.length - 1].id : null;
       syncLayerUI();
@@ -13891,18 +13906,8 @@ if (e.target.closest('.layer-item-box')) return;
           crop: cfg.crop ? { ...cfg.crop } : null
         };
       } else {
-        const clone = JSON.parse(JSON.stringify({
-          ...sel,
-          id: undefined,
-          imgObj: undefined,
-          _croppedCanvas: undefined
-        }));
-        if (sel.type === 'image' && sel.imgObj) {
-          clone.imgObj = sel.imgObj;
-        }
-        if (sel._croppedCanvas) {
-          clone._croppedCanvas = sel._croppedCanvas;
-        }
+        const clone = cloneLayerDeep(sel, false);
+        clone.id = undefined;
         globalLayerClipboard = clone;
       }
 
@@ -13924,12 +13929,7 @@ if (e.target.closest('.layer-item-box')) return;
 
       savePageLayerHistory(curIdx);
 
-      const newLayer = JSON.parse(JSON.stringify({
-        ...globalLayerClipboard,
-        imgObj: undefined,
-        _croppedCanvas: undefined
-      }));
-      newLayer.id = (globalLayerClipboard.type === 'group' ? 'group_' : 'layer_') + Date.now() + '_' + (layerSeqCounter++);
+      const newLayer = cloneLayerDeep(globalLayerClipboard, true);
       newLayer.name = (globalLayerClipboard.name || '객체') + ' (사본)';
 
       // [V1.3.3] 연속 붙여넣기 시 매번 조금씩 이동 배치 (같은 자리 겹침 방지)
@@ -13947,34 +13947,16 @@ if (e.target.closest('.layer-item-box')) return;
       newLayer.x = rawX <= 0.92 ? rawX : (0.08 + ((rawX - 0.08) % span));
       newLayer.y = rawY <= 0.92 ? rawY : (0.08 + ((rawY - 0.08) % span));
 
-      if (globalLayerClipboard.type === 'group' && Array.isArray(globalLayerClipboard.children)) {
+      if (globalLayerClipboard.type === 'group' && Array.isArray(newLayer.children)) {
         newLayer.w = Math.max(0.02, Math.min(1.2, Number(globalLayerClipboard.w) || 0.3));
         newLayer.h = Math.max(0.02, Math.min(1.2, Number(globalLayerClipboard.h) || 0.3));
-        newLayer.children = globalLayerClipboard.children.map(ch => {
-          let chCopy = {};
-          try {
-            chCopy = JSON.parse(JSON.stringify({ ...ch, imgObj: undefined, _croppedCanvas: undefined }));
-          } catch (e) {
-            chCopy = { ...ch };
-          }
-          chCopy.id = 'layer_' + Date.now() + '_' + (layerSeqCounter++);
-          chCopy.relX = isFinite(ch.relX) ? Number(ch.relX) : 0;
-          chCopy.relY = isFinite(ch.relY) ? Number(ch.relY) : 0;
-          chCopy.relW = isFinite(ch.relW) && ch.relW > 0 ? Number(ch.relW) : 1;
-          chCopy.relH = isFinite(ch.relH) && ch.relH > 0 ? Number(ch.relH) : 1;
-          chCopy.relRot = Number(ch.relRot) || 0;
-          if (ch.type === 'image') {
-            chCopy.imgObj = ch.imgObj;
-            chCopy._croppedCanvas = ch._croppedCanvas;
-          }
-          return chCopy;
+        newLayer.children.forEach(chCopy => {
+          chCopy.relX = isFinite(chCopy.relX) ? Number(chCopy.relX) : 0;
+          chCopy.relY = isFinite(chCopy.relY) ? Number(chCopy.relY) : 0;
+          chCopy.relW = isFinite(chCopy.relW) && chCopy.relW > 0 ? Number(chCopy.relW) : 1;
+          chCopy.relH = isFinite(chCopy.relH) && chCopy.relH > 0 ? Number(chCopy.relH) : 1;
+          chCopy.relRot = Number(chCopy.relRot) || 0;
         });
-      }
-      if (globalLayerClipboard.type === 'image' && globalLayerClipboard.imgObj) {
-        newLayer.imgObj = globalLayerClipboard.imgObj;
-      }
-      if (globalLayerClipboard._croppedCanvas) {
-        newLayer._croppedCanvas = globalLayerClipboard._croppedCanvas;
       }
 
       layers.push(newLayer);
@@ -14054,21 +14036,10 @@ if (e.target.closest('.layer-item-box')) return;
         layers.push(clone);
         selectedLayerId = clone.id;
       } else {
-        const clone = Object.assign({}, JSON.parse(JSON.stringify({
-          ...sel,
-          imgObj: undefined,
-          _croppedCanvas: undefined
-        })));
-        clone.id = (sel.type === 'group' ? 'group_' : 'layer_') + Date.now() + '_' + (layerSeqCounter++);
-        clone.name = sel.name + ' 사본';
+        const clone = cloneLayerDeep(sel, true);
+        clone.name = (sel.name || '객체') + ' 사본';
         clone.x = Math.min(0.92, sel.x + 0.04);
         clone.y = Math.min(0.92, sel.y + 0.04);
-        if (sel.type === 'image' && sel.imgObj) {
-          clone.imgObj = sel.imgObj;
-        }
-        if (sel.type === 'group' && Array.isArray(sel.children)) {
-          clone.children = JSON.parse(JSON.stringify(sel.children));
-        }
         layers.push(clone);
         selectedLayerIds.clear();
         selectedLayerIds.add(clone.id);
@@ -14130,19 +14101,65 @@ if (e.target.closest('.layer-item-box')) return;
       if (typeof showExitToast === 'function') showExitToast('선택한 객체가 삭제되었습니다.');
     }
 
+    // [V1.3.4] 그룹 자식을 월드 좌표계 개별 레이어로 전개하는 공용 헬퍼 (묶기 평탄화 & 묶음 풀기 공용)
+    function unpackGroupChildren(groupLayer) {
+      if (!groupLayer || groupLayer.type !== 'group' || !Array.isArray(groupLayer.children)) return [];
+      const rad = ((groupLayer.rot || 0) * Math.PI) / 180;
+      const cos = Math.cos(rad);
+      const sin = Math.sin(rad);
+      const out = [];
+      groupLayer.children.forEach(ch => {
+        const dx = (ch.relX !== undefined ? ch.relX : 0) * groupLayer.w;
+        const dy = (ch.relY !== undefined ? ch.relY : 0) * groupLayer.h;
+        const rotDx = dx * cos - dy * sin;
+        const rotDy = dx * sin + dy * cos;
+        const copy = cloneLayerDeep(ch, false);
+        delete copy.relX;
+        delete copy.relY;
+        delete copy.relW;
+        delete copy.relH;
+        delete copy.relRot;
+        copy.x = groupLayer.x + rotDx;
+        copy.y = groupLayer.y + rotDy;
+        copy.w = (ch.relW !== undefined ? ch.relW : 1) * groupLayer.w;
+        copy.h = (ch.relH !== undefined ? ch.relH : 1) * groupLayer.h;
+        copy.rot = ((ch.relRot || 0) + (groupLayer.rot || 0)) % 360;
+        if (groupLayer.opacity !== undefined && groupLayer.opacity < 100) {
+          copy.opacity = Math.round(((copy.opacity !== undefined ? copy.opacity : 100) * groupLayer.opacity) / 100);
+        }
+        copy.id = copy.id || ('layer_' + Date.now() + '_' + (layerSeqCounter++));
+        if (copy.type === 'group' && Array.isArray(copy.children)) {
+          out.push(...unpackGroupChildren(copy));
+        } else {
+          out.push(copy);
+        }
+      });
+      return out;
+    }
+
     // [V2.62.0] 도형 묶기 (Group) - 선택한 2개 이상의 도형을 단일 복합 객체로 묶음
     async function groupSelectedLayers() {
       const curIdx = docState.currentIndex;
       const item = docState.items[curIdx];
       if (!item) return;
       const layers = getCurrentItemLayers();
-      const targets = layers.filter(l => selectedLayerIds.has(l.id));
-      if (targets.length < 2) {
+      const rawTargets = layers.filter(l => l.id !== '__base__' && selectedLayerIds.has(l.id));
+      if (rawTargets.length < 2) {
         if (typeof showExitToast === 'function') showExitToast('묶을 도형을 2개 이상 선택하세요 (Shift+클릭으로 다중 선택)');
         return;
       }
 
       savePageLayerHistory(curIdx);
+
+      // 기존 그룹이 포함된 경우 1단계로 평탄화하여 중첩 그룹 유실 방지
+      const targets = [];
+      rawTargets.forEach(l => {
+        if (l.type === 'group' && Array.isArray(l.children)) {
+          targets.push(...unpackGroupChildren(l));
+        } else {
+          targets.push(l);
+        }
+      });
 
       // 1. 다중 객체 바운딩 박스 정규화 계산
       let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -14213,35 +14230,7 @@ if (e.target.closest('.layer-item-box')) return;
 
       savePageLayerHistory(curIdx);
 
-      const rad = ((sel.rot || 0) * Math.PI) / 180;
-      const cos = Math.cos(rad);
-      const sin = Math.sin(rad);
-
-      const unpacked = sel.children.map(ch => {
-        const dx = (ch.relX !== undefined ? ch.relX : 0) * sel.w;
-        const dy = (ch.relY !== undefined ? ch.relY : 0) * sel.h;
-        const rotDx = dx * cos - dy * sin;
-        const rotDy = dx * sin + dy * cos;
-        const worldX = sel.x + rotDx;
-        const worldY = sel.y + rotDy;
-        const worldW = (ch.relW !== undefined ? ch.relW : 1) * sel.w;
-        const worldH = (ch.relH !== undefined ? ch.relH : 1) * sel.h;
-        const worldRot = ((ch.relRot || 0) + (sel.rot || 0)) % 360;
-
-        const copy = { ...ch };
-        delete copy.relX;
-        delete copy.relY;
-        delete copy.relW;
-        delete copy.relH;
-        delete copy.relRot;
-        copy.x = worldX;
-        copy.y = worldY;
-        copy.w = worldW;
-        copy.h = worldH;
-        copy.rot = worldRot;
-        if (sel.opacity !== undefined && sel.opacity < 100) {
-          copy.opacity = Math.round(((copy.opacity !== undefined ? copy.opacity : 100) * sel.opacity) / 100);
-        }
+      const unpacked = unpackGroupChildren(sel).map(copy => {
         copy.id = 'layer_' + Date.now() + '_' + (layerSeqCounter++);
         return copy;
       });
