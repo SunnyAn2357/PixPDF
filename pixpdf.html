@@ -4187,9 +4187,9 @@
     <div class="col-viewer" id="colViewerArea">
       <div class="viewer-toolbar">
         <div class="viewer-nav" style="display: flex; align-items: center; gap: 6px;">
-          <button type="button" class="btn-tool-sm" id="btnPrevPage" title="이전 페이지 (← 또는 휠 위)" onclick="navigateViewer(-1)">◀ 이전</button>
+          <button type="button" class="btn-tool-sm" id="btnPrevPage" title="이전 페이지" onclick="navigateViewer(-1)">◀ 이전</button>
           <span id="viewerPageIndicator" style="font-size: 12px; font-weight: 700; color: var(--text-main); min-width: 44px; text-align: center;">- / -</span>
-          <button type="button" class="btn-tool-sm" id="btnNextPage" title="다음 페이지 (→ 또는 휠 아래)" onclick="navigateViewer(1)">다음 ▶</button>
+          <button type="button" class="btn-tool-sm" id="btnNextPage" title="다음 페이지" onclick="navigateViewer(1)">다음 ▶</button>
         </div>
         <!-- 중앙: 실시간 작업 상태 안내 텍스트 -->
         <div class="viewer-status-hint" id="viewerStatusHint">
@@ -4274,7 +4274,7 @@
 
         <div class="layer-add-btn-group" style="width: auto; justify-content: flex-end; gap: 4px;">
           <button type="button" class="btn-layer-add" onclick="addLayerTextBox()" title="카멜레온 위장/단색/투명 글상자 추가">+ 글상자</button>
-          <button type="button" class="btn-layer-add" onclick="addLayerShape()" title="사각형·원·화살표·별 등 14종 도형 추가">+ 도형</button>
+          <button type="button" class="btn-layer-add" onclick="addLayerShape()" title="사각형·원·화살표·별 등 20종 도형 추가">+ 도형</button>
           <button type="button" class="btn-layer-add" onclick="triggerAddLayerFile()" title="현재 페이지 위에 이미지 또는 PDF 조각 추가">+ PDF/이미지</button>
         </div>
         <!-- [모바일 전용] 목록으로 돌아가기 버튼 -->
@@ -4567,9 +4567,9 @@
               <div class="inspector-row" style="gap: 4px; align-items: center;">
                 <span class="inspector-lbl" style="width: 28px; flex-shrink: 0;">속성</span>
                 <div class="style-toggle-group" style="display: flex; gap: 2px; flex: 1.1;">
-                  <button type="button" class="btn-style-toggle" id="btnTextBold" onclick="toggleTextLayerStyle('bold')" title="굵게 (Ctrl+B)" style="flex: 1; padding: 0;"><b>B</b></button>
-                  <button type="button" class="btn-style-toggle" id="btnTextItalic" onclick="toggleTextLayerStyle('italic')" title="기울임 (Ctrl+I)" style="flex: 1; padding: 0;"><i>I</i></button>
-                  <button type="button" class="btn-style-toggle" id="btnTextUnderline" onclick="toggleTextLayerStyle('underline')" title="밑줄 (Ctrl+U)" style="flex: 1; padding: 0;"><u>U</u></button>
+                  <button type="button" class="btn-style-toggle" id="btnTextBold" onclick="toggleTextLayerStyle('bold')" title="굵게" style="flex: 1; padding: 0;"><b>B</b></button>
+                  <button type="button" class="btn-style-toggle" id="btnTextItalic" onclick="toggleTextLayerStyle('italic')" title="기울임" style="flex: 1; padding: 0;"><i>I</i></button>
+                  <button type="button" class="btn-style-toggle" id="btnTextUnderline" onclick="toggleTextLayerStyle('underline')" title="밑줄" style="flex: 1; padding: 0;"><u>U</u></button>
                   <button type="button" class="btn-style-toggle" id="btnTextStrike" onclick="toggleTextLayerStyle('strike')" title="취소선" style="flex: 1; padding: 0;"><s>S</s></button>
                 </div>
                 <span class="inspector-lbl" style="width: 28px; margin-left: 6px; flex-shrink: 0;">정렬</span>
@@ -4849,7 +4849,7 @@
           <div style="display: flex; flex-direction: column; gap: 2px;">
             <div style="display: flex; align-items: center; gap: 6px;">
               <span style="font-size: 12px; font-weight: 700; color: var(--text-main);">MY PDF</span>
-              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.2.0</span>
+              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.2.1</span>
             </div>
             <div style="font-size: 10.5px; color: #64748b; line-height: 1.35;">
               PDF와 이미지의 상호 변환 및 간편 편집 도구
@@ -5051,7 +5051,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 MY PDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c⚡ 현재 버전: V1.2.0 (고해상도 무손실 저장 파이프라인 & 파스텔 옐로우 핵심 버튼 강조)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c⚡ 현재 버전: V1.2.1 (객체·도형·글상자·회전·페이지 이동 툴팁 정확도 개선)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -15564,7 +15564,7 @@ if (e.target.closest('.layer-item-box')) return;
         boxEl.style.transform = `rotate(${obj.rot || 0}deg)`;
         boxEl.title = isLocked
           ? `${obj.name} (🔒 잠김 - 이동/변형 불가, 🔒 버튼으로 해제)`
-          : (isSel ? `${obj.name} (드래그: 이동, 모서리: 비율확대, Ctrl+모서리: 자유왜곡, ⟳: 회전)` : `${obj.name} (클릭하여 편집 선택, Shift+클릭: 다중선택)`);
+          : (isSel ? `${obj.name} (드래그: 이동, 모서리: 비율확대, Shift+모서리: 자유변형, Ctrl+모서리: 대칭변형, ⟳: 회전)` : `${obj.name} (클릭하여 편집 선택, Shift+클릭: 다중선택)`);
 
         // [V2.25.0] 바탕 이미지 선택 중에도 상위 객체 클릭 선택 100% 보장:
         // 바탕 이미지는 항상 바닥(10), 그 위의 부유 객체들은 20 + objIdx 부여.
@@ -15588,7 +15588,7 @@ if (e.target.closest('.layer-item-box')) return;
             const rotEl = document.createElement('div');
             rotEl.className = 'layer-rot-handle';
             rotEl.dataset.handle = 'rot';
-            rotEl.title = '드래그하여 회전';
+            rotEl.title = '드래그하여 회전 (Shift: 15° 단위)';
             rotEl.textContent = '⟳';
             boxEl.appendChild(rotEl);
           }
