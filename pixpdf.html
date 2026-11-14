@@ -4887,7 +4887,7 @@
           <div style="display: flex; flex-direction: column; gap: 2px;">
             <div style="display: flex; align-items: center; gap: 6px;">
               <span style="font-size: 12px; font-weight: 700; color: var(--text-main);">MY PDF</span>
-              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.3.0</span>
+              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.3.1</span>
             </div>
             <div style="font-size: 10.5px; color: #64748b; line-height: 1.35;">
               PDF와 이미지의 상호 변환 및 간편 편집 도구
@@ -5089,7 +5089,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 MY PDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c⚡ 현재 버전: V1.3.0 (마우스 기울이기 Skew & WebGL 고해상도 4모서리 투시변형)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c⚡ 현재 버전: V1.3.1 (크기 리셋 고정점 보정 & 4모서리 투시 핀 좌표 수정)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -5457,6 +5457,8 @@
         cfg.scaleX = 1.0;
         cfg.offsetX = 0;
         cfg.offsetY = 0;
+        cfg.resizeShiftX = 0;
+        cfg.resizeShiftY = 0;
         cfg.rotImg = 0;
         cfg.rot = 0;
         cfg.skewX = 0;
@@ -5470,6 +5472,8 @@
         const l = active.target;
         l.x = 0.5;
         l.y = 0.5;
+        l.resizeShiftX = 0;
+        l.resizeShiftY = 0;
         l.rot = 0;
         l.skewX = 0;
         l.skewY = 0;
@@ -5608,9 +5612,13 @@
       if (active.isBase) {
         active.target.offsetX = 0;
         active.target.offsetY = 0;
+        active.target.resizeShiftX = 0;
+        active.target.resizeShiftY = 0;
       } else {
         active.target.x = 0.5;
         active.target.y = 0.5;
+        active.target.resizeShiftX = 0;
+        active.target.resizeShiftY = 0;
       }
       requestViewerRedraw();
       updateThumbnailAsync(curIdx);
@@ -5675,6 +5683,10 @@
       if (active.isBase) {
         active.target.contentScale = 1.0;
         active.target.scaleX = 1.0;
+        active.target.offsetX = Math.max(-150, Math.min(150, (active.target.offsetX || 0) - (active.target.resizeShiftX || 0)));
+        active.target.offsetY = Math.max(-150, Math.min(150, (active.target.offsetY || 0) - (active.target.resizeShiftY || 0)));
+        active.target.resizeShiftX = 0;
+        active.target.resizeShiftY = 0;
       } else {
         if (active.target.origW && active.target.origH) {
           const mainCanvas = document.getElementById('mainViewerCanvas');
@@ -5692,6 +5704,10 @@
           active.target.w = 0.35;
           active.target.h = 0.2;
         }
+        active.target.x = Math.max(-0.4, Math.min(1.4, (active.target.x !== undefined ? active.target.x : 0.5) - (active.target.resizeShiftX || 0)));
+        active.target.y = Math.max(-0.4, Math.min(1.4, (active.target.y !== undefined ? active.target.y : 0.5) - (active.target.resizeShiftY || 0)));
+        active.target.resizeShiftX = 0;
+        active.target.resizeShiftY = 0;
       }
       requestViewerRedraw();
       updateThumbnailAsync(curIdx);
@@ -9729,10 +9745,10 @@ const modal = document.getElementById('modalPdfPicker');
         if (!geom) return null;
         return {
           targetInfo,
-          cx: (paperRect.sx + geom.x * paperRect.subW) * scaleX,
-          cy: (paperRect.sy + geom.y * paperRect.subH) * scaleY,
-          bw: geom.w * paperRect.subW * scaleX,
-          bh: geom.h * paperRect.subH * scaleY,
+          cx: (paperRect.sx + geom.visualCx * paperRect.subW) * scaleX,
+          cy: (paperRect.sy + geom.visualCy * paperRect.subH) * scaleY,
+          bw: geom.visualW * paperRect.subW * scaleX,
+          bh: geom.visualH * paperRect.subH * scaleY,
           rot: geom.rot || 0,
           skewX: Number(cfg.skewX) || 0,
           skewY: Number(cfg.skewY) || 0
@@ -9740,12 +9756,13 @@ const modal = document.getElementById('modalPdfPicker');
       } else {
         const layer = targetInfo.target;
         const geom = getLayerVisualGeometry(layer, paperRect.subW, paperRect.subH);
+        if (!geom) return null;
         return {
           targetInfo,
-          cx: (paperRect.sx + geom.x * paperRect.subW) * scaleX,
-          cy: (paperRect.sy + geom.y * paperRect.subH) * scaleY,
-          bw: geom.w * paperRect.subW * scaleX,
-          bh: geom.h * paperRect.subH * scaleY,
+          cx: (paperRect.sx + geom.visualCx * paperRect.subW) * scaleX,
+          cy: (paperRect.sy + geom.visualCy * paperRect.subH) * scaleY,
+          bw: geom.visualW * paperRect.subW * scaleX,
+          bh: geom.visualH * paperRect.subH * scaleY,
           rot: geom.rot || 0,
           skewX: Number(layer.skewX) || 0,
           skewY: Number(layer.skewY) || 0
@@ -12008,6 +12025,8 @@ if (e.target.closest('.layer-item-box')) return;
         cfg.scaleX = 1.0;
         cfg.offsetX = 0;
         cfg.offsetY = 0;
+        cfg.resizeShiftX = 0;
+        cfg.resizeShiftY = 0;
         cfg.paperCropMeta = { w: pw, h: ph, mmLong, origin };
         if (item._croppedCanvas) {
           item._croppedCanvas.width = 0;
@@ -16267,6 +16286,10 @@ if (e.target.closest('.layer-item-box')) return;
             origCfgOffsetX: cfg.offsetX || 0,
             origCfgOffsetY: cfg.offsetY || 0,
             origCfgRot: cfg.rotImg || 0,
+            origRawX: obj.isBase ? (cfg.offsetX || 0) : (selRawLayer && selRawLayer.x !== undefined ? selRawLayer.x : 0.5),
+            origRawY: obj.isBase ? (cfg.offsetY || 0) : (selRawLayer && selRawLayer.y !== undefined ? selRawLayer.y : 0.5),
+            origResizeShiftX: obj.isBase ? (cfg.resizeShiftX || 0) : (selRawLayer ? (selRawLayer.resizeShiftX || 0) : 0),
+            origResizeShiftY: obj.isBase ? (cfg.resizeShiftY || 0) : (selRawLayer ? (selRawLayer.resizeShiftY || 0) : 0),
             pScreenW: Math.max(20, pScreenW),
             pScreenH: Math.max(20, pScreenH),
             centerScreenX,
@@ -16549,6 +16572,8 @@ if (e.target.closest('.layer-item-box')) return;
             cfg.offsetX = Math.max(-150, Math.min(150, d.origCfgOffsetX + dxPercent));
             cfg.offsetY = Math.max(-150, Math.min(150, d.origCfgOffsetY + dyPercent));
           }
+          cfg.resizeShiftX = d.origResizeShiftX + ((cfg.offsetX || 0) - d.origRawX);
+          cfg.resizeShiftY = d.origResizeShiftY + ((cfg.offsetY || 0) - d.origRawY);
         } else {
           const sel = getSelectedLayer();
           if (!sel || sel.id !== d.layerId) return;
@@ -16566,6 +16591,8 @@ if (e.target.closest('.layer-item-box')) return;
             sel.x = Math.max(-0.4, Math.min(1.4, newVisualCx));
             sel.y = Math.max(-0.4, Math.min(1.4, newVisualCy));
           }
+          sel.resizeShiftX = d.origResizeShiftX + (sel.x - d.origRawX);
+          sel.resizeShiftY = d.origResizeShiftY + (sel.y - d.origRawY);
         }
         const ratioTag = shouldKeepRatio ? ' (정비율)' : ' (자유비율)';
         updateHudBadge(`크기: ${Math.round(newW * 100)}% × ${Math.round(newH * 100)}%${ratioTag}`, e.clientX, e.clientY);
