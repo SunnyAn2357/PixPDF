@@ -816,6 +816,26 @@
       background: #1e293b;
       box-shadow: 0 2px 6px rgba(51, 65, 85, 0.35);
     }
+    /* MY 노트에 반영 버튼 (MY 노트에서 편집 모드로 열렸을 때만 노출) */
+    #btnReflectToMyNote {
+      background: #2563eb;
+      color: #ffffff;
+      border: 1px solid #1d4ed8;
+      box-shadow: 0 1px 3px rgba(37, 99, 235, 0.28);
+      white-space: nowrap;
+    }
+    #btnReflectToMyNote:hover:not(:disabled) {
+      background: #1d4ed8;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.38);
+    }
+    #btnReflectToMyNote:disabled {
+      background: #cbd5e1 !important;
+      color: #94a3b8 !important;
+      border-color: #cbd5e1 !important;
+      box-shadow: none !important;
+      cursor: not-allowed !important;
+      opacity: 0.7;
+    }
     .btn-action-dual:disabled, #btnSavePdf:disabled, #btnSaveImg:disabled {
       background: #cbd5e1 !important;
       color: #94a3b8 !important;
@@ -4708,6 +4728,10 @@
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
               <span>Img 저장</span>
             </button>
+            <button class="btn-action-dual btn-mynote" id="btnReflectToMyNote" onclick="executeReflectToMyNote()" style="display: none;" title="편집한 이미지를 MY 노트 본문에 즉시 반영 (다운로드 폴더에도 사본 저장)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              <span>MY 노트에 반영</span>
+            </button>
           </div>
           <!-- 진행률 바만 보존 -->
           <div class="progress-bar-wrap" id="progWrap" style="margin-top: 6px; display: none;">
@@ -5013,7 +5037,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 MY PDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c⚡ 현재 버전: V1.0.0 (워커 스크립트 전역 프리로드 및 안전 버퍼 전송 완비)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c⚡ 현재 버전: V1.1.0 (워커 스크립트 전역 프리로드 및 안전 버퍼 전송 완비)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -7702,6 +7726,7 @@
     // 문서 닫기 (현재 열린 모든 이미지 및 PDF 닫기)
     function triggerCloseDocument() {
       closeMenuDropdown();
+      setMyNoteEditSession(null);
       docState.items = [];
       docState.checkList = [];
       docState.currentIndex = 0;
@@ -9303,6 +9328,108 @@ const modal = document.getElementById('modalPdfPicker');
         await executeSaveMergedPdf();
       }
       toggleMobileControl(false);
+    }
+
+    // [V1.1.0] MY 노트 편집 세션 상태 및 조건부 'MY 노트에 반영' 버튼 제어
+    let myNoteEditSession = null;
+    function setMyNoteEditSession(session) {
+      myNoteEditSession = session && session.editId ? session : null;
+      const btn = document.getElementById('btnReflectToMyNote');
+      if (btn) {
+        btn.style.display = myNoteEditSession ? 'inline-flex' : 'none';
+      }
+    }
+
+    async function executeReflectToMyNote() {
+      if (!myNoteEditSession || !window.chrome || !window.chrome.webview) return;
+      if (!docState.items || docState.items.length === 0) {
+        if (typeof showToast === 'function') showToast('반영할 이미지가 없습니다.');
+        return;
+      }
+
+      const btn = document.getElementById('btnReflectToMyNote');
+      if (btn) btn.disabled = true;
+      updateStatusMsg('MY 노트에 반영할 이미지 생성 중...');
+
+      try {
+        let pageIndex = (typeof docState.currentIndex === 'number' && docState.items[docState.currentIndex]) ? docState.currentIndex : 0;
+        const checkedIdx = docState.checkList ? docState.checkList.findIndex((chk, i) => chk && docState.items[i]) : -1;
+        if (!docState.items[pageIndex] && checkedIdx >= 0) pageIndex = checkedIdx;
+
+        const p = docState.items[pageIndex];
+        if (!p) throw new Error('대상 페이지를 찾을 수 없습니다.');
+
+        if (p.type === 'pdf' && !p.imgObj) {
+          await ensureItemCanvas(p);
+        }
+
+        const cfg = getEffectiveItemSettings(pageIndex);
+        const { isPageRot90 } = getResolvedRotations(cfg);
+        const activeScaleOpt = document.getElementById('selScale')?.value || docState.globalSettings.scale || 'original';
+        const qComp = resolveQualityCompression(activeScaleOpt);
+
+        const origW = p.width || (p.imgObj ? (p.imgObj.naturalWidth || p.imgObj.width) : 1200);
+        const origH = p.height || (p.imgObj ? (p.imgObj.naturalHeight || p.imgObj.height) : 1600);
+        const baseOrigW = isPageRot90 ? origH : origW;
+        const baseOrigH = isPageRot90 ? origW : origH;
+        const imgF = (p.type === 'pdf') ? 1 : getImagePageFactor(origW, origH);
+        const scaleMul = (p.type === 'pdf') ? qComp.scaleMulImg : (imgF * qComp.scaleMulImg);
+        const refW = baseOrigW * scaleMul, refH = baseOrigH * scaleMul;
+        const isOrigLandscape = origW > origH;
+        const orientOpt = cfg.orient || 'auto';
+        const baseLandscape = orientOpt === 'l' || (orientOpt === 'auto' && isOrigLandscape);
+        const isLandscape = isPageRot90 ? !baseLandscape : baseLandscape;
+        const sizeKey = cfg.fit || cfg.pageSize || 'original';
+        const paper = resolvePaperGeometry(sizeKey, isLandscape, refW, refH, cfg.customW, cfg.customH, { orient: orientOpt, rot90: (typeof isPageRot90 !== 'undefined' && isPageRot90) });
+
+        let paperW, paperH;
+        if (cfg.fit === 'original' || cfg.pageSize === 'original') {
+          paperW = Math.round(baseOrigW * scaleMul);
+          paperH = Math.round(baseOrigH * scaleMul);
+        } else if (cfg.fit === 'custom' || cfg.pageSize === 'custom') {
+          const pcMul = getPaperCropExportMul(cfg, scaleMul);
+          paperW = Math.round(paper.widthPx * pcMul);
+          paperH = Math.round(paper.heightPx * pcMul);
+        } else {
+          if (paper.isLandscape) {
+            paperW = Math.max(refW, Math.round(refH * paper.ratio));
+            paperH = Math.round(paperW / paper.ratio);
+          } else {
+            paperH = Math.max(refH, Math.round(refW / paper.ratio));
+            paperW = Math.round(paperH * paper.ratio);
+          }
+        }
+
+        const rawFmtVal = document.getElementById('selFormat')?.value || 'png';
+        const isTrans = (rawFmtVal === 'png');
+        const effCfg = Object.assign({}, cfg, { format: 'png', transparentBg: isTrans });
+
+        const finalCanvas = document.createElement('canvas');
+        drawPaperWithImage(finalCanvas, p, effCfg, { targetWidth: paperW, targetHeight: paperH });
+        const blob = await new Promise(r => finalCanvas.toBlob(r, 'image/png'));
+        finalCanvas.width = 0; finalCanvas.height = 0;
+        if (!blob) throw new Error('PNG 인코딩 실패');
+
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+        const base64 = String(dataUrl).split(',')[1] || '';
+
+        window.chrome.webview.postMessage(JSON.stringify({
+          action: 'reflectToMyNote',
+          editId: myNoteEditSession.editId,
+          replyPipe: myNoteEditSession.replyPipe || 'MY_Notes_ImageReturn_Pipe',
+          dataBase64: base64
+        }));
+      } catch (err) {
+        console.error(err);
+        updateStatusMsg('MY 노트 반영 실패: ' + err.message);
+        if (typeof showToast === 'function') showToast('반영 실패: ' + err.message);
+        if (btn) btn.disabled = false;
+      }
     }
 
     // 선택된 항목들을 고화질 이미지로 개별/ZIP 분할 저장 (PDF/이미지 혼합 완벽 지원)
@@ -16430,7 +16557,24 @@ if (e.target.closest('.layer-item-box')) return;
               showExitConfirmModal();
               return;
             }
+            if (msg && msg.action === 'reflectToMyNoteComplete') {
+              const btn = document.getElementById('btnReflectToMyNote');
+              if (btn) btn.disabled = false;
+              if (msg.success) {
+                updateStatusMsg('MY 노트에 반영 완료! (다운로드 폴더에도 저장됨)');
+                if (typeof showToast === 'function') showToast('MY 노트에 반영 완료! (다운로드 폴더에도 저장됨)');
+              } else {
+                updateStatusMsg('MY 노트 반영 실패: ' + (msg.error || '오류'));
+                if (typeof showToast === 'function') showToast('MY 노트 반영 실패: ' + (msg.error || '오류'));
+              }
+              return;
+            }
             if (msg && msg.action === 'openExternalFile' && msg.dataBase64) {
+              if (msg.fromMyNote === true) {
+                setMyNoteEditSession({ editId: msg.editId || '', replyPipe: msg.replyPipe || 'MY_Notes_ImageReturn_Pipe' });
+              } else {
+                setMyNoteEditSession(null);
+              }
               const byteCharacters = atob(msg.dataBase64);
               const byteNumbers = new Array(byteCharacters.length);
               for (let i = 0; i < byteCharacters.length; i++) {
