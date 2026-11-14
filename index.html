@@ -4964,7 +4964,7 @@
           <div style="display: flex; flex-direction: column; gap: 2px;">
             <div style="display: flex; align-items: center; gap: 6px;">
               <span style="font-size: 12px; font-weight: 700; color: var(--text-main);">MY PDF</span>
-              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.3.6</span>
+              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.3.7</span>
             </div>
             <div style="font-size: 10.5px; color: #64748b; line-height: 1.35;">
               PDF와 이미지의 상호 변환 및 간편 편집 도구
@@ -5166,7 +5166,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 MY PDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c⚡ 현재 버전: V1.3.6 (썸네일 Enter 간편 빈 페이지 생성 & 전 영역 상황별 우클릭 메뉴)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c⚡ 현재 버전: V1.3.7 (무손실 렌더링 고속화: 바탕 오프스크린 캐시 · 썸네일 중복 제거 · 고속 복사 · 디바운스)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -6736,8 +6736,51 @@
       return vp;
     }
 
+    // [V1.3.7] 바탕 이미지 오프스크린 캐시 (추가 레이어 이동·편집 시 바탕 투시/필터 재계산 0%)
+    let _baseLayerImgCache = { canvas: null, key: '' };
+    let _baseCacheUidSeq = 1;
+
     // [V2.24.0] 기본 이미지 단독 렌더러 (회전 각도와 무관하게 일정한 크기 유지 및 자르기 영역 기준 제자리 반전 완벽 지원)
     function drawSingleBaseImage(ctx, canvasW, canvasH, item, cfg, geom) {
+      if (!item || !item.imgObj || cfg.isBaseDeleted) return;
+      if (ctx && ctx.canvas && ctx.canvas.id === 'mainViewerCanvas') {
+        if (!item._cacheUid) item._cacheUid = _baseCacheUidSeq++;
+        if (!item.imgObj._cacheSrcId) item.imgObj._cacheSrcId = _baseCacheUidSeq++;
+        const filterStr = (typeof buildCanvasFilterString === 'function') ? buildCanvasFilterString(cfg) : 'none';
+        const key = [
+          item._cacheUid, item.imgObj._cacheSrcId, canvasW, canvasH,
+          geom.posX.toFixed(2), geom.posY.toFixed(2), geom.finalW.toFixed(2), geom.finalH.toFixed(2),
+          geom.rotRad.toFixed(4), geom.isObjectCrop ? 1 : 0,
+          cfg.flipH ? 1 : 0, cfg.flipV ? 1 : 0,
+          Number(cfg.skewX) || 0, Number(cfg.skewY) || 0,
+          Number(cfg.trapezoid) || 0, filterStr,
+          cfg.corners ? JSON.stringify(cfg.corners) : '',
+          cfg.crop ? JSON.stringify(cfg.crop) : ''
+        ].join('|');
+
+        if (_baseLayerImgCache.key === key && _baseLayerImgCache.canvas) {
+          ctx.drawImage(_baseLayerImgCache.canvas, 0, 0);
+          return;
+        }
+        if (!_baseLayerImgCache.canvas) {
+          _baseLayerImgCache.canvas = document.createElement('canvas');
+        }
+        const cc = _baseLayerImgCache.canvas;
+        if (cc.width !== canvasW) cc.width = canvasW;
+        if (cc.height !== canvasH) cc.height = canvasH;
+        const cctx = cc.getContext('2d');
+        cctx.clearRect(0, 0, canvasW, canvasH);
+        cctx.imageSmoothingEnabled = true;
+        cctx.imageSmoothingQuality = 'high';
+        _drawSingleBaseImageRaw(cctx, canvasW, canvasH, item, cfg, geom);
+        _baseLayerImgCache.key = key;
+        ctx.drawImage(cc, 0, 0);
+        return;
+      }
+      _drawSingleBaseImageRaw(ctx, canvasW, canvasH, item, cfg, geom);
+    }
+
+    function _drawSingleBaseImageRaw(ctx, canvasW, canvasH, item, cfg, geom) {
       if (!item || !item.imgObj || cfg.isBaseDeleted) return;
       const { posX, posY, finalW, finalH, baseDrawW, baseDrawH, cScale, scaleX, rotRad, isObjectCrop } = geom;
       const drawLocalW = baseDrawW * cScale * scaleX;
@@ -7204,7 +7247,26 @@
       }
       canvas.style.filter = 'none';
       canvas.style.transform = 'none';
-      drawPaperWithImage(canvas, item, cfg, { isThumbnail: true });
+      const mvc = document.getElementById('mainViewerCanvas');
+      const canFastCopy = (
+        index === docState.currentIndex &&
+        mvc && mvc.dataset.renderedIdx === String(index) &&
+        mvc.width > 0 && mvc.height > 0 &&
+        !(typeof isCropActive !== 'undefined' && isCropActive)
+      );
+      if (canFastCopy) {
+        const baseW = 800;
+        const canvasH = Math.max(40, Math.round(baseW * (mvc.height / mvc.width)));
+        if (canvas.width !== baseW) canvas.width = baseW;
+        if (canvas.height !== canvasH) canvas.height = canvasH;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, baseW, canvasH);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(mvc, 0, 0, baseW, canvasH);
+      } else {
+        drawPaperWithImage(canvas, item, cfg, { isThumbnail: true });
+      }
       const wrap = canvas.closest('.thumb-canvas-wrap');
       const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
       if (wrap) wrap.classList.toggle('checkerboard-bg', isTransparent);
@@ -9077,7 +9139,6 @@
           drawPaperWithImage(thumbCanvas, item, cfg, { isThumbnail: true });
           const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
           if (thumbCanvasWrap) thumbCanvasWrap.classList.toggle('checkerboard-bg', isTransparent);
-          updateViewerEdits(idx);
         })();
       });
 
@@ -9100,7 +9161,6 @@
       const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
       const wrap = thumbCanvas.parentElement;
       if (wrap) wrap.classList.toggle('checkerboard-bg', isTransparent);
-      updateViewerEdits(idx);
     }
     const renderThumbnailCard = renderSingleThumbnailCard;
 
@@ -9530,6 +9590,7 @@ const modal = document.getElementById('modalPdfPicker');
       canvas.style.filter = 'none';
       canvas.style.transform = 'none';
       drawPaperWithImage(canvas, item, cfg, { isThumbnail: false });
+      canvas.dataset.renderedIdx = String(index);
       const isTransparent = ((cfg.format || 'png') === 'png') && (cfg.transparentBg !== false);
       if (wrap) wrap.classList.toggle('checkerboard-bg', isTransparent);
       if (typeof isCropActive !== 'undefined' && isCropActive && typeof updateCropOverlayPositions === 'function') {
@@ -9662,9 +9723,22 @@ const modal = document.getElementById('modalPdfPicker');
         await renderMainViewerCanvas(curIdx);
       }
       if (tc) {
-        tc.style.filter = 'none';
-        tc.style.transform = 'none';
-        await updateThumbnailCanvas(curIdx);
+        if (curIdx === activeCurIdx) {
+          if (!window._thumbSyncTimers) window._thumbSyncTimers = {};
+          clearTimeout(window._thumbSyncTimers[curIdx]);
+          window._thumbSyncTimers[curIdx] = setTimeout(() => {
+            const tEl = document.getElementById(`thumb-canvas-${curIdx}`);
+            if (tEl && docState.items[curIdx]) {
+              tEl.style.filter = 'none';
+              tEl.style.transform = 'none';
+              updateThumbnailCanvas(curIdx);
+            }
+          }, 120);
+        } else {
+          tc.style.filter = 'none';
+          tc.style.transform = 'none';
+          await updateThumbnailCanvas(curIdx);
+        }
       }
       if (isPerspectiveActive && curIdx === activeCurIdx) {
         updateCornerPins();
