@@ -3744,6 +3744,14 @@
       border-color: #ca8a04 !important;
       color: #713f12 !important;
     }
+    /* [V1.3.2] 투시 등 배타적 모드 활성 시 타 변형/리셋 버튼 비활성화 스타일 */
+    .btn-office:disabled,
+    .btn-office-reset-all:disabled {
+      opacity: 0.36 !important;
+      pointer-events: none !important;
+      cursor: not-allowed !important;
+      filter: grayscale(0.45);
+    }
     .btn-office.btn-tf-col.btn-pastel-yellow .btn-tf-lbl {
       font-weight: 700 !important;
     }
@@ -4432,7 +4440,7 @@
               </button>
             </div>
             <!-- 1. [이미지 변형] 서브 그룹 (음영 박스 & 5열 2행 단정 배치) -->
-            <div class="office-subgroup">
+            <div id="subgroupImageTransforms" class="office-subgroup">
               <div class="office-subgroup-header">
                 <span class="office-subgroup-title">이미지 변형</span>
                 <button type="button" class="btn-office-reset-all" onclick="resetAllImageTransforms()" title="자르기, 투시, 크기, 위치, 각도, 기울기, 반전을 모두 원본 상태로 일괄 초기화">전체리셋</button>
@@ -4887,7 +4895,7 @@
           <div style="display: flex; flex-direction: column; gap: 2px;">
             <div style="display: flex; align-items: center; gap: 6px;">
               <span style="font-size: 12px; font-weight: 700; color: var(--text-main);">MY PDF</span>
-              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.3.1</span>
+              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.3.2</span>
             </div>
             <div style="font-size: 10.5px; color: #64748b; line-height: 1.35;">
               PDF와 이미지의 상호 변환 및 간편 편집 도구
@@ -5089,7 +5097,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 MY PDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c⚡ 현재 버전: V1.3.1 (크기 리셋 고정점 보정 & 4모서리 투시 핀 좌표 수정)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c⚡ 현재 버전: V1.3.2 (투시 모드 버튼 잠금·회색영역 종료·반전/자르기/페이지전환 충돌 해소)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -5338,6 +5346,7 @@
 
     
     function toggleFlipHorizontal() {
+      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) return;
       const active = getActiveEditableTarget();
       if (!active) return;
       active.target.flipH = !active.target.flipH;
@@ -5347,6 +5356,7 @@
     }
 
     function toggleFlipVertical() {
+      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) return;
       const active = getActiveEditableTarget();
       if (!active) return;
       active.target.flipV = !active.target.flipV;
@@ -5356,6 +5366,7 @@
     }
 
     function fitActiveObjectToPaper() {
+      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) return;
       const curIdx = docState.currentIndex;
       const item = docState.items[curIdx];
       if (!item) return;
@@ -5443,6 +5454,7 @@
     }
 
     function resetAllImageTransforms() {
+      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) return;
       // [V2.57.0] 자르기 모드가 켜진 채로 [전체리셋]을 눌러도 즉시 자르기 버튼/오버레이를 해제하고 자르기 영역을 100% 초기화
       if (typeof isCropActive !== 'undefined' && isCropActive) {
         endCropUI();
@@ -5603,6 +5615,7 @@
     }
 
     function resetActiveObjectOffset() {
+      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) return;
       const curIdx = docState.currentIndex;
       const active = getActiveEditableTarget();
       if (!active) {
@@ -5627,6 +5640,7 @@
     }
 
     function resetActiveObjectRotation() {
+      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) return;
       const curIdx = docState.currentIndex;
       const active = getActiveEditableTarget();
       if (!active) {
@@ -5674,6 +5688,7 @@
     }
 
     function resetActiveObjectScale() {
+      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) return;
       const curIdx = docState.currentIndex;
       const active = getActiveEditableTarget();
       if (!active) {
@@ -6699,20 +6714,47 @@
           ctx.scale(flipScaleX, flipScaleY);
         }
 
-        ctx.beginPath();
-        ctx.rect(-cropW / 2, -cropH / 2, cropW, cropH);
-        ctx.clip();
-
-        drawPerspectiveQuad(
-          ctx,
-          effImgSource,
-          -cropLocalX - drawLocalW / 2,
-          -cropLocalY - drawLocalH / 2,
-          drawLocalW,
-          drawLocalH,
-          cfg.corners,
-          cfg.trapezoid
+        const hasCornerWarp = Boolean(
+          cfg.corners && ['tl', 'tr', 'br', 'bl'].some(k => Math.abs(cfg.corners[k]?.x || 0) > 1e-4 || Math.abs(cfg.corners[k]?.y || 0) > 1e-4)
         );
+        if (hasCornerWarp) {
+          const srcW = effImgSource.naturalWidth || effImgSource.videoWidth || effImgSource.width || 1;
+          const srcH = effImgSource.naturalHeight || effImgSource.videoHeight || effImgSource.height || 1;
+          const sx = Math.max(0, Math.round((crop.x || 0) * srcW));
+          const sy = Math.max(0, Math.round((crop.y || 0) * srcH));
+          const sw = Math.max(1, Math.round((crop.w !== undefined ? crop.w : 1) * srcW));
+          const sh = Math.max(1, Math.round((crop.h !== undefined ? crop.h : 1) * srcH));
+          if (!drawSingleBaseImage._cropCache) {
+            drawSingleBaseImage._cropCache = { canvas: document.createElement('canvas'), key: '' };
+          }
+          const cache = drawSingleBaseImage._cropCache;
+          const cKey = `${item.id || ''}_${sx}_${sy}_${sw}_${sh}_${srcW}_${srcH}`;
+          if (cache.key !== cKey || cache.src !== effImgSource) {
+            cache.canvas.width = sw;
+            cache.canvas.height = sh;
+            const cCtx = cache.canvas.getContext('2d');
+            cCtx.clearRect(0, 0, sw, sh);
+            cCtx.drawImage(effImgSource, sx, sy, sw, sh, 0, 0, sw, sh);
+            cache.key = cKey;
+            cache.src = effImgSource;
+          }
+          drawPerspectiveQuad(ctx, cache.canvas, -cropW / 2, -cropH / 2, cropW, cropH, cfg.corners, cfg.trapezoid);
+        } else {
+          ctx.beginPath();
+          ctx.rect(-cropW / 2, -cropH / 2, cropW, cropH);
+          ctx.clip();
+
+          drawPerspectiveQuad(
+            ctx,
+            effImgSource,
+            -cropLocalX - drawLocalW / 2,
+            -cropLocalY - drawLocalH / 2,
+            drawLocalW,
+            drawLocalH,
+            null,
+            cfg.trapezoid
+          );
+        }
       } else {
         ctx.translate(posX + finalW / 2, posY + finalH / 2);
         ctx.rotate(rotRad);
@@ -6922,8 +6964,12 @@
       const lblPage = document.getElementById('lblPageRotVal');
       if (lblPage) lblPage.textContent = `${cfg.rotPage || 0}°`;
 
-      // 7. 투시 변환 활성화 여부 동기화 (페이지별 독립 유지)
-      syncPerspectiveUI(Boolean(cfg.isPerspectiveActive));
+      // 7. 투시 변환 활성화 여부 동기화 (페이지 전환 시 자동 종료, 동일 페이지 내에서는 전역 상태 유지)
+      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive && typeof _perspectivePageIndex !== 'undefined' && _perspectivePageIndex !== docState.currentIndex) {
+        if (typeof togglePerspectiveMode === 'function') togglePerspectiveMode(false);
+      } else {
+        syncPerspectiveUI(typeof isPerspectiveActive !== 'undefined' && Boolean(isPerspectiveActive));
+      }
 
       // 8. 다중 객체 레이어 UI 및 인스펙터 동기화
       if (typeof syncLayerUI === 'function') {
@@ -9675,6 +9721,8 @@ const modal = document.getElementById('modalPdfPicker');
     }
 
     // [V1.3.0] 4모서리 투시 변환(Corner Pinning) 대화형 편집 컨트롤러
+    let _perspectivePageIndex = -1;
+
     function syncPerspectiveUI(active) {
       const btn = document.getElementById('btnTogglePerspective');
       if (btn) {
@@ -9684,6 +9732,17 @@ const modal = document.getElementById('modalPdfPicker');
       const overlay = document.getElementById('perspectiveOverlay');
       if (overlay) {
         overlay.style.display = active ? 'block' : 'none';
+      }
+      // [V1.3.2] 투시 활성 시 '투시'와 '투시 리셋' 외의 다른 이미지 변형/리셋 버튼은 모두 잠금
+      const subgroup = document.getElementById('subgroupImageTransforms');
+      if (subgroup) {
+        subgroup.querySelectorAll('button').forEach((b) => {
+          if (b.id === 'btnTogglePerspective' || b.id === 'btnResetPerspectiveCurrent') {
+            b.disabled = false;
+          } else {
+            b.disabled = Boolean(active);
+          }
+        });
       }
     }
 
@@ -9711,15 +9770,23 @@ const modal = document.getElementById('modalPdfPicker');
           return;
         }
         isPerspectiveActive = true;
+        _perspectivePageIndex = docState.currentIndex;
         syncPerspectiveUI(true);
+        if (typeof updateLayerStageOverlay === 'function') updateLayerStageOverlay();
         updateCornerPins();
         if (typeof updateStatusMsg === 'function') {
-          updateStatusMsg('⏢ 투시변형 활성: 4개 모서리 핀(TL/TR/BR/BL)을 드래그해 왜곡을 조절하세요 ([투시] 재클릭 또는 ESC로 완료)');
+          updateStatusMsg('⏢ 투시변형 활성: 4개 모서리 핀(TL/TR/BR/BL)을 드래그해 왜곡을 조절하세요 ([투시], 회색 여백 클릭 또는 ESC로 완료)');
         }
       } else {
         isPerspectiveActive = false;
+        _perspectivePageIndex = -1;
         syncPerspectiveUI(false);
-        if (typeof updateStatusMsg === 'function') updateStatusMsg('투시변형 모드 종료');
+        if (typeof updateLayerStageOverlay === 'function') updateLayerStageOverlay();
+        if (typeof requestViewerRedraw === 'function') requestViewerRedraw();
+        if (typeof updateThumbnailAsync === 'function' && docState.currentIndex >= 0) {
+          updateThumbnailAsync(docState.currentIndex);
+        }
+        if (typeof updateStatusMsg === 'function') updateStatusMsg('투시변형 모드 종료 (변경사항 저장됨)');
       }
     }
 
@@ -9751,7 +9818,9 @@ const modal = document.getElementById('modalPdfPicker');
           bh: geom.visualH * paperRect.subH * scaleY,
           rot: geom.rot || 0,
           skewX: Number(cfg.skewX) || 0,
-          skewY: Number(cfg.skewY) || 0
+          skewY: Number(cfg.skewY) || 0,
+          flipScaleX: cfg.flipH ? -1 : 1,
+          flipScaleY: cfg.flipV ? -1 : 1
         };
       } else {
         const layer = targetInfo.target;
@@ -9765,7 +9834,9 @@ const modal = document.getElementById('modalPdfPicker');
           bh: geom.visualH * paperRect.subH * scaleY,
           rot: geom.rot || 0,
           skewX: Number(layer.skewX) || 0,
-          skewY: Number(layer.skewY) || 0
+          skewY: Number(layer.skewY) || 0,
+          flipScaleX: layer.flipH ? -1 : 1,
+          flipScaleY: layer.flipV ? -1 : 1
         };
       }
     }
@@ -9804,8 +9875,10 @@ const modal = document.getElementById('modalPdfPicker');
       const tanY = Math.tan((box.skewY * Math.PI) / 180);
 
       const toScreen = (pt) => {
-        const sx = pt.x + pt.y * tanX;
-        const sy = pt.x * tanY + pt.y;
+        const fx = pt.x * (box.flipScaleX || 1);
+        const fy = pt.y * (box.flipScaleY || 1);
+        const sx = fx + fy * tanX;
+        const sy = fx * tanY + fy;
         return {
           x: box.cx + sx * cosR - sy * sinR,
           y: box.cy + sx * sinR + sy * cosR
@@ -9860,6 +9933,10 @@ const modal = document.getElementById('modalPdfPicker');
             bw: Math.max(10, box.bw * zoom),
             bh: Math.max(10, box.bh * zoom),
             rot: box.rot,
+            tanX: Math.tan(((box.skewX || 0) * Math.PI) / 180),
+            tanY: Math.tan(((box.skewY || 0) * Math.PI) / 180),
+            flipScaleX: box.flipScaleX || 1,
+            flipScaleY: box.flipScaleY || 1,
             target: t
           };
           isPinDragging = true;
@@ -9877,8 +9954,14 @@ const modal = document.getElementById('modalPdfPicker');
         const rad = (-dragState.rot * Math.PI) / 180;
         const ldx = dx * Math.cos(rad) - dy * Math.sin(rad);
         const ldy = dx * Math.sin(rad) + dy * Math.cos(rad);
-        const nx = Math.max(-0.6, Math.min(0.6, dragState.origCorner.x + ldx / dragState.bw));
-        const ny = Math.max(-0.6, Math.min(0.6, dragState.origCorner.y + ldy / dragState.bh));
+        const det = 1 - dragState.tanX * dragState.tanY;
+        const safeDet = Math.abs(det) < 1e-4 ? (det < 0 ? -1e-4 : 1e-4) : det;
+        const fx = (ldx - ldy * dragState.tanX) / safeDet;
+        const fy = (ldy - ldx * dragState.tanY) / safeDet;
+        const px = fx * dragState.flipScaleX;
+        const py = fy * dragState.flipScaleY;
+        const nx = Math.max(-0.6, Math.min(0.6, dragState.origCorner.x + px / dragState.bw));
+        const ny = Math.max(-0.6, Math.min(0.6, dragState.origCorner.y + py / dragState.bh));
         dragState.target.corners[dragState.pinKey] = { x: nx, y: ny };
         updateCornerPins();
         requestViewerRedraw();
@@ -10800,6 +10883,13 @@ const modal = document.getElementById('modalPdfPicker');
         if (typeof isCropActive !== 'undefined' && isCropActive) {
           if (typeof closeCropMode === 'function') {
             closeCropMode();
+          }
+          return;
+        }
+        // [V1.3.2] 투시 모드 중 용지 바깥(회색 영역) 클릭 시 변경사항 유지 후 투시 모드 종료
+        if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) {
+          if (typeof togglePerspectiveMode === 'function') {
+            togglePerspectiveMode(false);
           }
           return;
         }
@@ -12120,6 +12210,9 @@ if (e.target.closest('.layer-item-box')) return;
         return;
       }
       if (isCropActive) await closeCropMode();
+      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive && typeof togglePerspectiveMode === 'function') {
+        togglePerspectiveMode(false);
+      }
       await openCropMode({ isPaper: true });
     }
     const togglePaperCropMode = togglePaperCrop;
@@ -12374,6 +12467,7 @@ if (e.target.closest('.layer-item-box')) return;
 
     // 1. 객체 자르기 토글 (객체 편집 -> 이미지 변형 -> [자르기])
     async function toggleCropMode() {
+      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) return;
       if (window.innerWidth <= 860) {
         if (typeof showExitToast === 'function') showExitToast('자르기 기능은 PC 환경에서 지원됩니다.');
         return;
@@ -13342,10 +13436,8 @@ if (e.target.closest('.layer-item-box')) return;
         }
       }
       if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) {
-        if (nextLayer && nextLayer.type !== 'image') {
-          const cfg = getEffectiveItemSettings(docState.currentIndex);
-          if (cfg) cfg.isPerspectiveActive = false;
-          if (typeof syncPerspectiveUI === 'function') syncPerspectiveUI(false);
+        if (!nextLayer || nextLayer.type !== 'image') {
+          if (typeof togglePerspectiveMode === 'function') togglePerspectiveMode(false);
         } else {
           if (typeof updateCornerPins === 'function') updateCornerPins();
         }
@@ -13987,6 +14079,9 @@ if (e.target.closest('.layer-item-box')) return;
         selectedLayerId = null;
         if (typeof isCropActive !== 'undefined' && isCropActive && typeof cancelCrop === 'function') {
           await cancelCrop();
+        }
+        if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive && typeof togglePerspectiveMode === 'function') {
+          togglePerspectiveMode(false);
         }
         syncLayerUI();
         await refreshAllViewsForLayers();
