@@ -323,11 +323,79 @@
       flex: 1;
       min-height: 0;
       overflow-y: auto;
-      padding: 12px;
+      padding: 6px 12px 10px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 0;
       position: relative;
+    }
+    .thumb-insert-slot {
+      flex-shrink: 0;
+      height: 22px;
+      width: 100%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .thumb-insert-slot::before {
+      content: '';
+      position: absolute;
+      left: 6px;
+      right: 6px;
+      top: 50%;
+      height: 2px;
+      transform: translateY(-50%);
+      border-radius: 2px;
+      border-top: 2px dashed transparent;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .thumb-insert-slot-pill {
+      position: relative;
+      z-index: 1;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: #eff6ff;
+      color: #2563eb;
+      border: 1px solid #bfdbfe;
+      opacity: 0;
+      transform: scale(0.92);
+      transition: opacity 0.14s ease, transform 0.14s ease, background 0.14s ease, color 0.14s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .thumb-insert-slot:hover::before {
+      border-top-color: #93c5fd;
+    }
+    .thumb-insert-slot:hover .thumb-insert-slot-pill {
+      opacity: 0.92;
+      transform: scale(1);
+    }
+    .thumb-insert-slot.active::before {
+      border-top: 2px solid #2563eb;
+    }
+    .thumb-insert-slot.active .thumb-insert-slot-pill {
+      opacity: 1;
+      transform: scale(1);
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #1d4ed8;
+      box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+    }
+    .thumb-insert-slot.drag-over::before {
+      border-top: 3px solid var(--primary);
+    }
+    .thumb-insert-slot.drag-over .thumb-insert-slot-pill {
+      opacity: 1;
+      transform: scale(1);
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
     }
     .thumb-card {
       flex-shrink: 0;
@@ -1141,46 +1209,56 @@
       overflow: visible;
     }
     .perspective-svg polygon {
-      fill: rgba(15, 118, 110, 0.08);
-      stroke: #0f766e;
-      stroke-width: 2;
+      fill: rgba(37, 99, 235, 0.06);
+      stroke: #2563eb;
+      stroke-width: 2.5;
       stroke-dasharray: 6, 4;
+      filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.92));
     }
     .corner-pin {
       position: absolute;
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      background: #0f766e;
-      color: #ffffff;
-      border: 2px solid #ffffff;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      background: #ffffff;
+      color: transparent;
+      font-size: 0;
+      line-height: 0;
+      overflow: visible;
+      border: 2px solid #2563eb;
+      box-sizing: border-box;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 9.5px;
-      font-weight: 800;
       cursor: grab;
       pointer-events: auto;
       transform: translate(-50%, -50%);
       user-select: none;
-      transition: transform 0.1s ease, background 0.15s ease, box-shadow 0.15s ease;
+      transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
       touch-action: none;
+    }
+    .corner-pin::after {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      cursor: inherit;
     }
     /* 모바일/우측 미니 프리뷰 전용 컴팩트 터치 핀 핸들 */
     .mini-corner-pin {
       position: absolute;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: #0f766e;
-      color: #ffffff;
-      border: 1.5px solid #ffffff;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+      width: 16px;
+      height: 16px;
+      border-radius: 2px;
+      background: #ffffff;
+      color: #2563eb;
+      border: 2px solid #2563eb;
+      box-sizing: border-box;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 8px;
+      font-size: 7px;
       font-weight: 800;
       cursor: grab;
       user-select: none;
@@ -1188,7 +1266,7 @@
       transform: translate(-50%, -50%);
       pointer-events: auto;
       touch-action: none;
-      transition: transform 0.1s ease, background 0.15s ease;
+      transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
     }
     .mini-corner-pin::before {
       content: '';
@@ -1196,14 +1274,15 @@
       inset: -9px; /* 모바일 손가락 터치 38px x 38px 터치 영역 확보 */
     }
     .mini-corner-pin:hover, .mini-corner-pin.active {
-      background: #047857;
-      transform: translate(-50%, -50%) scale(1.25);
-      box-shadow: 0 3px 10px rgba(4, 120, 87, 0.6);
-      border-color: #a7f3d0;
+      background: #eff6ff;
+      color: #1d4ed8;
+      transform: translate(-50%, -50%) scale(1.22);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25), 0 2px 6px rgba(0, 0, 0, 0.35);
+      border-color: #1d4ed8;
     }
     .mini-corner-pin:active {
       cursor: grabbing;
-      background: #065f46;
+      background: #dbeafe;
     }
     /* 모바일/우측 핀 터치 드래그 시 손가락 위에 뜨는 정밀 확대 돋보기(Loupe) */
     .pin-loupe {
@@ -1216,19 +1295,19 @@
     .pin-loupe canvas {
       border-radius: 50%;
       border: 3px solid #ffffff;
-      box-shadow: 0 0 0 2px var(--primary);
+      box-shadow: 0 0 0 2px #2563eb;
       display: block;
       background: #ffffff;
     }
     .corner-pin:hover, .corner-pin.active {
-      background: #047857;
+      background: #eff6ff;
       transform: translate(-50%, -50%) scale(1.22);
-      box-shadow: 0 4px 12px rgba(4, 120, 87, 0.55);
-      border-color: #a7f3d0;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25), 0 2px 6px rgba(0, 0, 0, 0.3);
+      border-color: #1d4ed8;
     }
     .corner-pin:active {
       cursor: grabbing;
-      background: #065f46;
+      background: #dbeafe;
     }
     /* 모서리 선택 칩 (우측 패널) */
     .corner-select-row {
@@ -2116,12 +2195,14 @@
     }
     .crop-box-border {
       fill: none;
-      stroke: #0d9488;
-      stroke-width: 1px;
+      stroke: #2563eb;
+      stroke-width: 2.5px;
+      stroke-dasharray: 6 4;
+      filter: drop-shadow(0 0 1.5px rgba(255, 255, 255, 0.92));
     }
     .crop-grid-line {
-      stroke: rgba(255, 255, 255, 0.4);
-      stroke-width: 0.8px;
+      stroke: rgba(255, 255, 255, 0.65);
+      stroke-width: 1px;
       stroke-dasharray: 4 3;
     }
 
@@ -2151,66 +2232,29 @@
       cursor: inherit;
     }
 
-    /* 세련된 프로페셔널 L자형 코너 브래킷 (16x16px, 두께 3px, Teal 테마 및 미세 그림자) */
-    .crop-bracket {
-      width: 16px;
-      height: 16px;
-      box-sizing: border-box;
-      border-color: #0d9488;
-      border-style: solid;
-      border-width: 0;
-      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
-      transition: border-color 0.12s ease;
-    }
-    .crop-bracket:hover {
-      border-color: #14b8a6;
-    }
-    .crop-bracket.tl {
-      border-top-width: 3px;
-      border-left-width: 3px;
-      transform: translate(-1px, -1px);
-      cursor: nwse-resize;
-    }
-    .crop-bracket.tr {
-      border-top-width: 3px;
-      border-right-width: 3px;
-      transform: translate(calc(-100% + 1px), -1px);
-      cursor: nesw-resize;
-    }
-    .crop-bracket.br {
-      border-bottom-width: 3px;
-      border-right-width: 3px;
-      transform: translate(calc(-100% + 1px), calc(-100% + 1px));
-      cursor: nwse-resize;
-    }
-    .crop-bracket.bl {
-      border-bottom-width: 3px;
-      border-left-width: 3px;
-      transform: translate(-1px, calc(-100% + 1px));
-      cursor: nesw-resize;
-    }
-
-    /* 세련된 슬림 엣지 바 (두께 3px, 길이 22px) */
+    /* 기본 선택(.layer-resize-handle)과 완전히 동일한 10x10px 정사각 파랑/흰색 조절 핸들 */
+    .crop-bracket,
     .crop-bar {
-      background: #0d9488;
+      width: 10px;
+      height: 10px;
+      box-sizing: border-box;
+      background: #ffffff;
+      border: 2px solid #2563eb;
       border-radius: 2px;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-      transform: translate(-50%, -50%);
-      transition: background 0.12s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      transition: background 0.12s ease, border-color 0.12s ease;
     }
+    .crop-bracket:hover,
     .crop-bar:hover {
-      background: #14b8a6;
+      background: #eff6ff;
+      border-color: #1d4ed8;
     }
-    .crop-bar.t, .crop-bar.b {
-      width: 22px;
-      height: 3px;
-      cursor: ns-resize;
-    }
-    .crop-bar.l, .crop-bar.r {
-      width: 3px;
-      height: 22px;
-      cursor: ew-resize;
-    }
+    .crop-bracket.tl { cursor: nwse-resize; }
+    .crop-bracket.tr { cursor: nesw-resize; }
+    .crop-bracket.br { cursor: nwse-resize; }
+    .crop-bracket.bl { cursor: nesw-resize; }
+    .crop-bar.t, .crop-bar.b { cursor: ns-resize; }
+    .crop-bar.l, .crop-bar.r { cursor: ew-resize; }
 
     /* 2열 툴바 중앙에 단정하게 배치되는 자르기 제어 바 */
     .viewer-crop-toolbar {
@@ -2894,23 +2938,47 @@
     .layer-resize-handle.bl { left: -5px; bottom: -5px; cursor: nesw-resize; }
     .layer-resize-handle.l  { left: -5px; top: calc(50% - 5px); cursor: ew-resize; }
 
-    .layer-rot-handle {
+    .layer-move-handle,
+    .layer-rot-handle,
+    .layer-lock-btn,
+    .layer-del-btn {
       position: absolute;
-      left: calc(50% - 8px);
-      top: -26px;
-      width: 16px;
-      height: 16px;
-      background: #2563eb;
-      color: #ffffff;
-      border: 2px solid #ffffff;
+      top: -28px;
+      width: 20px;
+      height: 20px;
+      box-sizing: border-box;
       border-radius: 50%;
-      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z' fill='%230f172a' stroke='%23ffffff' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E") 12 12, crosshair;
+      border: 1.5px solid #ffffff;
+      color: #ffffff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 9px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+      padding: 0;
+      line-height: 1;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.28);
+      user-select: none;
+      pointer-events: auto;
+      transition: transform 0.12s ease, background 0.12s ease;
+    }
+    .layer-move-handle {
+      left: calc(50% - 34px);
+      background: #2563eb;
+      cursor: move;
+      z-index: 18;
+    }
+    .layer-move-handle:hover {
+      background: #1d4ed8;
+      transform: scale(1.12);
+    }
+    .layer-rot-handle {
+      left: calc(50% - 10px);
+      background: #2563eb;
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z' fill='%230f172a' stroke='%23ffffff' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E") 12 12, crosshair;
       z-index: 17;
+    }
+    .layer-rot-handle:hover {
+      background: #1d4ed8;
+      transform: scale(1.12);
     }
     .layer-rot-handle:active,
     body.is-rotating-layer,
@@ -2921,74 +2989,47 @@
       content: '';
       position: absolute;
       left: 50%;
-      top: 14px;
+      top: 18px;
       width: 1.5px;
-      height: 10px;
+      height: 8px;
       background: #2563eb;
       transform: translateX(-50%);
       pointer-events: none;
     }
-    .layer-del-btn {
-      position: absolute;
-      right: -10px;
-      top: -24px;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: #dc2626;
-      color: #ffffff;
-      border: 1.5px solid #ffffff;
-      font-size: 10px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    /* [V2.72.0] 객체 잠금(Lock) 버튼 & 삭제(Del) 버튼 통일 스타일 */
+    .layer-lock-btn {
+      left: calc(50% + 14px);
+      background: #475569;
       cursor: pointer;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
       z-index: 18;
-      padding: 0;
-      line-height: 1;
+    }
+    .layer-lock-btn:hover {
+      background: #334155;
+      transform: scale(1.12);
+    }
+    .layer-lock-btn.is-locked {
+      background: #d97706 !important;
+    }
+    .layer-lock-btn.is-locked:hover {
+      background: #b45309 !important;
+    }
+    .layer-del-btn {
+      left: calc(50% + 38px);
+      background: #dc2626;
+      cursor: pointer;
+      z-index: 18;
     }
     .layer-del-btn:hover {
       background: #b91c1c;
-      transform: scale(1.1);
-    }
-    /* [V2.72.0] 객체 잠금(Lock) 버튼 & 잠금 상태 렌더링 */
-    .layer-lock-btn {
-      position: absolute;
-      right: 12px;
-      top: -24px;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: #475569;
-      color: #ffffff;
-      border: 1.5px solid #ffffff;
-      font-size: 9px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-      z-index: 18;
-      padding: 0;
-      line-height: 1;
-      transition: all 0.15s ease;
-    }
-    .layer-lock-btn:hover {
-      transform: scale(1.1);
-      background: #334155;
-    }
-    .layer-lock-btn.is-locked {
-      background: #f59e0b !important;
+      transform: scale(1.12);
     }
     .layer-item-box.is-locked {
       border: 2px dashed #f59e0b !important;
       cursor: default !important;
     }
     .layer-item-box.is-locked .layer-resize-handle,
-    .layer-item-box.is-locked .layer-rot-handle {
+    .layer-item-box.is-locked .layer-rot-handle,
+    .layer-item-box.is-locked .layer-move-handle {
       display: none !important;
     }
 
@@ -3703,6 +3744,18 @@
       border-color: var(--primary) !important;
       color: var(--primary) !important;
     }
+    .btn-rot-paper.btn-rot-paper-reset {
+      background: #e2e8f0 !important;
+      border: 1px solid #94a3b8 !important;
+      color: #1e293b !important;
+      font-weight: 700 !important;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .btn-rot-paper.btn-rot-paper-reset:hover {
+      background: #cbd5e1 !important;
+      border-color: #64748b !important;
+      color: #0f172a !important;
+    }
 
   
     /* V2.16.0 Status hint in middle viewer toolbar */
@@ -3874,14 +3927,16 @@
     }
     /* [V1.3.0] 이미지 변형 리셋 버튼 전용 회색 스타일 */
     .btn-office.btn-tf-col.btn-tf-reset {
-      background: #f1f5f9 !important;
-      border-color: #cbd5e1 !important;
-      color: #475569 !important;
+      background: #e2e8f0 !important;
+      border: 1px solid #94a3b8 !important;
+      color: #1e293b !important;
+      font-weight: 700 !important;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
     .btn-office.btn-tf-col.btn-tf-reset:hover {
-      background: #e2e8f0 !important;
-      border-color: #94a3b8 !important;
-      color: #1e293b !important;
+      background: #cbd5e1 !important;
+      border-color: #64748b !important;
+      color: #0f172a !important;
     }
     /* [V1.2.0] 용지에 맞춤 전용 파스텔 옐로우 강조 버튼 */
     .btn-office.btn-tf-col.btn-pastel-yellow {
@@ -3894,13 +3949,28 @@
       border-color: #ca8a04 !important;
       color: #713f12 !important;
     }
-    /* [V1.3.2] 투시 등 배타적 모드 활성 시 타 변형/리셋 버튼 비활성화 스타일 */
+    /* [V1.4.0] 투시/자르기 배타적 모드 및 미선택 상태 비활성화 스타일 */
     .btn-office:disabled,
-    .btn-office-reset-all:disabled {
+    .btn-office-reset-all:disabled,
+    .btn-compact-reset:disabled {
       opacity: 0.36 !important;
       pointer-events: none !important;
       cursor: not-allowed !important;
       filter: grayscale(0.45);
+    }
+    .office-slider:disabled {
+      opacity: 0.38 !important;
+      pointer-events: none !important;
+      cursor: not-allowed !important;
+    }
+    .office-subgroup.is-disabled-group .compact-slider-card {
+      opacity: 0.52;
+    }
+    #btnUndoAction:disabled,
+    #btnRedoAction:disabled {
+      opacity: 0.35 !important;
+      pointer-events: none !important;
+      cursor: not-allowed !important;
     }
     .btn-office.btn-tf-col.btn-pastel-yellow .btn-tf-lbl {
       font-weight: 700 !important;
@@ -4338,15 +4408,19 @@
       <div class="thumb-toolbar">
         <label id="lblSelectAll"><input type="checkbox" id="chkSelectAll"> 전체선택</label>
         <div style="display:flex; align-items:center; gap:6px; position:relative;">
-          <button class="btn-layer-add btn-insert-header" id="btnFileMgrDropdown" onclick="toggleFileMgrDropdown(event)" title="열린 파일 관리 및 새 파일/페이지 삽입">+ 삽입 ▾</button>
-          <div class="menu-dropdown insert-dropdown" id="menuFileMgrDropdown" style="top:32px; right:0; left:auto; width:165px; z-index:210;">
-            <button class="menu-item" onclick="triggerInsertFileAction(event)" style="padding:9px 12px; font-size:12.5px; display:flex; align-items:center; gap:8px;">
+          <button class="btn-layer-add btn-insert-header" id="btnFileMgrDropdown" onclick="toggleFileMgrDropdown(event)" title="선택 위치에 파일·빈 페이지 삽입 및 열린 파일 관리">+ 삽입 ▾</button>
+          <div class="menu-dropdown insert-dropdown" id="menuFileMgrDropdown" style="top:32px; right:0; left:auto; width:220px; z-index:210;">
+            <button class="menu-item" id="btnMenuInsertFile" onclick="triggerInsertFileAction(event)" style="padding:9px 12px; font-size:12.5px; display:flex; align-items:center; gap:8px;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              <span>새 파일 삽입</span>
+              <span id="lblMenuInsertFile">이 곳에 파일 삽입</span>
             </button>
-            <button class="menu-item" onclick="insertBlankPageAction(event)" style="padding:9px 12px; font-size:12.5px; display:flex; align-items:center; gap:8px;">
+            <button class="menu-item" id="btnMenuInsertBlank" onclick="insertBlankPageAction(event)" style="padding:9px 12px; font-size:12.5px; display:flex; align-items:center; gap:8px;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-              <span>빈 페이지 삽입</span>
+              <span id="lblMenuInsertBlank">이 곳에 빈 페이지 추가</span>
+            </button>
+            <button class="menu-item" id="btnMenuInsertPaste" onclick="triggerInsertPasteFromMenu(event)" style="padding:9px 12px; font-size:12.5px; display:flex; align-items:center; gap:8px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+              <span id="lblMenuInsertPaste">빈 페이지 삽입해서 붙여넣기</span>
             </button>
             <button class="menu-item" onclick="openOpenFilesManagerModal(event)" style="padding:9px 12px; font-size:12.5px; display:flex; align-items:center; gap:8px;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
@@ -4547,7 +4621,7 @@
               <span class="paper-rot-label" title="바탕 종이 자체를 90도 회전합니다 (내용물 이미지는 유지)">용지 회전</span>
               <div class="paper-rot-controls">
                 <button type="button" class="btn-rot-paper" title="종이 반시계 방향 90도 회전" onclick="rotatePageByDelta(-90)">⟲ -90°</button>
-                <button type="button" class="btn-rot-paper" title="종이 0도 정방향 초기화" onclick="rotatePageTo(0)">리셋</button>
+                <button type="button" class="btn-rot-paper btn-rot-paper-reset" title="용지 회전을 0° 정방향으로 되돌립니다" onclick="rotatePageTo(0)">리셋</button>
                 <button type="button" class="btn-rot-paper" title="종이 시계 방향 90도 회전" onclick="rotatePageByDelta(90)">⟳ +90°</button>
               </div>
               <span id="lblPageRotVal" class="paper-rot-val">0°</span>
@@ -5051,7 +5125,7 @@
           <div style="display: flex; flex-direction: column; gap: 2px;">
             <div style="display: flex; align-items: center; gap: 6px;">
               <span style="font-size: 12px; font-weight: 700; color: var(--text-main);">MY PDF</span>
-              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.3.9</span>
+              <span style="font-size: 11.5px; font-weight: 600; color: #94a3b8; letter-spacing: 0.2px;">V1.4.0</span>
             </div>
             <div style="font-size: 10.5px; color: #64748b; line-height: 1.35;">
               PDF와 이미지의 상호 변환 및 간편 편집 도구
@@ -5253,7 +5327,7 @@
 
     console.log('%c====================================================', 'color: #0d9488; font-weight: bold;');
     console.log('%c🚀 MY PDF 로딩 완료! (PDF & 이미지 양방향 변환·편집기)', 'color: #0f766e; font-size: 13px; font-weight: bold;');
-    console.log('%c⚡ 현재 버전: V1.3.9 (정렬·선택박스·배율·페이지이동·클립보드 붙여넣기·회전핸들 개선)', 'color: #0d9488; font-weight: bold;');
+    console.log('%c⚡ 현재 버전: V1.4.0 (전용 이동핸들·엄격 선택/모드 잠금·텍스트/도형 투시·통합 Undo/Redo)', 'color: #0d9488; font-weight: bold;');
     console.log('%c🔒 100% 로컬 브라우저 메모리 격리 구동 (Zero-Server & Offline-First)', 'color: #10b981; font-weight: bold;');
     console.log('%c🛡️ 보안 무결성: 외부 서버 데이터 전송 일체 없음', 'color: #64748b;');
     if (isHttpEnv) {
@@ -5486,25 +5560,27 @@
       return parts.length > 0 ? parts.join(' ') : 'none';
     }
 
-        function getActiveEditableTarget() {
+    function getActiveEditableTarget() {
       const curIdx = docState.currentIndex;
       const item = docState.items[curIdx];
-      if (!item) return null;
-      if (selectedLayerId && selectedLayerId !== '__base__') {
+      if (!item || !selectedLayerId) return null;
+      if (selectedLayerId !== '__base__') {
         const layers = getCurrentItemLayers(curIdx);
         const selLayer = layers.find(l => l.id === selectedLayerId);
-        if (selLayer) return { isBase: false, target: selLayer };
+        if (selLayer) return { isBase: false, target: selLayer, item: item };
+        return null;
       }
-      // 선택된 객체가 없거나 '__base__'일 때는 현재 페이지의 기본 이미지를 타겟으로 처리
       const cfg = getEffectiveItemSettings(curIdx);
+      if (!cfg || cfg.isBaseDeleted || !item.imgObj) return null;
       return { isBase: true, target: cfg, item: item };
     }
 
     
     function toggleFlipHorizontal() {
-      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) return;
+      if ((typeof isCropActive !== 'undefined' && isCropActive) || (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive)) return;
       const active = getActiveEditableTarget();
       if (!active) return;
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       active.target.flipH = !active.target.flipH;
       requestViewerRedraw();
       updateThumbnailAsync(docState.currentIndex);
@@ -5512,9 +5588,10 @@
     }
 
     function toggleFlipVertical() {
-      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) return;
+      if ((typeof isCropActive !== 'undefined' && isCropActive) || (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive)) return;
       const active = getActiveEditableTarget();
       if (!active) return;
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       active.target.flipV = !active.target.flipV;
       requestViewerRedraw();
       updateThumbnailAsync(docState.currentIndex);
@@ -5522,12 +5599,13 @@
     }
 
     function fitActiveObjectToPaper() {
-      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) return;
+      if ((typeof isCropActive !== 'undefined' && isCropActive) || (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive)) return;
       const curIdx = docState.currentIndex;
       const item = docState.items[curIdx];
       if (!item) return;
       const active = getActiveEditableTarget();
       if (!active) return;
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
 
       const canvas = document.getElementById('mainViewerCanvas');
       const canvasW = canvas ? canvas.width : 2000;
@@ -5539,7 +5617,10 @@
         const fullW = item.width || (item.imgObj ? (item.imgObj.naturalWidth || item.imgObj.width) : 1200);
         const fullH = item.height || (item.imgObj ? (item.imgObj.naturalHeight || item.imgObj.height) : 1600);
         const marginPx = cfg.margin || 0;
-        const scaleFactor = canvasW / (paperRect.subW || 1000);
+        const { paper } = (typeof getPaperCanvasDimensions === 'function')
+          ? getPaperCanvasDimensions(item, cfg)
+          : { paper: { widthPx: paperRect.subW || 1000 } };
+        const scaleFactor = canvasW / ((paper && paper.widthPx) ? paper.widthPx : 1000);
         const viewMargin = Math.round(marginPx * scaleFactor);
         const innerW = Math.max(10, canvasW - (viewMargin * 2));
         const innerH = Math.max(10, canvasH - (viewMargin * 2));
@@ -5610,15 +5691,11 @@
     }
 
     function resetAllImageTransforms() {
-      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) return;
-      // [V2.57.0] 자르기 모드가 켜진 채로 [전체리셋]을 눌러도 즉시 자르기 버튼/오버레이를 해제하고 자르기 영역을 100% 초기화
-      if (typeof isCropActive !== 'undefined' && isCropActive) {
-        endCropUI();
-        cropBox = { x: 0, y: 0, w: 1, h: 1 };
-      }
+      if ((typeof isCropActive !== 'undefined' && isCropActive) || (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive)) return;
       const curIdx = docState.currentIndex;
       const active = getActiveEditableTarget();
       if (!active) return;
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       if (active.isBase) {
         const cfg = active.target;
         cfg.contentScale = 1.0;
@@ -5663,9 +5740,15 @@
           l.h = h;
         }
       }
-      requestViewerRedraw();
-      updateThumbnailAsync(curIdx);
-      updateLayerStageOverlay();
+      if (typeof syncLayerUI === 'function') syncLayerUI();
+      if (typeof updateViewerEdits === 'function') {
+        updateViewerEdits(curIdx);
+      } else {
+        requestViewerRedraw();
+        updateThumbnailAsync(curIdx);
+        updateLayerStageOverlay();
+      }
+      updateMiniPreview();
       if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive && typeof updateCornerPins === 'function') {
         updateCornerPins();
       }
@@ -5680,8 +5763,11 @@
 
     let filterSliderRafId = null;
     function onFilterSliderInput(prop, val) {
+      if ((typeof isCropActive !== 'undefined' && isCropActive) || (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive)) return;
       const active = getActiveEditableTarget();
       if (!active) return;
+      if (!active.isBase && (!active.target || active.target.type !== 'image')) return;
+      if (typeof beginContinuousUndoCapture === 'function') beginContinuousUndoCapture();
       const numVal = parseFloat(val);
       active.target[prop] = numVal;
 
@@ -5706,8 +5792,11 @@
     }
 
     function resetFilterSlider(prop) {
+      if ((typeof isCropActive !== 'undefined' && isCropActive) || (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive)) return;
       const active = getActiveEditableTarget();
       if (!active) return;
+      if (!active.isBase && (!active.target || active.target.type !== 'image')) return;
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       let defaultVal = 0;
       if (prop === 'brightness' || prop === 'contrast' || prop === 'saturation' || prop === 'opacity') {
         defaultVal = 100;
@@ -5732,8 +5821,11 @@
     }
 
     function resetAllOfficeFilters() {
+      if ((typeof isCropActive !== 'undefined' && isCropActive) || (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive)) return;
       const active = getActiveEditableTarget();
       if (!active) return;
+      if (!active.isBase && (!active.target || active.target.type !== 'image')) return;
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       const t = active.target;
       t.brightness = 100;
       t.contrast = 100;
@@ -5771,13 +5863,14 @@
     }
 
     function resetActiveObjectOffset() {
-      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) return;
+      if ((typeof isCropActive !== 'undefined' && isCropActive) || (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive)) return;
       const curIdx = docState.currentIndex;
       const active = getActiveEditableTarget();
       if (!active) {
         updateStatusMsg('먼저 화면의 객체(이미지/글상자/도형)를 클릭하여 선택하세요.');
         return;
       }
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       if (active.isBase) {
         active.target.offsetX = 0;
         active.target.offsetY = 0;
@@ -5796,26 +5889,57 @@
     }
 
     function resetActiveObjectRotation() {
-      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) return;
+      if ((typeof isCropActive !== 'undefined' && isCropActive) || (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive)) return;
       const curIdx = docState.currentIndex;
+      const item = docState.items[curIdx];
       const active = getActiveEditableTarget();
       if (!active) {
         updateStatusMsg('먼저 화면의 객체(이미지/글상자/도형)를 클릭하여 선택하세요.');
         return;
       }
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       if (active.isBase) {
-        active.target.rotImg = 0;
-        active.target.rot = 0;
-        active.target.skewX = 0;
-        active.target.skewY = 0;
+        const cfg = active.target;
+        const canvas = document.getElementById('mainViewerCanvas');
+        const geom = (item && canvas && typeof getBaseImageVisualGeometry === 'function')
+          ? getBaseImageVisualGeometry(item, cfg, canvas.width || 2000, canvas.height || 2000)
+          : null;
+        if (geom && geom.hasCrop) {
+          const unmapped = geom.unmap(geom.visualW, geom.visualH, geom.visualCx, geom.visualCy, 0);
+          cfg.offsetX = unmapped.offsetX;
+          cfg.offsetY = unmapped.offsetY;
+        }
+        cfg.rotImg = 0;
+        cfg.rot = 0;
+        cfg.skewX = 0;
+        cfg.skewY = 0;
       } else {
-        active.target.rot = 0;
-        active.target.skewX = 0;
-        active.target.skewY = 0;
+        const l = active.target;
+        const geom = (typeof getLayerVisualGeometry === 'function') ? getLayerVisualGeometry(l) : null;
+        if (geom && geom.hasCrop) {
+          const unmapped = geom.unmap(geom.visualW, geom.visualH, geom.visualCx, geom.visualCy, 0);
+          l.rot = 0;
+          l.x = Math.max(-0.4, Math.min(1.4, unmapped.x));
+          l.y = Math.max(-0.4, Math.min(1.4, unmapped.y));
+        } else {
+          l.rot = 0;
+        }
+        l.skewX = 0;
+        l.skewY = 0;
       }
-      requestViewerRedraw();
-      updateThumbnailAsync(curIdx);
-      updateLayerStageOverlay();
+      const sliderRot = document.getElementById('sliderRotation');
+      if (sliderRot) sliderRot.value = 0;
+      const lblRot = document.getElementById('lblRotationVal');
+      if (lblRot) lblRot.textContent = '0°';
+      if (typeof syncLayerUI === 'function') syncLayerUI();
+      if (typeof updateViewerEdits === 'function') {
+        updateViewerEdits(curIdx);
+      } else {
+        requestViewerRedraw();
+        updateThumbnailAsync(curIdx);
+        updateLayerStageOverlay();
+      }
+      updateMiniPreview();
       if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive && typeof updateCornerPins === 'function') {
         updateCornerPins();
       }
@@ -5823,20 +5947,27 @@
     }
 
     function resetActiveObjectPerspective() {
+      if (typeof isCropActive !== 'undefined' && isCropActive) return;
       const curIdx = docState.currentIndex;
       const active = getActiveEditableTarget();
       if (!active) {
         updateStatusMsg('먼저 화면의 객체(이미지/글상자/도형)를 클릭하여 선택하세요.');
         return;
       }
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       active.target.corners = null;
       if (active.isBase) {
         active.target.trapezoid = 0;
       }
-      if (typeof savePageLayerHistory === 'function') savePageLayerHistory(curIdx);
-      requestViewerRedraw();
-      updateThumbnailAsync(curIdx);
-      updateLayerStageOverlay();
+      if (typeof syncLayerUI === 'function') syncLayerUI();
+      if (typeof updateViewerEdits === 'function') {
+        updateViewerEdits(curIdx);
+      } else {
+        requestViewerRedraw();
+        updateThumbnailAsync(curIdx);
+        updateLayerStageOverlay();
+      }
+      updateMiniPreview();
       if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive && typeof updateCornerPins === 'function') {
         updateCornerPins();
       }
@@ -5844,13 +5975,14 @@
     }
 
     function resetActiveObjectScale() {
-      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) return;
+      if ((typeof isCropActive !== 'undefined' && isCropActive) || (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive)) return;
       const curIdx = docState.currentIndex;
       const active = getActiveEditableTarget();
       if (!active) {
         updateStatusMsg('먼저 화면의 객체(이미지/글상자/도형)를 클릭하여 선택하세요.');
         return;
       }
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       if (active.isBase) {
         active.target.contentScale = 1.0;
         active.target.scaleX = 1.0;
@@ -5899,6 +6031,13 @@
         if (canvas && item) {
           drawPaperWithImage(canvas, item, cfg, { isThumbnail: false });
           canvas.dataset.renderedIdx = String(curIdx);
+          if (typeof updateLayerStageOverlay === 'function') updateLayerStageOverlay();
+          if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive && typeof updateCornerPins === 'function') {
+            updateCornerPins();
+          }
+          if (typeof isCropActive !== 'undefined' && isCropActive && typeof updateCropOverlayPositions === 'function') {
+            updateCropOverlayPositions();
+          }
         }
       });
     }
@@ -5969,6 +6108,7 @@
       const cur = docState.currentIndex;
       const item = docState.items[cur];
       if (!item) return;
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       const cfg = getEffectiveItemSettings(cur);
 
       const before = getPaperCanvasDimensions(item, cfg);
@@ -5995,6 +6135,7 @@
       const cur = docState.currentIndex;
       const item = docState.items[cur];
       if (!item) return;
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       const cfg = getEffectiveItemSettings(cur);
 
       const before = getPaperCanvasDimensions(item, cfg);
@@ -6015,13 +6156,26 @@
 
     // 객체(내용물 이미지) 회전 함수
     function rotateImageByDelta(delta) {
+      if ((typeof isCropActive !== 'undefined' && isCropActive) || (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive)) return;
+      if (!selectedLayerId) return;
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       if (typeof handleLayerRotateByDelta === 'function' && handleLayerRotateByDelta(delta)) return;
       const cur = docState.currentIndex;
+      const item = docState.items[cur];
       const cfg = getEffectiveItemSettings(cur);
       let curImg = parseInt(cfg.rotImg !== undefined ? cfg.rotImg : 0, 10) || 0;
       let nextImg = curImg + delta;
       if (nextImg > 180) nextImg -= 360;
       if (nextImg <= -180) nextImg += 360;
+      const canvas = document.getElementById('mainViewerCanvas');
+      const geom = (item && canvas && typeof getBaseImageVisualGeometry === 'function')
+        ? getBaseImageVisualGeometry(item, cfg, canvas.width || 2000, canvas.height || 2000)
+        : null;
+      if (geom && geom.hasCrop) {
+        const unmapped = geom.unmap(geom.visualW, geom.visualH, geom.visualCx, geom.visualCy, nextImg);
+        cfg.offsetX = unmapped.offsetX;
+        cfg.offsetY = unmapped.offsetY;
+      }
       cfg.rotImg = nextImg;
       cfg.rot = nextImg;
       const slider = document.getElementById('sliderRotation');
@@ -6035,9 +6189,22 @@
     }
 
     function rotateImageTo(val) {
+      if ((typeof isCropActive !== 'undefined' && isCropActive) || (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive)) return;
+      if (!selectedLayerId) return;
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       if (typeof handleLayerRotateTo === 'function' && handleLayerRotateTo(val)) return;
       const cur = docState.currentIndex;
+      const item = docState.items[cur];
       const cfg = getEffectiveItemSettings(cur);
+      const canvas = document.getElementById('mainViewerCanvas');
+      const geom = (item && canvas && typeof getBaseImageVisualGeometry === 'function')
+        ? getBaseImageVisualGeometry(item, cfg, canvas.width || 2000, canvas.height || 2000)
+        : null;
+      if (geom && geom.hasCrop) {
+        const unmapped = geom.unmap(geom.visualW, geom.visualH, geom.visualCx, geom.visualCy, val);
+        cfg.offsetX = unmapped.offsetX;
+        cfg.offsetY = unmapped.offsetY;
+      }
       cfg.rotImg = val;
       cfg.rot = val;
       const slider = document.getElementById('sliderRotation');
@@ -6047,7 +6214,7 @@
       updateViewerEdits();
       updateMiniPreview();
       if (isPerspectiveActive) updateCornerPins();
-      updateStatusMsg('객체 회전 0° 초기화', '🖼️');
+      updateStatusMsg(`객체 회전 ${val}° 초기화`, '🖼️');
     }
 
     function registerOpenedFile(file, type, loadedDoc = null, customTotalPages = 1, arrayBuf = null) {
@@ -6181,7 +6348,7 @@
 
     // 회전 타겟(페이지, 이미지) 해석 헬퍼 함수
     function getResolvedRotations(cfg) {
-      const rotPage = parseInt(cfg.rotPage !== undefined ? cfg.rotPage : (cfg.rot || 0), 10) || 0;
+      const rotPage = parseInt(cfg.rotPage !== undefined ? cfg.rotPage : 0, 10) || 0;
       const rotImg = parseInt(cfg.rotImg !== undefined ? cfg.rotImg : (cfg.rot || 0), 10) || 0;
       const target = cfg.rotTarget || { page: true, image: true };
       const pageStep90 = Math.round(rotPage / 90);
@@ -7201,6 +7368,8 @@
     // [배경 투명화] 체크박스 변경 핸들러 (데스크톱 툴바와 모바일 패널 양방향 동기화)
     async function onTransparentBgChange(checked) {
       const cur = docState.currentIndex;
+      if (cur < 0 || !docState.items[cur]) return;
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       const cfg = getEffectiveItemSettings(cur);
       cfg.transparentBg = Boolean(checked);
 
@@ -7241,8 +7410,13 @@
     // 오른쪽 설정 변경 리스너: 현재 보고 있는 페이지에 즉시 저장 및 좌/중/우 3개 창 동시 실시간 반영!
     async function onSettingChange(key, value) {
       const cur = docState.currentIndex;
-      const cfg = getEffectiveItemSettings(cur);
       const item = docState.items[cur];
+      if (!item) return;
+      const isDiscreteSetting = (key !== 'rot' && key !== 'rot_updated' && key !== 'customW' && key !== 'customH');
+      if (isDiscreteSetting && typeof pushUndoSnapshot === 'function') {
+        pushUndoSnapshot();
+      }
+      const cfg = getEffectiveItemSettings(cur);
       let beforeGeom = null;
       if (item && (key === 'pageSize' || key === 'fit' || key === 'orient' || key === 'customW' || key === 'customH')) {
         beforeGeom = (typeof getPaperCanvasDimensions === 'function') ? getPaperCanvasDimensions(item, cfg) : null;
@@ -7361,36 +7535,43 @@
       if (card) card.dataset.thumbRendered = '1';
     }
 
-    // 슬라이더 바 직접 드래그 시 선택된 타겟(페이지 및/또는 이미지)에 각도 즉시 독립 적용
+    // 슬라이더 바 직접 드래그 시 현재 선택된 객체(또는 바탕 이미지) 각도 즉시 적용
     function onSliderRotationInput(val) {
+      if ((typeof isCropActive !== 'undefined' && isCropActive) || (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive)) return;
+      if (!selectedLayerId) return;
+      if (typeof beginContinuousUndoCapture === 'function') beginContinuousUndoCapture();
       const num = parseInt(val, 10) || 0;
       if (typeof handleLayerRotationInput === 'function' && handleLayerRotationInput(num)) return;
       const cur = docState.currentIndex;
       const item = docState.items[cur];
       const cfg = getEffectiveItemSettings(cur);
-      const target = cfg.rotTarget || { page: true, image: true };
-
-      if (!target.page && !target.image) return;
-
-      if (target.page) {
-        const before = getPaperCanvasDimensions(item, cfg);
-        cfg.rotPage = num;
-        const after = getPaperCanvasDimensions(item, cfg);
-        if (before && after) {
-          updateLayersForCanvasDimensionChange(item, before.canvasW, before.canvasH, after.canvasW, after.canvasH);
-        }
+      const canvas = document.getElementById('mainViewerCanvas');
+      const geom = (item && canvas && typeof getBaseImageVisualGeometry === 'function')
+        ? getBaseImageVisualGeometry(item, cfg, canvas.width || 2000, canvas.height || 2000)
+        : null;
+      if (geom && geom.hasCrop) {
+        const unmapped = geom.unmap(geom.visualW, geom.visualH, geom.visualCx, geom.visualCy, num);
+        cfg.offsetX = unmapped.offsetX;
+        cfg.offsetY = unmapped.offsetY;
       }
-      if (target.image) cfg.rotImg = num;
+      cfg.rotImg = num;
       cfg.rot = num;
 
       const lblRot = document.getElementById('lblRotationVal');
       if (lblRot) lblRot.textContent = `${num}°`;
 
-      onSettingChange('rot_updated', num);
+      updateViewerEdits(cur);
+      updateMiniPreview();
+      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive && typeof updateCornerPins === 'function') {
+        updateCornerPins();
+      }
     }
 
     // 회전 각도 퀵 조절 유틸리티 (-90°, 0° 초기화, +90°)
     function rotateCurrentByDelta(delta) {
+      if ((typeof isCropActive !== 'undefined' && isCropActive) || (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive)) return;
+      if (!selectedLayerId) return;
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       const cur = docState.currentIndex;
       const item = docState.items[cur];
       const cfg = getEffectiveItemSettings(cur);
@@ -7430,6 +7611,9 @@
 
     // 0° 초기화 버튼: 오직 사용자가 초기화 버튼을 눌렀을 때만 선택된 대상을 0으로 리셋
     function rotateCurrentTo(val) {
+      if ((typeof isCropActive !== 'undefined' && isCropActive) || (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive)) return;
+      if (!selectedLayerId) return;
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       const cur = docState.currentIndex;
       const item = docState.items[cur];
       const cfg = getEffectiveItemSettings(cur);
@@ -7964,6 +8148,7 @@
     function toggleFileMgrDropdown(e) {
       if (e) e.stopPropagation();
       closeMenuDropdown();
+      if (typeof syncInsertDropdownLabels === 'function') syncInsertDropdownLabels();
       const menu = document.getElementById('menuFileMgrDropdown') || document.getElementById('menuInsertDropdown');
       if (menu) menu.classList.toggle('show');
     }
@@ -8118,9 +8303,18 @@
       if (e) e.stopPropagation();
       closeInsertDropdown();
       const total = docState.items.length;
-      const curIdx = docState.currentIndex;
-      const insertAt = (total > 0 && curIdx >= 0 && curIdx < total) ? curIdx + 1 : -1;
+      const insertAt = total > 0 ? getEffectiveThumbInsertIndex() : -1;
       triggerInsertFileDialog(insertAt);
+    }
+
+    function triggerInsertPasteFromMenu(e) {
+      if (e) e.stopPropagation();
+      closeInsertDropdown();
+      const total = docState.items.length;
+      const targetIdx = total > 0 ? getEffectiveThumbInsertIndex() : 0;
+      if (typeof triggerSmartPaste === 'function') {
+        triggerSmartPaste(true, targetIdx);
+      }
     }
 
     async function insertBlankPageAction(e, explicitInsertAt = null) {
@@ -8131,7 +8325,10 @@
       const curIdx = docState.currentIndex;
       const insertAt = (typeof explicitInsertAt === 'number' && !isNaN(explicitInsertAt))
         ? Math.max(0, Math.min(total, explicitInsertAt))
-        : ((total > 0 && curIdx >= 0 && curIdx < total) ? curIdx + 1 : total);
+        : ((total > 0) ? getEffectiveThumbInsertIndex() : 0);
+      if (typeof setThumbEmptyCursorActive === 'function') {
+        setThumbEmptyCursorActive(false);
+      }
       const refIdx = (total > 0)
         ? Math.max(0, Math.min(total - 1, (curIdx >= 0 && curIdx < total) ? curIdx : (insertAt > 0 ? insertAt - 1 : 0)))
         : 0;
@@ -8170,6 +8367,8 @@
         fit: sizeKey,
         quality: 'ultra',
         rot: 0,
+        rotPage: 0,
+        rotImg: 0,
         rotTarget: { page: true, image: true },
         contentScale: 1.0,
         scaleX: 1.0,
@@ -8197,6 +8396,7 @@
         settings: newItemSettings
       };
 
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       docState.items.splice(insertAt, 0, newPageItem);
       docState.checkList.splice(insertAt, 0, true);
       docState.currentIndex = insertAt;
@@ -8875,8 +9075,10 @@
       }
 
       if (isOverThumb) {
-        // 1열 썸네일 영역에 떨어진 경우 (페이지 목록에 삽입)
-        await processFiles(files, -1, 'thumb-area');
+        // 1열 썸네일 영역에 떨어진 경우 (슬롯 위면 해당 위치, 빈 여백이면 맨 끝)
+        const dropSlot = e.target && e.target.closest ? e.target.closest('.thumb-insert-slot') : null;
+        const dropAt = dropSlot ? Number(dropSlot.dataset.slotIdx) : (docState.items.length > 0 ? docState.items.length : -1);
+        await processFiles(files, dropAt, 'thumb-area');
       } else {
         // 문서가 비어 있거나 기타 영역에 떨어진 경우
         await processFiles(files, -1, 'center-area');
@@ -8924,6 +9126,8 @@
       if (pdfFiles.length === 0 && imgFiles.length === 0) return;
 
       const isFirstLoad = (docState.items.length === 0);
+      const preProcessSnap = (!isFirstLoad && typeof captureWorkspaceSnapshot === 'function') ? captureWorkspaceSnapshot() : null;
+      let didMutateWorkspace = false;
       let insertAt = customInsertIndex >= 0 ? customInsertIndex : (isFirstLoad ? 0 : docState.currentIndex + 1);
 
       // 1. PDF 파일 처리
@@ -8978,6 +9182,7 @@
             docState.checkList.splice(insertAt, 0, true);
             docState.currentIndex = insertAt;
             insertAt++;
+            didMutateWorkspace = true;
           } else {
             // 다중 페이지 PDF 문서는 사용자가 필요한 페이지를 선택할 수 있도록 피커 모달 오픈
             openPdfPicker(loadedDoc, pdfFile, insertAt, 'insert', null, [], arrayBuf);
@@ -9026,8 +9231,13 @@
             docState.items.splice(insertAt, 0, ...newItems);
             docState.checkList.splice(insertAt, 0, ...new Array(newItems.length).fill(true));
             docState.currentIndex = insertAt;
+            didMutateWorkspace = true;
           }
         }
+      }
+
+      if (preProcessSnap && didMutateWorkspace && typeof commitExternalUndoSnapshot === 'function') {
+        commitExternalUndoSnapshot(preProcessSnap);
       }
 
       await refreshWorkspaceDisplay();
@@ -9062,6 +9272,7 @@
     // 1열 PDF 썸네일 렌더링 (순서 변경, 개별 삭제, 드래그 드롭 위치 삽입 지원)
     // [통합] 1열 썸네일 렌더링 (순서 변경, 개별 삭제, 드래그 드롭 위치 삽입 지원)
     let thumbEmptyCursorActive = false;
+    let thumbInsertSlotIndex = null;
 
     function openPageJumpPopover(e, customPos = null) {
       if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
@@ -9157,19 +9368,100 @@
       }
     }
 
+    function getThumbSlotLocationLabel(slotIdx) {
+      const total = (docState && Array.isArray(docState.items)) ? docState.items.length : 0;
+      if (total <= 0) return '작업 영역';
+      if (slotIdx <= 0) return '맨 앞 (1페이지 위)';
+      if (slotIdx >= total) return '맨 끝 (마지막 아래)';
+      return `#${slotIdx} ~ #${slotIdx + 1} 사이`;
+    }
+
+    function getEffectiveThumbInsertIndex() {
+      const total = (docState && Array.isArray(docState.items)) ? docState.items.length : 0;
+      if (total <= 0) return 0;
+      if (thumbInsertSlotIndex !== null && !isNaN(thumbInsertSlotIndex)) {
+        return Math.max(0, Math.min(total, Number(thumbInsertSlotIndex)));
+      }
+      if (thumbEmptyCursorActive) return total;
+      const curIdx = (docState && typeof docState.currentIndex === 'number') ? docState.currentIndex : (total - 1);
+      return Math.max(0, Math.min(total, curIdx + 1));
+    }
+
+    function syncInsertDropdownLabels() {
+      const total = (docState && Array.isArray(docState.items)) ? docState.items.length : 0;
+      const isSlotOrEmpty = (total <= 0) || thumbEmptyCursorActive || (thumbInsertSlotIndex !== null);
+      const lblFile = document.getElementById('lblMenuInsertFile');
+      const lblBlank = document.getElementById('lblMenuInsertBlank');
+      const lblPaste = document.getElementById('lblMenuInsertPaste');
+      if (lblFile) lblFile.textContent = isSlotOrEmpty ? '이 곳에 파일 삽입' : '아래에 파일 삽입';
+      if (lblBlank) lblBlank.textContent = isSlotOrEmpty ? '이 곳에 빈 페이지 추가' : '아래에 빈 페이지 추가';
+      if (lblPaste) lblPaste.textContent = isSlotOrEmpty ? '빈 페이지 삽입해서 붙여넣기' : '아래에 빈 페이지 삽입해서 붙여넣기';
+    }
+
+    function setThumbInsertSlot(slotIdx) {
+      const total = (docState && Array.isArray(docState.items)) ? docState.items.length : 0;
+      const slots = document.querySelectorAll('#thumbList .thumb-insert-slot');
+      if (slotIdx === null || slotIdx === undefined || isNaN(slotIdx)) {
+        thumbInsertSlotIndex = null;
+        slots.forEach(s => s.classList.remove('active'));
+        syncInsertDropdownLabels();
+        return;
+      }
+      if (total <= 0) {
+        thumbInsertSlotIndex = 0;
+        thumbEmptyCursorActive = true;
+        if (typeof isCropActive !== 'undefined' && isCropActive && typeof cancelCrop === 'function') cancelCrop();
+        if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive && typeof togglePerspectiveMode === 'function') togglePerspectiveMode(false);
+        if (typeof selectLayer === 'function') selectLayer(null);
+        syncInsertDropdownLabels();
+        if (typeof updateStatusMsg === 'function') {
+          updateStatusMsg('빈 공간 선택됨 (Enter: 이 곳에 빈 페이지 추가, Ctrl+V: 빈 페이지 삽입해서 붙여넣기)');
+        }
+        return;
+      }
+      const clamped = Math.max(0, Math.min(total, Number(slotIdx)));
+      thumbInsertSlotIndex = clamped;
+      thumbEmptyCursorActive = true;
+      document.querySelectorAll('#thumbList .thumb-card').forEach(el => el.classList.remove('active'));
+      slots.forEach(s => {
+        s.classList.toggle('active', Number(s.dataset.slotIdx) === clamped);
+      });
+      if (typeof isCropActive !== 'undefined' && isCropActive && typeof cancelCrop === 'function') cancelCrop();
+      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive && typeof togglePerspectiveMode === 'function') togglePerspectiveMode(false);
+      if (typeof selectLayer === 'function') selectLayer(null);
+      syncInsertDropdownLabels();
+      if (typeof updateStatusMsg === 'function') {
+        updateStatusMsg(`${getThumbSlotLocationLabel(clamped)} 선택됨 (Enter: 이 곳에 빈 페이지 추가, Ctrl+V: 빈 페이지 삽입해서 붙여넣기)`);
+      }
+    }
+
     function setThumbEmptyCursorActive(active) {
-      thumbEmptyCursorActive = !!active;
+      const next = Boolean(active);
+      thumbEmptyCursorActive = next;
       const cards = document.querySelectorAll('#thumbList .thumb-card');
-      if (thumbEmptyCursorActive) {
+      const slots = document.querySelectorAll('#thumbList .thumb-insert-slot');
+      if (next) {
         cards.forEach(el => el.classList.remove('active'));
-      } else if (docState && Array.isArray(docState.items) && docState.items.length > 0 && docState.currentIndex >= 0) {
-        const hasActive = document.querySelector('#thumbList .thumb-card.active');
-        if (!hasActive) {
-          const curIdx = docState.currentIndex;
-          const targetCard = Array.from(cards).find(el => Number(el.dataset.idx ?? el.dataset.index) === curIdx) || cards[curIdx];
-          if (targetCard) targetCard.classList.add('active');
+        const total = (docState && Array.isArray(docState.items)) ? docState.items.length : 0;
+        if (thumbInsertSlotIndex === null) {
+          thumbInsertSlotIndex = total;
+        }
+        slots.forEach(s => {
+          s.classList.toggle('active', Number(s.dataset.slotIdx) === thumbInsertSlotIndex);
+        });
+      } else {
+        thumbInsertSlotIndex = null;
+        slots.forEach(s => s.classList.remove('active'));
+        if (docState && Array.isArray(docState.items) && docState.items.length > 0 && docState.currentIndex >= 0) {
+          const hasActive = document.querySelector('#thumbList .thumb-card.active');
+          if (!hasActive) {
+            const curIdx = docState.currentIndex;
+            const targetCard = Array.from(cards).find(el => Number(el.dataset.idx ?? el.dataset.index) === curIdx) || cards[curIdx];
+            if (targetCard) targetCard.classList.add('active');
+          }
         }
       }
+      syncInsertDropdownLabels();
     }
 
     async function renderThumbnailList() {
@@ -9179,15 +9471,11 @@
       if (!container._thumbEmptyBindDone) {
         container._thumbEmptyBindDone = true;
         container.addEventListener('click', (e) => {
-          if (!e.target.closest('.thumb-card')) {
-            setThumbEmptyCursorActive(true);
-            container.focus({ preventScroll: true });
-            if (typeof updateStatusMsg === 'function') {
-              updateStatusMsg('빈 공간 선택됨 (Enter: 맨 끝에 빈 페이지 추가, Ctrl+V: 새 빈 페이지에 붙여넣기)');
-            }
-          } else {
-            setThumbEmptyCursorActive(false);
-          }
+          if (e.target.closest('.thumb-empty-guide button')) return;
+          if (e.target.closest('.thumb-insert-slot') || e.target.closest('.thumb-card')) return;
+          const total = (docState && Array.isArray(docState.items)) ? docState.items.length : 0;
+          setThumbInsertSlot(total);
+          container.focus({ preventScroll: true });
         });
         const viewerCol = document.getElementById('colViewerArea');
         const ctrlCol = document.getElementById('colControl');
@@ -9195,7 +9483,7 @@
           if (col && !col._thumbResetBindDone) {
             col._thumbResetBindDone = true;
             col.addEventListener('pointerdown', () => {
-              if (thumbEmptyCursorActive) setThumbEmptyCursorActive(false);
+              if (thumbEmptyCursorActive || thumbInsertSlotIndex !== null) setThumbEmptyCursorActive(false);
             });
           }
         });
@@ -9203,6 +9491,8 @@
       container.innerHTML = '';
       if (docState.items.length === 0) {
         thumbEmptyCursorActive = false;
+        thumbInsertSlotIndex = null;
+        syncInsertDropdownLabels();
         updateThumbCounts();
         return;
       }
@@ -9255,15 +9545,70 @@
         }, { root: container, rootMargin: '350px 0px' });
       }
 
+      const createThumbInsertSlot = (slotIdx) => {
+        const slot = document.createElement('div');
+        slot.className = 'thumb-insert-slot' + ((thumbEmptyCursorActive && thumbInsertSlotIndex === slotIdx) ? ' active' : '');
+        slot.dataset.slotIdx = String(slotIdx);
+        slot.title = `${getThumbSlotLocationLabel(slotIdx)} — 클릭 후 Enter(이 곳에 빈 페이지 추가) / Ctrl+V(빈 페이지 삽입해서 붙여넣기) / 우클릭 메뉴`;
+
+        const pill = document.createElement('span');
+        pill.className = 'thumb-insert-slot-pill';
+        pill.textContent = '+ 이 곳에 삽입';
+        slot.appendChild(pill);
+
+        slot.addEventListener('click', (e) => {
+          e.stopPropagation();
+          setThumbInsertSlot(slotIdx);
+          container.focus({ preventScroll: true });
+        });
+
+        slot.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          clearThumbDropLines();
+          slot.classList.add('drag-over');
+        });
+        slot.addEventListener('dragleave', (e) => {
+          e.stopPropagation();
+          slot.classList.remove('drag-over');
+        });
+        slot.addEventListener('drop', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          clearThumbDropLines();
+          if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            await processFiles(Array.from(e.dataTransfer.files), slotIdx, 'thumb-slot');
+          } else if (draggedCardIndex !== null) {
+            let insertAt = slotIdx;
+            if (draggedCardIndex < insertAt) insertAt--;
+            if (draggedCardIndex !== insertAt) {
+              if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
+              const movedItem = docState.items.splice(draggedCardIndex, 1)[0];
+              const movedChk = docState.checkList.splice(draggedCardIndex, 1)[0];
+              docState.items.splice(insertAt, 0, movedItem);
+              docState.checkList.splice(insertAt, 0, movedChk);
+              docState.currentIndex = insertAt;
+              await renderThumbnailList();
+              loadMainViewer(insertAt);
+            }
+          }
+          draggedCardIndex = null;
+        });
+
+        return slot;
+      };
+
+      container.appendChild(createThumbInsertSlot(0));
+
       docState.items.forEach((item, idx) => {
         const card = document.createElement('div');
-        card.className = `thumb-card ${idx === docState.currentIndex ? 'active' : ''}`;
+        card.className = `thumb-card ${(!thumbEmptyCursorActive && idx === docState.currentIndex) ? 'active' : ''}`;
         card.id = `thumb-card-${idx}`;
         card.dataset.idx = String(idx);
         card.draggable = true;
         card.onclick = (e) => {
           if (e.target.closest('input[type="checkbox"]') || e.target.closest('button')) return;
-          thumbEmptyCursorActive = false;
+          setThumbEmptyCursorActive(false);
           loadMainViewer(idx);
           container.focus({ preventScroll: true });
           if (window.innerWidth <= 860) {
@@ -9313,6 +9658,7 @@
           if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             await processFiles(Array.from(e.dataTransfer.files), insertAt, 'thumb-slot');
           } else if (draggedCardIndex !== null && draggedCardIndex !== idx) {
+            if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
             const movedItem = docState.items.splice(draggedCardIndex, 1)[0];
             const movedChk = docState.checkList.splice(draggedCardIndex, 1)[0];
             if (draggedCardIndex < insertAt) insertAt--;
@@ -9388,6 +9734,7 @@
         thumbCanvasWrap.appendChild(thumbCanvas);
         card.appendChild(thumbCanvasWrap);
         container.appendChild(card);
+        container.appendChild(createThumbInsertSlot(idx + 1));
 
         if (!useLazyRender || idx === docState.currentIndex || idx < 6) {
           renderThumbCardNow(card, item, idx);
@@ -9416,6 +9763,7 @@
       }
 
       updateThumbCounts();
+      syncInsertDropdownLabels();
     }
     const renderPdfThumbnailList = renderThumbnailList;
     const renderImageThumbnailList = renderThumbnailList;
@@ -9440,6 +9788,7 @@
     async function moveItemOrder(index, delta) {
       const target = index + delta;
       if (target < 0 || target >= docState.items.length) return;
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       const movedItem = docState.items.splice(index, 1)[0];
       const movedChk = docState.checkList.splice(index, 1)[0];
       docState.items.splice(target, 0, movedItem);
@@ -9453,6 +9802,7 @@
 
     async function removeItem(index) {
       if (index < 0 || index >= docState.items.length) return;
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       docState.items.splice(index, 1);
       docState.checkList.splice(index, 1);
 
@@ -9777,6 +10127,9 @@ const modal = document.getElementById('modalPdfPicker');
 
       const newChecks = new Array(newPages.length).fill(true);
       const targetPos = pickerState.targetInsertIndex;
+      if (docState.items.length > 0 && typeof pushUndoSnapshot === 'function') {
+        pushUndoSnapshot();
+      }
 
       if (targetPos >= 0 && targetPos <= docState.items.length) {
         docState.items.splice(targetPos, 0, ...newPages);
@@ -9800,6 +10153,7 @@ const modal = document.getElementById('modalPdfPicker');
       docState.checkList = docState.checkList.map(() => checked);
       document.querySelectorAll('#thumbList input[type="checkbox"]').forEach(c => c.checked = checked);
       updateThumbCounts();
+      syncInsertDropdownLabels();
     });
 
     function updateThumbCounts() {
@@ -9837,6 +10191,9 @@ const modal = document.getElementById('modalPdfPicker');
     function clearThumbDropLines() {
       document.querySelectorAll('.thumb-card').forEach(c => {
         c.classList.remove('drag-over-top', 'drag-over-bottom');
+      });
+      document.querySelectorAll('.thumb-insert-slot').forEach(s => {
+        s.classList.remove('drag-over');
       });
     }
 
@@ -9885,6 +10242,9 @@ const modal = document.getElementById('modalPdfPicker');
       }
 
       if (typeof thumbEmptyCursorActive !== 'undefined') thumbEmptyCursorActive = false;
+      if (typeof thumbInsertSlotIndex !== 'undefined') thumbInsertSlotIndex = null;
+      document.querySelectorAll('#thumbList .thumb-insert-slot').forEach(s => s.classList.remove('active'));
+      if (typeof syncInsertDropdownLabels === 'function') syncInsertDropdownLabels();
       // 페이지 전환 시 기본 선택 해제 (기본 상태는 아무 객체도 선택되지 않음)
       selectedLayerId = null;
       if (typeof selectedLayerIds !== 'undefined' && selectedLayerIds && typeof selectedLayerIds.clear === 'function') {
@@ -10177,16 +10537,9 @@ const modal = document.getElementById('modalPdfPicker');
       if (overlay) {
         overlay.style.display = active ? 'block' : 'none';
       }
-      // [V1.3.2] 투시 활성 시 '투시'와 '투시 리셋' 외의 다른 이미지 변형/리셋 버튼은 모두 잠금
-      const subgroup = document.getElementById('subgroupImageTransforms');
-      if (subgroup) {
-        subgroup.querySelectorAll('button').forEach((b) => {
-          if (b.id === 'btnTogglePerspective' || b.id === 'btnResetPerspectiveCurrent') {
-            b.disabled = false;
-          } else {
-            b.disabled = Boolean(active);
-          }
-        });
+      // [V1.4.0] 통합 버튼/슬라이더 잠금 상태 동기화로 일원화
+      if (typeof syncObjectControlLockState === 'function') {
+        syncObjectControlLockState();
       }
     }
 
@@ -10194,7 +10547,11 @@ const modal = document.getElementById('modalPdfPicker');
       const active = (typeof getActiveEditableTarget === 'function') ? getActiveEditableTarget() : null;
       if (!active) return null;
       if (active.isBase) return active;
-      if (active.target && active.target.type === 'image') return active;
+      if (active.target) {
+        const t = active.target.type;
+        if (t === 'image' || t === 'text') return active;
+        if (t === 'shape' && active.target.shapeType !== 'mosaic') return active;
+      }
       return null;
     }
 
@@ -10204,13 +10561,10 @@ const modal = document.getElementById('modalPdfPicker');
         if (typeof isCropActive !== 'undefined' && isCropActive && typeof endCropUI === 'function') {
           endCropUI();
         }
-        let targetObj = getPerspectiveEditableTarget();
-        if (!targetObj && docState.items.length > 0) {
-          if (typeof selectLayer === 'function') selectLayer('__base__');
-          targetObj = getPerspectiveEditableTarget();
-        }
+        const targetObj = getPerspectiveEditableTarget();
         if (!targetObj) {
-          if (typeof updateStatusMsg === 'function') updateStatusMsg('투시변형은 바탕 이미지 또는 추가된 이미지 객체에서만 사용할 수 있습니다.');
+          if (typeof showExitToast === 'function') showExitToast('먼저 투시 변형을 적용할 바탕 이미지나 객체(글상자·도형)를 선택하세요.');
+          if (typeof updateStatusMsg === 'function') updateStatusMsg('투시 변형을 적용할 대상을 먼저 선택하세요 (모자이크·그룹 제외).');
           return;
         }
         isPerspectiveActive = true;
@@ -10363,6 +10717,7 @@ const modal = document.getElementById('modalPdfPicker');
           ev.preventDefault();
           const box = getActiveObjectScreenBox();
           if (!box) return;
+          if (typeof beginContinuousUndoCapture === 'function') beginContinuousUndoCapture();
           const pinKey = el.dataset.pin;
           const t = box.targetInfo.target;
           if (!t.corners || t.corners.unit !== 'norm') {
@@ -10427,7 +10782,7 @@ const modal = document.getElementById('modalPdfPicker');
         dragState = null;
         if (typeof hideHudBadge === 'function') hideHudBadge();
         const curIdx = docState.currentIndex;
-        if (typeof savePageLayerHistory === 'function') savePageLayerHistory(curIdx);
+        if (typeof commitContinuousUndoCapture === 'function') commitContinuousUndoCapture();
         updateThumbnailAsync(curIdx);
       }
     })();
@@ -12094,7 +12449,7 @@ if (e.target.closest('.layer-item-box')) return;
 
         // [단축키 Ctrl+C] 선택된 객체 복사
         if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C')) {
-          if (typeof getActiveEditableTarget === 'function' && getActiveEditableTarget(e.target)) return;
+          if (e.target && e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
           if (typeof copySelectedLayerToClipboard === 'function' && typeof getSelectedLayer === 'function' && getSelectedLayer()) {
             e.preventDefault();
             copySelectedLayerToClipboard();
@@ -12104,14 +12459,15 @@ if (e.target.closest('.layer-item-box')) return;
 
         // [단축키 Ctrl+V] 통합 클립보드 붙여넣기 (네이티브 paste 이벤트가 OS 클립보드를 우선 전달하고, 미발생 시 80ms 후 비동기 읽기 폴백)
         if ((e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'V')) {
-          if (typeof getActiveEditableTarget === 'function' && getActiveEditableTarget(e.target)) return;
+          if (e.target && e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
           if (e.repeat) return;
-          const forceNew = !!(typeof thumbEmptyCursorActive !== 'undefined' && thumbEmptyCursorActive);
+          const forceNew = !!(typeof thumbEmptyCursorActive !== 'undefined' && (thumbEmptyCursorActive || thumbInsertSlotIndex !== null));
+          const targetSlot = (forceNew && typeof getEffectiveThumbInsertIndex === 'function') ? getEffectiveThumbInsertIndex() : null;
           if (window._pendingPasteFallbackTimer) clearTimeout(window._pendingPasteFallbackTimer);
           window._pendingPasteFallbackTimer = setTimeout(() => {
             window._pendingPasteFallbackTimer = null;
             if (typeof triggerSmartPaste === 'function') {
-              triggerSmartPaste(forceNew);
+              triggerSmartPaste(forceNew, targetSlot);
             }
           }, 80);
           return;
@@ -12165,10 +12521,10 @@ if (e.target.closest('.layer-item-box')) return;
           return;
         }
         const inThumbPanel = Boolean(document.activeElement && document.activeElement.closest && document.activeElement.closest('#thumbList'));
-        if (inThumbPanel && docState.items.length > 0 && typeof insertBlankPageAction === 'function') {
+        if (inThumbPanel && (docState.items.length > 0 || thumbEmptyCursorActive || thumbInsertSlotIndex !== null) && typeof insertBlankPageAction === 'function') {
           e.preventDefault();
-          const insertAt = thumbEmptyCursorActive ? docState.items.length : (docState.currentIndex + 1);
-          thumbEmptyCursorActive = false;
+          const insertAt = getEffectiveThumbInsertIndex();
+          setThumbEmptyCursorActive(false);
           insertBlankPageAction(null, insertAt);
           return;
         }
@@ -12220,6 +12576,9 @@ if (e.target.closest('.layer-item-box')) return;
       const isShift = e.shiftKey;
 
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        if ((typeof isCropActive !== 'undefined' && isCropActive) || (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive)) {
+          return;
+        }
         if (activeObj) {
           if (activeObj.target && activeObj.target.locked) {
             e.preventDefault();
@@ -12230,6 +12589,7 @@ if (e.target.closest('.layer-item-box')) return;
           // A. [Ctrl + 방향키] 크기 미세 조절
           if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
+            if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
             const step = isShift ? 0.025 : 0.005;
             if (activeObj.isBase) {
               const cfg = activeObj.target;
@@ -12244,7 +12604,6 @@ if (e.target.closest('.layer-item-box')) return;
               else if (e.key === 'ArrowDown') layer.h = Math.min(2.0, (layer.h || 0.2) + step);
               else if (e.key === 'ArrowUp') layer.h = Math.max(0.02, (layer.h || 0.2) - step);
             }
-            if (typeof savePageLayerHistory === 'function') savePageLayerHistory(docState.currentIndex);
             requestViewerRedraw();
             updateThumbnailAsync(docState.currentIndex);
             updateLayerStageOverlay();
@@ -12254,6 +12613,7 @@ if (e.target.closest('.layer-item-box')) return;
           // B. [Alt + 방향키] 각도 미세 회전
           if (e.altKey) {
             e.preventDefault();
+            if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
             const rotDelta = isShift ? 15 : 1;
             let dRot = (e.key === 'ArrowRight' || e.key === 'ArrowDown') ? rotDelta : -rotDelta;
             if (activeObj.isBase) {
@@ -12270,7 +12630,6 @@ if (e.target.closest('.layer-item-box')) return;
               if (r <= -180) r += 360;
               layer.rot = r;
             }
-            if (typeof savePageLayerHistory === 'function') savePageLayerHistory(docState.currentIndex);
             requestViewerRedraw();
             updateThumbnailAsync(docState.currentIndex);
             updateLayerStageOverlay();
@@ -12279,6 +12638,7 @@ if (e.target.closest('.layer-item-box')) return;
 
           // C. [단독 방향키] 위치 미세 이동
           e.preventDefault();
+          if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
           const nudgeStep = isShift ? 1.0 : 0.1; // % 단위
           let dx = 0, dy = 0;
           if (e.key === 'ArrowLeft') dx = -nudgeStep;
@@ -12670,6 +13030,7 @@ if (e.target.closest('.layer-item-box')) return;
     // - 이후 편집(바구니 B)은 새 비트맵 기준이므로 [이미지 변형 전체리셋]은 잘린 용지를 유지한 채 이미지만 정렬합니다.
     // - [리셋] 버튼: 자른 뒤 무슨 편집을 했든 스냅샷(바구니 A)을 그대로 꺼내 자르기 전 상태로 100% 복원합니다. (역산 수식 없음)
     // ==========================================================================
+    let _preCropUndoSnap = null;
     function endCropUI() {
       isCropActive = false;
       croppingLayerId = null;
@@ -12681,6 +13042,9 @@ if (e.target.closest('.layer-item-box')) return;
         const b = document.getElementById(id);
         if (b) b.classList.remove('active');
       });
+      if (typeof syncObjectControlLockState === 'function') {
+        syncObjectControlLockState();
+      }
     }
 
     async function togglePaperCrop(e) {
@@ -12809,17 +13173,6 @@ if (e.target.closest('.layer-item-box')) return;
         cfg: JSON.parse(JSON.stringify(cfg))
       };
 
-      // [V2.71.1 핵심] 용지 자르기와 레이어 되돌리기/복구하기(Undo/Redo) 완벽 격리
-      // 자르기 이전의 레이어 스택이 자른 용지 위로 월경(튀어나오는) 버그 방지
-      if (typeof pageLayerUndoStack !== 'undefined') {
-        pageLayerUndoStack[idx] = [];
-      }
-      if (typeof pageLayerRedoStack !== 'undefined') {
-        pageLayerRedoStack[idx] = [];
-      }
-      if (typeof savePageLayerHistory === 'function') {
-        savePageLayerHistory(idx);
-      }
       return true;
 
     }
@@ -12830,7 +13183,10 @@ if (e.target.closest('.layer-item-box')) return;
       const idx = docState.currentIndex;
       const item = docState.items[idx];
       if (!item) return;
-      if (isCropActive) endCropUI();
+      if (isCropActive) {
+        _preCropUndoSnap = null;
+        endCropUI();
+      }
 
       const snap = item._paperCropSnapshot;
       if (!snap) {
@@ -12838,29 +13194,18 @@ if (e.target.closest('.layer-item-box')) return;
         if (typeof renderMainViewerCanvas === 'function') await renderMainViewerCanvas(idx);
         return;
       }
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       const cfg = getEffectiveItemSettings(idx);
       Object.keys(cfg).forEach(k => { delete cfg[k]; });
       Object.assign(cfg, JSON.parse(JSON.stringify(snap.cfg)));
       item.type = snap.type; item.doc = snap.doc; item.pageNum = snap.pageNum;
       item.imgObj = snap.imgObj; item.width = snap.width; item.height = snap.height;
-      item.layers = JSON.parse(JSON.stringify(snap.layers || []));
+      item.layers = Array.isArray(snap.layers) ? snap.layers.map(l => (typeof cloneLayerDeep === 'function' ? cloneLayerDeep(l, false) : JSON.parse(JSON.stringify(l)))) : [];
       if (item._croppedCanvas) { item._croppedCanvas.width = 0; item._croppedCanvas.height = 0; }
       item._croppedCanvas = null;
       item._paperCropSnapshot = null;
       item._paperCropPostBaseline = null; // [V2.71.1] 기준선 정리
       selectedLayerId = null;
-
-      // [V2.71.1] 용지 자르기 취소 시 되돌리기/복구하기 스택도 원본 레이어 상태로 안전하게 동기화
-      if (typeof pageLayerUndoStack !== 'undefined') {
-        pageLayerUndoStack[idx] = [];
-      }
-      if (typeof pageLayerRedoStack !== 'undefined') {
-        pageLayerRedoStack[idx] = [];
-      }
-      if (typeof savePageLayerHistory === 'function') {
-        savePageLayerHistory(idx);
-      }
-
 
       await refreshAfterPaperChange(idx);
       updateStatusMsg('용지 자르기 전 상태로 복원되었습니다.');
@@ -12998,12 +13343,13 @@ if (e.target.closest('.layer-item-box')) return;
         };
       }
 
-      // [객체 자르기]: 선택된 레이어 확인 (이미지, 도형, 글상자 등)
-      const selLayer = (croppingLayerId && croppingLayerId !== '__base__')
-        ? (item.layers || []).find(l => l.id === croppingLayerId)
-        : ((typeof getSelectedLayer === 'function') ? getSelectedLayer() : null);
+      // [객체 자르기]: 선택된 레이어 또는 바탕 이미지 확인 (미선택 시 null 반환)
+      const targetId = croppingLayerId || (typeof selectedLayerId !== 'undefined' ? selectedLayerId : null);
+      if (!targetId) return null;
 
-      if (selLayer && selLayer.id !== '__base__') {
+      if (targetId !== '__base__') {
+        const selLayer = (item.layers || []).find(l => l.id === targetId);
+        if (!selLayer) return null;
         const cx = (paperRect.sx + selLayer.x * paperRect.subW) * scaleX;
         const cy = (paperRect.sy + selLayer.y * paperRect.subH) * scaleY;
         const bw = Math.max(20, selLayer.w * paperRect.subW * scaleX);
@@ -13019,6 +13365,7 @@ if (e.target.closest('.layer-item-box')) return;
         };
       }
 
+      if (cfg.isBaseDeleted || !item.imgObj) return null;
       // 기본 이미지 (__base__)
       const fullW = item.width || (item.imgObj ? (item.imgObj.naturalWidth || item.imgObj.width) : 1200);
       const fullH = item.height || (item.imgObj ? (item.imgObj.naturalHeight || item.imgObj.height) : 1600);
@@ -13027,7 +13374,10 @@ if (e.target.closest('.layer-item-box')) return;
       const marginPx = cfg.margin || 0;
       const canvasW = canvas.width;
       const canvasH = canvas.height;
-      const scaleFactor = canvasW / (paperRect.subW || 1000);
+      const { paper: cropPaper } = (typeof getPaperCanvasDimensions === 'function')
+        ? getPaperCanvasDimensions(item, cfg)
+        : { paper: { widthPx: paperRect.subW || 1000 } };
+      const scaleFactor = canvasW / ((cropPaper && cropPaper.widthPx) ? cropPaper.widthPx : 1000);
       const viewMargin = Math.round(marginPx * scaleFactor);
       const innerW = Math.max(10, canvasW - (viewMargin * 2));
       const innerH = Math.max(10, canvasH - (viewMargin * 2));
@@ -13063,6 +13413,13 @@ if (e.target.closest('.layer-item-box')) return;
       const item = docState.items[docState.currentIndex];
       if (!item) return;
 
+      const isPaper = Boolean(opts.isPaper);
+      const selLayer = (typeof getSelectedLayer === 'function') ? getSelectedLayer() : null;
+      if (!isPaper && !selLayer) {
+        if (typeof showExitToast === 'function') showExitToast('먼저 바탕 이미지 또는 객체를 선택해주세요.');
+        return;
+      }
+
       // 투시변환이 켜져 있다면 먼저 닫기 (상호 배타)
       const curIdx = docState.currentIndex;
       const cfg = getEffectiveItemSettings(curIdx);
@@ -13070,10 +13427,10 @@ if (e.target.closest('.layer-item-box')) return;
         if (typeof togglePerspectiveMode === 'function') togglePerspectiveMode();
       }
 
+      _preCropUndoSnap = (typeof captureWorkspaceSnapshot === 'function') ? captureWorkspaceSnapshot() : null;
       isCropActive = true;
-      cropPaperMode = Boolean(opts.isPaper);
+      cropPaperMode = isPaper;
 
-      const selLayer = (typeof getSelectedLayer === 'function') ? getSelectedLayer() : null;
       if (cropPaperMode) {
         // [V2.55.0] 용지 자르기: 기본 이미지의 보이는 영역에 자르기 박스를 자동 스냅 (조각 크기에 딱 맞게 자르기 1클릭 지원)
         croppingLayerId = '__paper__';
@@ -13113,9 +13470,10 @@ if (e.target.closest('.layer-item-box')) return;
       const overlay = document.getElementById('cropOverlay');
       if (overlay) overlay.style.display = 'block';
 
-      // 버튼 활성 상태 표시
-      const btnCrop = document.getElementById(cropPaperMode ? 'btnTogglePaperCrop' : 'btnToggleCrop');
+      // 버튼 활성 상태 표시 및 타 컨트롤 잠금 동기화
+      const btnCrop = document.getElementById(cropPaperMode ? 'btnFitPaperToContent' : 'btnToggleCrop');
       if (btnCrop) btnCrop.classList.add('active');
+      if (typeof syncObjectControlLockState === 'function') syncObjectControlLockState();
 
       const targetInfo = getCropTargetInfo();
       const targetName = targetInfo ? targetInfo.name : '객체';
@@ -13406,6 +13764,8 @@ if (e.target.closest('.layer-item-box')) return;
     // 7. 자르기 완료 및 모드 닫기
     async function closeCropMode() {
       if (!isCropActive) return;
+      const preSnap = _preCropUndoSnap;
+      _preCropUndoSnap = null;
       if (cropPaperMode) {
         // [V2.55.0] 용지 자르기 확정: 잘라낸 영역을 정규 custom 용지로 굽고(bake) 내용물 위치/크기를 그대로 보존
         const box = Object.assign({}, cropBox);
@@ -13418,6 +13778,9 @@ if (e.target.closest('.layer-item-box')) return;
           return;
         }
         bakePaperCrop(curIdx, box);
+        if (preSnap && typeof commitExternalUndoSnapshot === 'function') {
+          commitExternalUndoSnapshot(preSnap);
+        }
         await refreshAfterPaperChange(curIdx);
         updateStatusMsg('용지 자르기 적용 완료 (리셋 버튼으로 복원 가능)');
         return;
@@ -13425,12 +13788,20 @@ if (e.target.closest('.layer-item-box')) return;
       await applyCropAuto();
       isCropActive = false;
       croppingLayerId = null;
+      cropPaperMode = false;
 
       const overlay = document.getElementById('cropOverlay');
       if (overlay) overlay.style.display = 'none';
 
       const btnCrop = document.getElementById('btnToggleCrop');
       if (btnCrop) btnCrop.classList.remove('active');
+
+      if (preSnap && typeof commitExternalUndoSnapshot === 'function') {
+        commitExternalUndoSnapshot(preSnap);
+      }
+      if (typeof syncObjectControlLockState === 'function') {
+        syncObjectControlLockState();
+      }
 
       if (typeof renderMainViewerCanvas === 'function') {
         await renderMainViewerCanvas(docState.currentIndex);
@@ -13461,11 +13832,19 @@ if (e.target.closest('.layer-item-box')) return;
     // [자르기 ⟲] 버튼: 현재 선택된 객체 100% 원본 복원
 
     async function resetCropCurrentItem() {
+      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) return;
+      if (isCropActive && cropPaperMode) return;
       const item = docState.items[docState.currentIndex];
       if (!item) return;
 
       const selLayer = (typeof getSelectedLayer === 'function') ? getSelectedLayer() : null;
-      if (selLayer && selLayer.id !== '__base__') {
+      if (!selLayer) return;
+
+      if (!isCropActive && typeof pushUndoSnapshot === 'function') {
+        pushUndoSnapshot();
+      }
+
+      if (selLayer.id !== '__base__') {
         selLayer.crop = null;
         if (selLayer._croppedCanvas) {
           selLayer._croppedCanvas.width = 0;
@@ -13924,7 +14303,13 @@ if (e.target.closest('.layer-item-box')) return;
         }
       }
       if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive) {
-        if (!nextLayer || nextLayer.type !== 'image') {
+        const canPersp = nextLayer && (
+          nextLayer.isBase ||
+          nextLayer.type === 'image' ||
+          nextLayer.type === 'text' ||
+          (nextLayer.type === 'shape' && nextLayer.shapeType !== 'mosaic')
+        );
+        if (!canPersp) {
           if (typeof togglePerspectiveMode === 'function') togglePerspectiveMode(false);
         } else {
           if (typeof updateCornerPins === 'function') updateCornerPins();
@@ -14225,14 +14610,12 @@ if (e.target.closest('.layer-item-box')) return;
         trapExp: { top: 0, bot: 0 }
       };
 
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       layers.push(newLayer);
       selectedLayerId = newLayer.id;
       if (typeof selectedLayerIds !== 'undefined' && selectedLayerIds) {
         selectedLayerIds.clear();
         selectedLayerIds.add(newLayer.id);
-      }
-      if (typeof savePageLayerHistory === 'function' && docState && typeof docState.currentIndex === 'number') {
-        savePageLayerHistory(docState.currentIndex);
       }
       syncLayerUI();
       await refreshAllViewsForLayers();
@@ -14250,18 +14633,22 @@ if (e.target.closest('.layer-item-box')) return;
 
       if (dir === 'front') {
         if (idx === layers.length - 1) return;
+        if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
         const [target] = layers.splice(idx, 1);
         layers.push(target);
       } else if (dir === 'back') {
         if (idx === 0) return;
+        if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
         const [target] = layers.splice(idx, 1);
         layers.unshift(target);
       } else if (dir === 'up') {
         if (idx === layers.length - 1) return;
+        if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
         const [target] = layers.splice(idx, 1);
         layers.splice(idx + 1, 0, target);
       } else if (dir === 'down') {
         if (idx === 0) return;
+        if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
         const [target] = layers.splice(idx, 1);
         layers.splice(idx - 1, 0, target);
       }
@@ -14269,15 +14656,17 @@ if (e.target.closest('.layer-item-box')) return;
       await refreshAllViewsForLayers();
     }
 
-    // [V2.61.0] 전역 레이어 클립보드 (Ctrl+C / Ctrl+V 지원) & 페이지 히스토리 (Undo / Ctrl+Z)
+    // [V1.4.0] 통합 워크스페이스 히스토리 엔진 (Undo / Ctrl+Z, Redo / Ctrl+Y) - Before-Mutation 스냅샷
     let globalLayerClipboard = null;
-    const pageLayerUndoStack = {};
+    const MAX_WORKSPACE_HISTORY = 60;
+    const workspaceUndoStack = [];
+    const workspaceRedoStack = [];
+    let _continuousUndoPendingSnap = null;
+    let _isRestoringWorkspaceHistory = false;
 
     function hasGlobalLayerClipboard() {
       return Boolean(globalLayerClipboard);
     }
-
-    const pageLayerRedoStack = {};
 
     // [V1.3.4] 그룹 children 포함 이미지/캔버스 레퍼런스를 재귀적으로 보존하는 안전 복제 헬퍼
     function cloneLayerDeep(src, regenerateIds = false) {
@@ -14304,59 +14693,303 @@ if (e.target.closest('.layer-item-box')) return;
       return copy;
     }
 
-    function savePageLayerHistory(pageIdx) {
-      if (pageIdx === undefined) pageIdx = docState.currentIndex;
-      const item = docState.items[pageIdx];
-      if (!item) return;
-      const layers = getCurrentItemLayers(pageIdx);
-      if (!pageLayerUndoStack[pageIdx]) pageLayerUndoStack[pageIdx] = [];
-      const stack = pageLayerUndoStack[pageIdx];
-      stack.push(layers.map(l => cloneLayerDeep(l, false)));
-      if (stack.length > 30) stack.shift();
-      if (!pageLayerRedoStack[pageIdx]) pageLayerRedoStack[pageIdx] = [];
-      pageLayerRedoStack[pageIdx].length = 0;
+    function clearLayerCroppedCachesDeep(layers) {
+      if (!Array.isArray(layers)) return;
+      layers.forEach(l => {
+        if (!l || typeof l !== 'object') return;
+        l._croppedCanvas = null;
+        if (l.type === 'group' && Array.isArray(l.children)) {
+          clearLayerCroppedCachesDeep(l.children);
+        }
+      });
+    }
+
+    function clonePaperCropSnapshot(snap) {
+      if (!snap || typeof snap !== 'object') return null;
+      return {
+        cfg: snap.cfg ? JSON.parse(JSON.stringify(snap.cfg)) : {},
+        type: snap.type,
+        doc: snap.doc,
+        pageNum: snap.pageNum,
+        imgObj: snap.imgObj,
+        width: snap.width,
+        height: snap.height,
+        layers: Array.isArray(snap.layers) ? snap.layers.map(l => cloneLayerDeep(l, false)) : []
+      };
+    }
+
+    function captureWorkspaceSnapshot() {
+      return {
+        currentIndex: typeof docState.currentIndex === 'number' ? docState.currentIndex : 0,
+        selectedLayerId: typeof selectedLayerId !== 'undefined' ? selectedLayerId : null,
+        selectedLayerIds: (typeof selectedLayerIds !== 'undefined' && selectedLayerIds) ? Array.from(selectedLayerIds) : [],
+        globalSettings: JSON.parse(JSON.stringify(docState.globalSettings || {})),
+        checkList: Array.isArray(docState.checkList) ? [...docState.checkList] : [],
+        fileName: docState.fileName || 'MY_PDF_Document',
+        items: (docState.items || []).map(item => ({
+          type: item.type,
+          doc: item.doc,
+          pageNum: item.pageNum,
+          name: item.name,
+          width: item.width,
+          height: item.height,
+          imgObj: item.imgObj,
+          file: item.file,
+          fileId: item.fileId,
+          isBlankPage: Boolean(item.isBlankPage),
+          settings: item.settings ? JSON.parse(JSON.stringify(item.settings)) : {},
+          layers: (item.layers || []).map(l => cloneLayerDeep(l, false)),
+          _paperCropSnapshot: clonePaperCropSnapshot(item._paperCropSnapshot)
+        }))
+      };
+    }
+
+    function serializeLayerForSignature(l) {
+      if (!l || typeof l !== 'object') return l;
+      const out = {};
+      Object.keys(l).sort().forEach(k => {
+        if (k === '_croppedCanvas') return;
+        if (k === 'imgObj') {
+          out.hasImgObj = Boolean(l.imgObj);
+          return;
+        }
+        if (k === 'children' && Array.isArray(l.children)) {
+          out.children = l.children.map(serializeLayerForSignature);
+          return;
+        }
+        out[k] = l[k];
+      });
+      return out;
+    }
+
+    function serializeWorkspaceSnapshotSignature(snap) {
+      if (!snap) return '';
+      try {
+        return JSON.stringify({
+          checkList: snap.checkList || [],
+          globalSettings: snap.globalSettings || {},
+          items: (snap.items || []).map(it => ({
+            type: it.type,
+            fileId: it.fileId,
+            pageNum: it.pageNum,
+            name: it.name,
+            width: it.width,
+            height: it.height,
+            isBlankPage: Boolean(it.isBlankPage),
+            hasImg: Boolean(it.imgObj),
+            hasPaperSnap: Boolean(it._paperCropSnapshot),
+            settings: it.settings || {},
+            layers: (it.layers || []).map(serializeLayerForSignature)
+          }))
+        });
+      } catch (e) {
+        return String(Date.now()) + '_' + Math.random();
+      }
+    }
+
+    function syncUndoRedoButtonsUI() {
+      const btnUndo = document.getElementById('btnUndoAction');
+      const btnRedo = document.getElementById('btnRedoAction');
+      const canUndo = workspaceUndoStack.length > 0;
+      const canRedo = workspaceRedoStack.length > 0;
+      if (btnUndo) {
+        btnUndo.disabled = !canUndo;
+        btnUndo.title = canUndo ? `되돌리기 (Ctrl+Z) [${workspaceUndoStack.length}단계]` : '되돌릴 작업이 없습니다';
+      }
+      if (btnRedo) {
+        btnRedo.disabled = !canRedo;
+        btnRedo.title = canRedo ? `다시 실행 (Ctrl+Y) [${workspaceRedoStack.length}단계]` : '다시 실행할 작업이 없습니다';
+      }
+    }
+
+    function pushUndoSnapshot() {
+      if (_isRestoringWorkspaceHistory) return;
+      if (_continuousUndoPendingSnap) {
+        commitContinuousUndoCapture();
+      }
+      const snap = captureWorkspaceSnapshot();
+      const sig = serializeWorkspaceSnapshotSignature(snap);
+      if (workspaceUndoStack.length > 0 && workspaceUndoStack[workspaceUndoStack.length - 1]._sig === sig) {
+        return;
+      }
+      snap._sig = sig;
+      workspaceUndoStack.push(snap);
+      if (workspaceUndoStack.length > MAX_WORKSPACE_HISTORY) {
+        workspaceUndoStack.shift();
+      }
+      workspaceRedoStack.length = 0;
+      syncUndoRedoButtonsUI();
+    }
+
+    function beginContinuousUndoCapture() {
+      if (_isRestoringWorkspaceHistory) return;
+      if (!_continuousUndoPendingSnap) {
+        const snap = captureWorkspaceSnapshot();
+        snap._sig = serializeWorkspaceSnapshotSignature(snap);
+        _continuousUndoPendingSnap = snap;
+      }
+    }
+
+    function commitContinuousUndoCapture() {
+      if (!_continuousUndoPendingSnap) return;
+      const preSnap = _continuousUndoPendingSnap;
+      _continuousUndoPendingSnap = null;
+      commitExternalUndoSnapshot(preSnap);
+    }
+
+    function commitExternalUndoSnapshot(preSnap) {
+      if (!preSnap || _isRestoringWorkspaceHistory) return;
+      const preSig = preSnap._sig || serializeWorkspaceSnapshotSignature(preSnap);
+      const curSnap = captureWorkspaceSnapshot();
+      const curSig = serializeWorkspaceSnapshotSignature(curSnap);
+      if (preSig === curSig) return;
+      if (workspaceUndoStack.length > 0 && workspaceUndoStack[workspaceUndoStack.length - 1]._sig === preSig) {
+        workspaceRedoStack.length = 0;
+        syncUndoRedoButtonsUI();
+        return;
+      }
+      preSnap._sig = preSig;
+      workspaceUndoStack.push(preSnap);
+      if (workspaceUndoStack.length > MAX_WORKSPACE_HISTORY) {
+        workspaceUndoStack.shift();
+      }
+      workspaceRedoStack.length = 0;
+      syncUndoRedoButtonsUI();
+    }
+
+    function savePageLayerHistory() {
+      pushUndoSnapshot();
+    }
+
+    async function restoreWorkspaceSnapshot(snap) {
+      if (!snap) return;
+      if (typeof isCropActive !== 'undefined' && isCropActive && typeof endCropUI === 'function') {
+        endCropUI();
+      }
+      if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive && typeof togglePerspectiveMode === 'function') {
+        togglePerspectiveMode(false);
+      }
+      _isRestoringWorkspaceHistory = true;
+      _continuousUndoPendingSnap = null;
+      try {
+        docState.globalSettings = JSON.parse(JSON.stringify(snap.globalSettings || {}));
+        docState.checkList = Array.isArray(snap.checkList) ? [...snap.checkList] : [];
+        docState.fileName = snap.fileName || docState.fileName || 'MY_PDF_Document';
+        docState.items = (snap.items || []).map(srcItem => {
+          const clonedLayers = (srcItem.layers || []).map(l => cloneLayerDeep(l, false));
+          clearLayerCroppedCachesDeep(clonedLayers);
+          return {
+            type: srcItem.type,
+            doc: srcItem.doc,
+            pageNum: srcItem.pageNum,
+            name: srcItem.name,
+            width: srcItem.width,
+            height: srcItem.height,
+            imgObj: srcItem.imgObj,
+            file: srcItem.file,
+            fileId: srcItem.fileId,
+            isBlankPage: Boolean(srcItem.isBlankPage),
+            settings: srcItem.settings ? JSON.parse(JSON.stringify(srcItem.settings)) : {},
+            layers: clonedLayers,
+            _croppedCanvas: null,
+            _paperCropSnapshot: clonePaperCropSnapshot(srcItem._paperCropSnapshot)
+          };
+        });
+
+        const maxIdx = Math.max(0, docState.items.length - 1);
+        docState.currentIndex = Math.max(0, Math.min(maxIdx, snap.currentIndex || 0));
+
+        await refreshWorkspaceDisplay();
+
+        if (docState.items.length > 0) {
+          if (typeof selectedLayerIds !== 'undefined' && selectedLayerIds) {
+            selectedLayerIds.clear();
+            const curItem = docState.items[docState.currentIndex];
+            const curLayers = (curItem && Array.isArray(curItem.layers)) ? curItem.layers : [];
+            (snap.selectedLayerIds || []).forEach(id => {
+              if (id === '__base__' || curLayers.some(l => l.id === id)) {
+                selectedLayerIds.add(id);
+              }
+            });
+          }
+          const curItem = docState.items[docState.currentIndex];
+          const curLayers = (curItem && Array.isArray(curItem.layers)) ? curItem.layers : [];
+          const candSel = snap.selectedLayerId;
+          if (candSel === '__base__' || (candSel && curLayers.some(l => l.id === candSel))) {
+            selectedLayerId = candSel;
+          } else {
+            selectedLayerId = null;
+          }
+          if (typeof syncControlsForCurrentPage === 'function') syncControlsForCurrentPage();
+          if (typeof syncOfficeSliders === 'function') syncOfficeSliders();
+          if (typeof syncLayerUI === 'function') syncLayerUI();
+          if (typeof renderMainViewerCanvas === 'function') await renderMainViewerCanvas(docState.currentIndex);
+          if (typeof updateLayerStageOverlay === 'function') updateLayerStageOverlay();
+          if (typeof updateMiniPreview === 'function') updateMiniPreview();
+          if (typeof updateThumbCounts === 'function') updateThumbCounts();
+        }
+      } finally {
+        _isRestoringWorkspaceHistory = false;
+        syncUndoRedoButtonsUI();
+        if (typeof syncObjectControlLockState === 'function') {
+          syncObjectControlLockState();
+        }
+      }
     }
 
     async function undoPageLayerAction() {
-      const curIdx = docState.currentIndex;
-      const item = docState.items[curIdx];
-      if (!item) return;
-      const stack = pageLayerUndoStack[curIdx];
-      if (!stack || stack.length === 0) {
+      if (_continuousUndoPendingSnap) {
+        commitContinuousUndoCapture();
+      }
+      if (workspaceUndoStack.length === 0) {
         if (typeof showActionToast === 'function') showActionToast('되돌릴 작업이 없습니다.');
+        syncUndoRedoButtonsUI();
         return;
       }
-      const currentLayers = getCurrentItemLayers(curIdx);
-      if (!pageLayerRedoStack[curIdx]) pageLayerRedoStack[curIdx] = [];
-      pageLayerRedoStack[curIdx].push(currentLayers.map(l => cloneLayerDeep(l, false)));
-
-      const prevLayers = stack.pop();
-      item.layers = prevLayers;
-      selectedLayerId = (prevLayers.length > 0) ? prevLayers[prevLayers.length - 1].id : null;
-      syncLayerUI();
-      await refreshAllViewsForLayers();
-      if (typeof showActionToast === 'function') showActionToast('작업이 되돌려졌습니다. (Undo)');
+      const curSnap = captureWorkspaceSnapshot();
+      curSnap._sig = serializeWorkspaceSnapshotSignature(curSnap);
+      workspaceRedoStack.push(curSnap);
+      if (workspaceRedoStack.length > MAX_WORKSPACE_HISTORY) {
+        workspaceRedoStack.shift();
+      }
+      const prevSnap = workspaceUndoStack.pop();
+      await restoreWorkspaceSnapshot(prevSnap);
+      if (typeof showActionToast === 'function') showActionToast('이전 작업 상태로 되돌렸습니다.');
+      if (typeof updateStatusMsg === 'function') updateStatusMsg('작업 되돌리기(Undo) 완료');
     }
 
     async function redoPageLayerAction() {
-      const curIdx = docState.currentIndex;
-      const item = docState.items[curIdx];
-      if (!item) return;
-      const redoStack = pageLayerRedoStack[curIdx];
-      if (!redoStack || redoStack.length === 0) {
+      if (_continuousUndoPendingSnap) {
+        commitContinuousUndoCapture();
+      }
+      if (workspaceRedoStack.length === 0) {
         if (typeof showActionToast === 'function') showActionToast('다시 실행할 작업이 없습니다.');
+        syncUndoRedoButtonsUI();
         return;
       }
-      const currentLayers = getCurrentItemLayers(curIdx);
-      if (!pageLayerUndoStack[curIdx]) pageLayerUndoStack[curIdx] = [];
-      pageLayerUndoStack[curIdx].push(currentLayers.map(l => cloneLayerDeep(l, false)));
+      const curSnap = captureWorkspaceSnapshot();
+      curSnap._sig = serializeWorkspaceSnapshotSignature(curSnap);
+      workspaceUndoStack.push(curSnap);
+      if (workspaceUndoStack.length > MAX_WORKSPACE_HISTORY) {
+        workspaceUndoStack.shift();
+      }
+      const nextSnap = workspaceRedoStack.pop();
+      await restoreWorkspaceSnapshot(nextSnap);
+      if (typeof showActionToast === 'function') showActionToast('되돌린 작업을 다시 실행했습니다.');
+      if (typeof updateStatusMsg === 'function') updateStatusMsg('다시 실행(Redo) 완료');
+    }
 
-      const nextLayers = redoStack.pop();
-      item.layers = nextLayers;
-      selectedLayerId = (nextLayers.length > 0) ? nextLayers[nextLayers.length - 1].id : null;
-      syncLayerUI();
-      await refreshAllViewsForLayers();
-      if (typeof showActionToast === 'function') showActionToast('작업이 다시 실행되었습니다. (Redo)');
+    window.addEventListener('pointerup', () => {
+      if (typeof commitContinuousUndoCapture === 'function') commitContinuousUndoCapture();
+    });
+    const _colControlUndoEl = document.getElementById('colControl');
+    if (_colControlUndoEl) {
+      _colControlUndoEl.addEventListener('change', () => {
+        if (typeof commitContinuousUndoCapture === 'function') commitContinuousUndoCapture();
+      });
+      _colControlUndoEl.addEventListener('focusout', () => {
+        if (typeof commitContinuousUndoCapture === 'function') commitContinuousUndoCapture();
+      });
     }
 
     let globalLayerPasteCount = 0;
@@ -14465,12 +15098,12 @@ if (e.target.closest('.layer-item-box')) return;
 
     // [V2.19.0] 기본 이미지를 포함한 모든 객체의 복제 지원
     async function duplicateSelectedLayer() {
-      savePageLayerHistory(docState.currentIndex);
       const curIdx = docState.currentIndex;
       const item = docState.items[curIdx];
       if (!item) return;
       const sel = getSelectedLayer();
       if (!sel) return;
+      pushUndoSnapshot();
       const layers = getCurrentItemLayers();
       const cfg = getEffectiveItemSettings(curIdx);
 
@@ -14485,7 +15118,10 @@ if (e.target.closest('.layer-item-box')) return;
         const marginPx = cfg.margin || 0;
         const canvasW = canvas ? canvas.width : 2000;
         const canvasH = canvas ? canvas.height : 2000;
-        const scaleFactor = canvasW / (paperRect.subW || 1000);
+        const { paper: dupPaper } = (typeof getPaperCanvasDimensions === 'function')
+          ? getPaperCanvasDimensions(item, cfg)
+          : { paper: { widthPx: paperRect.subW || 1000 } };
+        const scaleFactor = canvasW / ((dupPaper && dupPaper.widthPx) ? dupPaper.widthPx : 1000);
         const viewMargin = Math.round(marginPx * scaleFactor);
         const innerW = Math.max(10, canvasW - (viewMargin * 2));
         const innerH = Math.max(10, canvasH - (viewMargin * 2));
@@ -14547,11 +15183,11 @@ if (e.target.closest('.layer-item-box')) return;
     // [V2.19.0] 기본 이미지를 포함한 모든 객체의 삭제 지원 (표준 삭제 토스트 표출)
     async function deleteSelectedLayer() {
       const curIdx = docState.currentIndex;
-      savePageLayerHistory(curIdx);
       const item = docState.items[curIdx];
       if (!item) return;
 
       if (selectedLayerIds.size > 1) {
+        pushUndoSnapshot();
         const layers = getCurrentItemLayers();
         item.layers = layers.filter(l => !selectedLayerIds.has(l.id));
         const delCount = selectedLayerIds.size;
@@ -14578,6 +15214,8 @@ if (e.target.closest('.layer-item-box')) return;
         }
         return;
       }
+
+      pushUndoSnapshot();
 
       const layers = getCurrentItemLayers();
       const idx = layers.findIndex(l => l.id === sel.id);
@@ -14790,19 +15428,105 @@ if (e.target.closest('.layer-item-box')) return;
       const sel = getSelectedLayer();
       if (!sel || sel.type !== 'group') return;
       if (prop === 'opacity') {
+        if (typeof beginContinuousUndoCapture === 'function') beginContinuousUndoCapture();
         const num = Math.max(0, Math.min(100, parseInt(val, 10) || 0));
         sel.opacity = num;
         const lbl = document.getElementById('lblGroupOpacityVal');
         if (lbl) lbl.textContent = `${num}%`;
         const slider = document.getElementById('sliderGroupOpacity');
         if (slider) slider.value = num;
+      } else if (typeof pushUndoSnapshot === 'function') {
+        pushUndoSnapshot();
       }
       await refreshAllViewsForLayers();
     }
 
     // --------------------------------------------------------------------------
-    // 2. 우측 패널 레이어 칩 & 인스펙터 UI 동기화
+    // 2. 우측 패널 레이어 칩 & 인스펙터 UI 동기화 + 통합 잠금 동기화
     // --------------------------------------------------------------------------
+
+    function syncObjectControlLockState() {
+      const hasDoc = Boolean(docState && Array.isArray(docState.items) && docState.items.length > 0 && docState.currentIndex >= 0);
+      const sel = (hasDoc && typeof getSelectedLayer === 'function') ? getSelectedLayer() : null;
+      const hasMulti = hasDoc && Boolean(typeof selectedLayerIds !== 'undefined' && selectedLayerIds && selectedLayerIds.size > 0);
+      const hasAnySelected = Boolean(sel) || hasMulti;
+
+      const cropOn = (typeof isCropActive !== 'undefined' && Boolean(isCropActive));
+      const paperCropOn = cropOn && (typeof cropPaperMode !== 'undefined' && Boolean(cropPaperMode));
+      const perspOn = (typeof isPerspectiveActive !== 'undefined' && Boolean(isPerspectiveActive));
+      const hasPerspTarget = hasDoc && (typeof getPerspectiveEditableTarget === 'function' ? Boolean(getPerspectiveEditableTarget()) : false);
+
+      if (typeof syncUndoRedoButtonsUI === 'function') {
+        syncUndoRedoButtonsUI();
+      }
+
+      // 1. 정렬 바 (#layerAlignBar)
+      const alignBar = document.getElementById('layerAlignBar');
+      if (alignBar) {
+        const canAlign = hasAnySelected && !cropOn && !perspOn;
+        alignBar.querySelectorAll('.btn-align-act').forEach((btn) => {
+          btn.disabled = !canAlign;
+          if (!canAlign) {
+            if (!btn.dataset.origTitle) btn.dataset.origTitle = btn.title || '';
+            btn.title = (cropOn || perspOn)
+              ? '자르기 또는 투시변형 모드 중에는 사용할 수 없습니다'
+              : '객체 또는 바탕 이미지를 먼저 선택하세요';
+          } else if (btn.dataset.origTitle) {
+            btn.title = btn.dataset.origTitle;
+          }
+        });
+      }
+
+      // 2. [이미지 변형] 서브 그룹 (#subgroupImageTransforms)
+      const subTf = document.getElementById('subgroupImageTransforms');
+      if (subTf) {
+        subTf.classList.toggle('is-disabled-group', !hasAnySelected);
+        subTf.querySelectorAll('button, input').forEach((el) => {
+          const id = el.id || '';
+          if (!hasAnySelected) {
+            el.disabled = true;
+            return;
+          }
+          if (cropOn) {
+            el.disabled = paperCropOn ? true : (id !== 'btnToggleCrop' && id !== 'btnResetCropCurrent');
+            return;
+          }
+          if (perspOn) {
+            el.disabled = (id !== 'btnTogglePerspective' && id !== 'btnResetPerspectiveCurrent');
+            return;
+          }
+          if (id === 'btnTogglePerspective' || id === 'btnResetPerspectiveCurrent') {
+            el.disabled = !hasPerspTarget;
+            if (!hasPerspTarget) {
+              if (!el.dataset.origTitle) el.dataset.origTitle = el.title || '';
+              el.title = (sel && sel.type === 'shape' && sel.shapeType === 'mosaic')
+                ? '모자이크 도형은 투시 변형을 지원하지 않습니다'
+                : '그룹/다중 선택에서는 투시 변형을 사용할 수 없습니다';
+            } else if (el.dataset.origTitle) {
+              el.title = el.dataset.origTitle;
+            }
+            return;
+          }
+          el.disabled = false;
+        });
+      }
+
+      // 3. 회전 슬라이더 (#sliderRotation - 존재 시 동기화)
+      const sliderRot = document.getElementById('sliderRotation');
+      if (sliderRot) {
+        sliderRot.disabled = !hasAnySelected || cropOn || perspOn;
+      }
+
+      // 4. [이미지 편집] 서브 그룹 (#subgroupImageFilters) - 기본/이미지 레이어 선택 시에만 활성
+      const subFilters = document.getElementById('subgroupImageFilters');
+      if (subFilters) {
+        const canEditFilters = hasAnySelected && !cropOn && !perspOn && Boolean(sel && (sel.isBase || sel.type === 'image'));
+        subFilters.classList.toggle('is-disabled-group', !canEditFilters);
+        subFilters.querySelectorAll('button, input').forEach((el) => {
+          el.disabled = !canEditFilters;
+        });
+      }
+    }
 
     function syncLayerUI() {
       const curIdx = docState.currentIndex;
@@ -14963,23 +15687,7 @@ if (e.target.closest('.layer-item-box')) return;
         }
       }
 
-      // [V1.3.9] 아무 객체도 선택되지 않은 상태에서는 정렬(좌/중/우/상/중/하) 버튼 6종 비활성화
-      const hasAnyAlignTarget = Boolean(
-        (typeof selectedLayerId !== 'undefined' && selectedLayerId !== null) ||
-        (typeof selectedLayerIds !== 'undefined' && selectedLayerIds && selectedLayerIds.size > 0)
-      );
-      const alignBar = document.getElementById('layerAlignBar');
-      if (alignBar) {
-        alignBar.querySelectorAll('.btn-align-act').forEach((btn) => {
-          btn.disabled = !hasAnyAlignTarget;
-          if (!hasAnyAlignTarget) {
-            if (!btn.dataset.origTitle) btn.dataset.origTitle = btn.title || '';
-            btn.title = '객체 또는 바탕 이미지를 먼저 선택하세요';
-          } else if (btn.dataset.origTitle) {
-            btn.title = btn.dataset.origTitle;
-          }
-        });
-      }
+      // [V1.4.0] 정렬·변형·편집 컨트롤 잠금 상태는 syncObjectControlLockState()에서 일괄 동기화합니다.
 
       // [V2.62.0] 다중 선택 시 알림 바 동기화
       const multiBar = document.getElementById('layerMultiSelectBar');
@@ -14997,12 +15705,13 @@ if (e.target.closest('.layer-item-box')) return;
       const sliderRot = document.getElementById('sliderRotation');
       const lblRot = document.getElementById('lblRotationVal');
       if (sel) {
-        const r = Math.round(sel.rot || 0);
+        const rawRot = sel.isBase ? (sel.cfg ? (sel.cfg.rotImg !== undefined ? sel.cfg.rotImg : 0) : 0) : sel.rot;
+        const r = Math.round(rawRot || 0);
         if (sliderRot) sliderRot.value = r;
         if (lblRot) lblRot.textContent = `${r}°`;
       } else {
         const cfg = getEffectiveItemSettings(docState.currentIndex);
-        const r = cfg ? (cfg.rotImg || cfg.rot || 0) : 0;
+        const r = cfg ? (cfg.rotImg !== undefined ? cfg.rotImg : 0) : 0;
         if (sliderRot) sliderRot.value = r;
         if (lblRot) lblRot.textContent = `${r}°`;
       }
@@ -15168,12 +15877,22 @@ if (e.target.closest('.layer-item-box')) return;
           if (lblShapeOp) lblShapeOp.textContent = `${shapeOp}%`;
         }
       }
+
+      if (typeof syncObjectControlLockState === 'function') {
+        syncObjectControlLockState();
+      }
     }
 
     // 글상자 속성 변경 핸들러
     async function onTextLayerPropChange(prop, val) {
       const sel = getSelectedLayer();
       if (!sel || sel.type !== 'text') return;
+
+      if (prop === 'opacity' || prop === 'text' || prop === 'fontSize') {
+        if (typeof beginContinuousUndoCapture === 'function') beginContinuousUndoCapture();
+      } else if (typeof pushUndoSnapshot === 'function') {
+        pushUndoSnapshot();
+      }
 
       if (prop === 'opacity') {
         sel.opacity = Math.max(0, Math.min(100, parseInt(val, 10) || 0));
@@ -15201,6 +15920,7 @@ if (e.target.closest('.layer-item-box')) return;
     async function stepTextLayerFontSize(delta) {
       const sel = getSelectedLayer();
       if (!sel || sel.type !== 'text') return;
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       sel.fontSize = Math.max(6, Math.min(250, (sel.fontSize || 28) + delta));
       syncLayerUI();
       await refreshAllViewsForLayers();
@@ -15209,6 +15929,7 @@ if (e.target.closest('.layer-item-box')) return;
     async function toggleTextLayerStyle(prop) {
       const sel = getSelectedLayer();
       if (!sel || sel.type !== 'text') return;
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       sel[prop] = !sel[prop];
       syncLayerUI();
       await refreshAllViewsForLayers();
@@ -15253,6 +15974,8 @@ if (e.target.closest('.layer-item-box')) return;
       const canvas = document.getElementById('mainViewerCanvas');
       if (!canvas || !canvas.width || !canvas.height) return;
 
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
+
       const item = docState.items[docState.currentIndex];
       const cfg = getEffectiveItemSettings(docState.currentIndex);
       const paperRect = getActivePaperCanvasRect(canvas, item, cfg);
@@ -15293,6 +16016,12 @@ if (e.target.closest('.layer-item-box')) return;
       const sel = getSelectedLayer();
       if (!sel || sel.type !== 'shape') return;
 
+      if (prop === 'opacity' || prop === 'strokeWidth') {
+        if (typeof beginContinuousUndoCapture === 'function') beginContinuousUndoCapture();
+      } else if (typeof pushUndoSnapshot === 'function') {
+        pushUndoSnapshot();
+      }
+
       if (prop === 'opacity') {
         sel.opacity = Math.max(0, Math.min(100, parseInt(val, 10) || 0));
         const lbl = document.getElementById('lblShapeOpacityVal');
@@ -15301,6 +16030,12 @@ if (e.target.closest('.layer-item-box')) return;
         if (slider && slider.value !== String(sel.opacity)) slider.value = sel.opacity;
       } else if (prop === 'shapeType') {
         sel.shapeType = val;
+        if (val === 'mosaic') {
+          sel.corners = null;
+          if (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive && selectedLayerId === sel.id && typeof togglePerspectiveMode === 'function') {
+            togglePerspectiveMode(false);
+          }
+        }
         const numMatch = sel.name.match(/\d+$/);
         const numStr = numMatch ? ' ' + numMatch[0] : '';
         sel.name = (SHAPE_NAMES[val] || '도형') + numStr;
@@ -15322,7 +16057,7 @@ if (e.target.closest('.layer-item-box')) return;
 
     function handleLayerScale(delta) {
       const sel = getSelectedLayer();
-      if (!sel) return false;
+      if (!sel || sel.isBase) return false;
       const factor = Math.max(0.5, 1 + delta);
       sel.w = Math.max(0.03, Math.min(1.8, sel.w * factor));
       sel.h = Math.max(0.03, Math.min(1.8, sel.h * factor));
@@ -15336,7 +16071,7 @@ if (e.target.closest('.layer-item-box')) return;
 
     function handleLayerResetScale() {
       const sel = getSelectedLayer();
-      if (!sel) return false;
+      if (!sel || sel.isBase) return false;
       if (sel.type === 'text') {
         sel.w = 0.34; sel.h = 0.09; sel.fontSize = 28;
         syncLayerUI();
@@ -15351,7 +16086,7 @@ if (e.target.closest('.layer-item-box')) return;
 
     function handleLayerScaleX(delta) {
       const sel = getSelectedLayer();
-      if (!sel) return false;
+      if (!sel || sel.isBase) return false;
       sel.w = Math.max(0.03, Math.min(1.8, sel.w * (1 + delta)));
       refreshAllViewsForLayers();
       return true;
@@ -15359,7 +16094,7 @@ if (e.target.closest('.layer-item-box')) return;
 
     function handleLayerResetScaleX() {
       const sel = getSelectedLayer();
-      if (!sel) return false;
+      if (!sel || sel.isBase) return false;
       if (sel.type === 'image' && sel.origW && sel.origH) {
         const canvas = document.getElementById('mainViewerCanvas');
         const pRatio = (canvas && canvas.width && canvas.height) ? (canvas.width / canvas.height) : 0.707;
@@ -15373,7 +16108,7 @@ if (e.target.closest('.layer-item-box')) return;
 
     function handleLayerTrapezoid(mode) {
       const sel = getSelectedLayer();
-      if (!sel) return false;
+      if (!sel || sel.isBase) return false;
       if (sel.type !== 'image') {
         if (typeof showExitToast === 'function') showExitToast('사다리꼴/투시 변형은 이미지·PDF 객체에서 지원됩니다.');
         return true;
@@ -15388,7 +16123,7 @@ if (e.target.closest('.layer-item-box')) return;
 
     function handleLayerResetTrapezoid() {
       const sel = getSelectedLayer();
-      if (!sel) return false;
+      if (!sel || sel.isBase) return false;
       if (sel.type === 'image') {
         sel.trapExp = { top: 0, bot: 0 };
         refreshAllViewsForLayers();
@@ -15398,7 +16133,7 @@ if (e.target.closest('.layer-item-box')) return;
 
     function handleLayerBrightness(delta) {
       const sel = getSelectedLayer();
-      if (!sel) return false;
+      if (!sel || sel.isBase) return false;
       if (sel.type === 'image') {
         sel.brightness = Math.max(20, Math.min(250, (sel.brightness || 100) + delta));
         refreshAllViewsForLayers();
@@ -15408,7 +16143,7 @@ if (e.target.closest('.layer-item-box')) return;
 
     function handleLayerResetBrightness() {
       const sel = getSelectedLayer();
-      if (!sel) return false;
+      if (!sel || sel.isBase) return false;
       if (sel.type === 'image') {
         sel.brightness = 100;
         refreshAllViewsForLayers();
@@ -15418,7 +16153,7 @@ if (e.target.closest('.layer-item-box')) return;
 
     function handleLayerContrast(delta) {
       const sel = getSelectedLayer();
-      if (!sel) return false;
+      if (!sel || sel.isBase) return false;
       if (sel.type === 'image') {
         sel.contrast = Math.max(20, Math.min(250, (sel.contrast || 100) + delta));
         refreshAllViewsForLayers();
@@ -15428,7 +16163,7 @@ if (e.target.closest('.layer-item-box')) return;
 
     function handleLayerResetContrast() {
       const sel = getSelectedLayer();
-      if (!sel) return false;
+      if (!sel || sel.isBase) return false;
       if (sel.type === 'image') {
         sel.contrast = 100;
         refreshAllViewsForLayers();
@@ -15438,7 +16173,7 @@ if (e.target.closest('.layer-item-box')) return;
 
     function handleLayerOffset(pixelDx, pixelDy) {
       const sel = getSelectedLayer();
-      if (!sel) return false;
+      if (!sel || sel.isBase) return false;
       const mainCanvas = document.getElementById('mainViewerCanvas');
       const cw = (mainCanvas && mainCanvas.width) ? mainCanvas.width : 1200;
       const ch = (mainCanvas && mainCanvas.height) ? mainCanvas.height : 1200;
@@ -15450,7 +16185,7 @@ if (e.target.closest('.layer-item-box')) return;
 
     function handleLayerResetOffset() {
       const sel = getSelectedLayer();
-      if (!sel) return false;
+      if (!sel || sel.isBase) return false;
       sel.x = 0.5;
       sel.y = 0.5;
       refreshAllViewsForLayers();
@@ -15459,8 +16194,16 @@ if (e.target.closest('.layer-item-box')) return;
 
     function handleLayerRotationInput(num) {
       const sel = getSelectedLayer();
-      if (!sel) return false;
-      sel.rot = num;
+      if (!sel || sel.isBase) return false;
+      const geom = (typeof getLayerVisualGeometry === 'function') ? getLayerVisualGeometry(sel) : null;
+      if (geom && geom.hasCrop) {
+        const unmapped = geom.unmap(geom.visualW, geom.visualH, geom.visualCx, geom.visualCy, num);
+        sel.rot = num;
+        sel.x = Math.max(-0.4, Math.min(1.4, unmapped.x));
+        sel.y = Math.max(-0.4, Math.min(1.4, unmapped.y));
+      } else {
+        sel.rot = num;
+      }
       const lblRot = document.getElementById('lblRotationVal');
       if (lblRot) lblRot.textContent = `${num}°`;
       refreshAllViewsForLayers();
@@ -15469,11 +16212,19 @@ if (e.target.closest('.layer-item-box')) return;
 
     function handleLayerRotateByDelta(delta) {
       const sel = getSelectedLayer();
-      if (!sel) return false;
+      if (!sel || sel.isBase) return false;
       let next = Math.round(sel.rot || 0) + delta;
       if (next > 180) next -= 360;
       if (next <= -180) next += 360;
-      sel.rot = next;
+      const geom = (typeof getLayerVisualGeometry === 'function') ? getLayerVisualGeometry(sel) : null;
+      if (geom && geom.hasCrop) {
+        const unmapped = geom.unmap(geom.visualW, geom.visualH, geom.visualCx, geom.visualCy, next);
+        sel.rot = next;
+        sel.x = Math.max(-0.4, Math.min(1.4, unmapped.x));
+        sel.y = Math.max(-0.4, Math.min(1.4, unmapped.y));
+      } else {
+        sel.rot = next;
+      }
       syncLayerUI();
       refreshAllViewsForLayers();
       return true;
@@ -15481,8 +16232,16 @@ if (e.target.closest('.layer-item-box')) return;
 
     function handleLayerRotateTo(val) {
       const sel = getSelectedLayer();
-      if (!sel) return false;
-      sel.rot = val;
+      if (!sel || sel.isBase) return false;
+      const geom = (typeof getLayerVisualGeometry === 'function') ? getLayerVisualGeometry(sel) : null;
+      if (geom && geom.hasCrop) {
+        const unmapped = geom.unmap(geom.visualW, geom.visualH, geom.visualCx, geom.visualCy, val);
+        sel.rot = val;
+        sel.x = Math.max(-0.4, Math.min(1.4, unmapped.x));
+        sel.y = Math.max(-0.4, Math.min(1.4, unmapped.y));
+      } else {
+        sel.rot = val;
+      }
       syncLayerUI();
       refreshAllViewsForLayers();
       return true;
@@ -15490,7 +16249,9 @@ if (e.target.closest('.layer-item-box')) return;
 
     async function handleLayerResetCorners() {
       const sel = getSelectedLayer();
-      if (!sel || sel.type !== 'image') return false;
+      if (!sel || sel.isBase) return false;
+      const canPersp = sel.type === 'image' || sel.type === 'text' || (sel.type === 'shape' && sel.shapeType !== 'mosaic');
+      if (!canPersp) return false;
       sel.corners = {
         tl: { x: 0, y: 0 },
         tr: { x: 0, y: 0 },
@@ -15620,7 +16381,10 @@ if (e.target.closest('.layer-item-box')) return;
 
       const marginPx = cfg.margin || 0;
       const paperRect = getActivePaperCanvasRect({ width: canvasW, height: canvasH }, item, cfg);
-      const scaleFactor = canvasW / (paperRect.subW || 1000);
+      const { paper: basePaper } = (typeof getPaperCanvasDimensions === 'function')
+        ? getPaperCanvasDimensions(item, cfg)
+        : { paper: { widthPx: paperRect.subW || 1000 } };
+      const scaleFactor = canvasW / ((basePaper && basePaper.widthPx) ? basePaper.widthPx : 1000);
       const viewMargin = Math.round(marginPx * scaleFactor);
       const innerW = Math.max(10, canvasW - (viewMargin * 2));
       const innerH = Math.max(10, canvasH - (viewMargin * 2));
@@ -15810,8 +16574,20 @@ if (e.target.closest('.layer-item-box')) return;
       ctx.restore();
     }
 
+    // [V1.4.0] 투시(4모서리 핀) 활성 여부 검사 (텍스트/도형 벡터 무손실 렌더링 분기용)
+    function hasActivePerspectiveCorners(corners) {
+      if (!corners) return false;
+      const eps = 0.0005;
+      return (
+        (corners.tl && (Math.abs(corners.tl.x || 0) > eps || Math.abs(corners.tl.y || 0) > eps)) ||
+        (corners.tr && (Math.abs(corners.tr.x || 0) > eps || Math.abs(corners.tr.y || 0) > eps)) ||
+        (corners.br && (Math.abs(corners.br.x || 0) > eps || Math.abs(corners.br.y || 0) > eps)) ||
+        (corners.bl && (Math.abs(corners.bl.x || 0) > eps || Math.abs(corners.bl.y || 0) > eps))
+      );
+    }
+
     // [핵심] 카멜레온 위장 배경 인페인팅 (15곳 5x3 다중 구역 배경색 샘플링 + 글자/표선 노이즈 배제 + 구간별 양선형 보간 합성)
-    function drawChameleonBackground(ctx, canvasW, canvasH, cx, cy, boxW, boxH, rotRad) {
+    function drawChameleonBackground(ctx, canvasW, canvasH, cx, cy, boxW, boxH, rotRad, sampleCtx = null) {
       try {
         const cos = Math.cos(rotRad);
         const sin = Math.sin(rotRad);
@@ -15838,7 +16614,7 @@ if (e.target.closest('.layer-item-box')) return;
         const rw = Math.max(1, maxX - minX + 1);
         const rh = Math.max(1, maxY - minY + 1);
 
-        const imgData = ctx.getImageData(minX, minY, rw, rh).data;
+        const imgData = (sampleCtx || ctx).getImageData(minX, minY, rw, rh).data;
 
         // 지정된 로컬 사각형 구역(lx0~lx1, ly0~ly1)에서 글자 획/표선을 배제한 순수 배경색 추출
         function sampleRegionCleanColor(lx0, ly0, lx1, ly1) {
@@ -15942,7 +16718,18 @@ if (e.target.closest('.layer-item-box')) return;
       }
     }
 
-    function drawTextLayerOnCanvas(ctx, canvasW, canvasH, layer, cx, cy, boxW, boxH, rotRad, refScale, options = {}) {
+    function prepareVectorPerspOffscreenCanvas(boxW, boxH) {
+      const offCanvas = window._vectorPerspOffCanvas || (window._vectorPerspOffCanvas = document.createElement('canvas'));
+      const offW = Math.max(4, Math.ceil(boxW));
+      const offH = Math.max(4, Math.ceil(boxH));
+      if (offCanvas.width !== offW) offCanvas.width = offW;
+      if (offCanvas.height !== offH) offCanvas.height = offH;
+      const offCtx = offCanvas.getContext('2d');
+      offCtx.clearRect(0, 0, offW, offH);
+      return { offCanvas, offCtx, offW, offH };
+    }
+
+    function drawWarpedOffscreenLayer(ctx, layer, offCanvas, cx, cy, boxW, boxH, rotRad, isCropping) {
       ctx.save();
       const op = (layer.opacity !== undefined) ? Math.max(0, Math.min(100, Number(layer.opacity))) / 100 : 1;
       if (op < 1) {
@@ -15950,7 +16737,81 @@ if (e.target.closest('.layer-item-box')) return;
       }
       const flipScaleX = layer.flipH ? -1 : 1;
       const flipScaleY = layer.flipV ? -1 : 1;
+
+      if (!isCropping && layer.crop) {
+        const crop = layer.crop;
+        const cropW = boxW * (crop.w !== undefined ? crop.w : 1);
+        const cropH = boxH * (crop.h !== undefined ? crop.h : 1);
+        const cropLocalX = -boxW / 2 + boxW * ((crop.x || 0) + (crop.w !== undefined ? crop.w : 1) / 2);
+        const cropLocalY = -boxH / 2 + boxH * ((crop.y || 0) + (crop.h !== undefined ? crop.h : 1) / 2);
+        const cropCenterPaperX = cx + (cropLocalX * Math.cos(rotRad) - cropLocalY * Math.sin(rotRad));
+        const cropCenterPaperY = cy + (cropLocalX * Math.sin(rotRad) + cropLocalY * Math.cos(rotRad));
+        ctx.translate(cropCenterPaperX, cropCenterPaperY);
+        ctx.rotate(rotRad);
+        const skX = Number(layer.skewX) || 0;
+        const skY = Number(layer.skewY) || 0;
+        if (skX !== 0 || skY !== 0) {
+          ctx.transform(1, Math.tan((skY * Math.PI) / 180), Math.tan((skX * Math.PI) / 180), 1, 0, 0);
+        }
+        if (flipScaleX !== 1 || flipScaleY !== 1) {
+          ctx.scale(flipScaleX, flipScaleY);
+        }
+        ctx.beginPath();
+        ctx.rect(-cropW / 2, -cropH / 2, cropW, cropH);
+        ctx.clip();
+        ctx.translate(-cropLocalX, -cropLocalY);
+      } else {
+        ctx.translate(cx, cy);
+        ctx.rotate(rotRad);
+        const skX = Number(layer.skewX) || 0;
+        const skY = Number(layer.skewY) || 0;
+        if (skX !== 0 || skY !== 0) {
+          ctx.transform(1, Math.tan((skY * Math.PI) / 180), Math.tan((skX * Math.PI) / 180), 1, 0, 0);
+        }
+        if (flipScaleX !== 1 || flipScaleY !== 1) {
+          ctx.scale(flipScaleX, flipScaleY);
+        }
+      }
+      drawPerspectiveQuad(ctx, offCanvas, -boxW / 2, -boxH / 2, boxW, boxH, layer.corners, 0);
+      ctx.restore();
+    }
+
+    function drawTextLayerOnCanvas(ctx, canvasW, canvasH, layer, cx, cy, boxW, boxH, rotRad, refScale, options = {}) {
       const isCroppingText = Boolean(ctx.canvas && ctx.canvas.id === 'mainViewerCanvas' && typeof isCropActive !== 'undefined' && isCropActive && croppingLayerId === layer.id);
+      if (hasActivePerspectiveCorners(layer.corners) && typeof drawPerspectiveQuad === 'function') {
+        const { offCanvas, offCtx, offW, offH } = prepareVectorPerspOffscreenCanvas(boxW, boxH);
+
+        const rawBgMode = layer.bgMode || 'chameleon';
+        if (rawBgMode === 'chameleon') {
+          offCtx.save();
+          offCtx.translate(offW / 2, offH / 2);
+          drawChameleonBackground(offCtx, canvasW, canvasH, cx, cy, boxW, boxH, rotRad, ctx);
+          offCtx.restore();
+        }
+        const proxyLayer = {
+          ...layer,
+          bgMode: rawBgMode === 'chameleon' ? '_prebuilt' : rawBgMode,
+          rot: 0,
+          skewX: 0,
+          skewY: 0,
+          flipH: false,
+          flipV: false,
+          crop: null,
+          corners: null,
+          opacity: 100
+        };
+        drawTextLayerOnCanvas(offCtx, offW, offH, proxyLayer, offW / 2, offH / 2, boxW, boxH, 0, refScale, options);
+        drawWarpedOffscreenLayer(ctx, layer, offCanvas, cx, cy, boxW, boxH, rotRad, isCroppingText);
+        return;
+      }
+
+      ctx.save();
+      const op = (layer.opacity !== undefined) ? Math.max(0, Math.min(100, Number(layer.opacity))) / 100 : 1;
+      if (op < 1) {
+        ctx.globalAlpha = ctx.globalAlpha * op;
+      }
+      const flipScaleX = layer.flipH ? -1 : 1;
+      const flipScaleY = layer.flipV ? -1 : 1;
 
       if (!isCroppingText && layer.crop) {
         const crop = layer.crop;
@@ -16231,6 +17092,27 @@ if (e.target.closest('.layer-item-box')) return;
 
     // 15종 벡터 도형 렌더러 (면색 없음 투명 테두리 및 5종 선 스타일: 실선/이중선/파선/일점쇄선/점선 완벽 지원)
     function drawShapeLayerOnCanvas(ctx, layer, cx, cy, boxW, boxH, rotRad, refScale) {
+      const stCheck = layer.shapeType || 'rect';
+      const isCroppingShape = Boolean(ctx.canvas && ctx.canvas.id === 'mainViewerCanvas' && typeof isCropActive !== 'undefined' && isCropActive && croppingLayerId === layer.id);
+      if (stCheck !== 'mosaic' && hasActivePerspectiveCorners(layer.corners) && typeof drawPerspectiveQuad === 'function') {
+        const { offCanvas, offCtx, offW, offH } = prepareVectorPerspOffscreenCanvas(boxW, boxH);
+
+        const proxyLayer = {
+          ...layer,
+          rot: 0,
+          skewX: 0,
+          skewY: 0,
+          flipH: false,
+          flipV: false,
+          crop: null,
+          corners: null,
+          opacity: 100
+        };
+        drawShapeLayerOnCanvas(offCtx, proxyLayer, offW / 2, offH / 2, boxW, boxH, 0, refScale);
+        drawWarpedOffscreenLayer(ctx, layer, offCanvas, cx, cy, boxW, boxH, rotRad, isCroppingShape);
+        return;
+      }
+
       ctx.save();
       const op = (layer.opacity !== undefined) ? Math.max(0, Math.min(100, Number(layer.opacity))) / 100 : 1;
       if (op < 1) {
@@ -16238,7 +17120,6 @@ if (e.target.closest('.layer-item-box')) return;
       }
       const flipScaleX = layer.flipH ? -1 : 1;
       const flipScaleY = layer.flipV ? -1 : 1;
-      const isCroppingShape = Boolean(ctx.canvas && ctx.canvas.id === 'mainViewerCanvas' && typeof isCropActive !== 'undefined' && isCropActive && croppingLayerId === layer.id);
 
       const sw = Math.max(0, (layer.strokeWidth !== undefined ? layer.strokeWidth : 4) * refScale);
       const inset = sw / 2;
@@ -16493,12 +17374,24 @@ if (e.target.closest('.layer-item-box')) return;
     // --------------------------------------------------------------------------
 
     
-    // 메인 뷰어 캔버스 직접 클릭 시 바탕 이미지 즉시 선택
+    // 메인 뷰어 캔버스 직접 클릭 시 바탕 이미지 즉시 선택 (스페이스/스포이드/자르기/투시/삭제된 바탕 예외)
     const mainCanvasEl = document.getElementById('mainViewerCanvas');
     if (mainCanvasEl) {
       mainCanvasEl.addEventListener('pointerdown', (e) => {
         if (e.button !== 0 && e.pointerType === 'mouse') return;
+        if (typeof isSpaceKeyDown !== 'undefined' && isSpaceKeyDown) return;
+        if (typeof isEyedropperActive !== 'undefined' && isEyedropperActive) return;
+        if ((typeof isCropActive !== 'undefined' && isCropActive) || (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive)) return;
         if (e.target.closest('.layer-item-box')) return;
+        const curIdx = docState.currentIndex;
+        const curItem = docState.items[curIdx];
+        const curCfg = (curIdx >= 0 && curItem && typeof getEffectiveItemSettings === 'function') ? getEffectiveItemSettings(curIdx) : null;
+        if (!curItem || !curItem.imgObj || (curCfg && curCfg.isBaseDeleted)) {
+          if (selectedLayerId !== null || (typeof selectedLayerIds !== 'undefined' && selectedLayerIds.size > 0)) {
+            selectLayer(null);
+          }
+          return;
+        }
         if (selectedLayerId !== '__base__') {
           selectLayer('__base__');
         }
@@ -16580,10 +17473,10 @@ if (e.target.closest('.layer-item-box')) return;
       const layers = getCurrentItemLayers(curIdx);
       const target = layers.find(l => l.id === layerId);
       if (!target) return;
-      target.locked = !target.locked;
-      if (typeof savePageLayerHistory === 'function') {
-        savePageLayerHistory(curIdx);
+      if (typeof pushUndoSnapshot === 'function') {
+        pushUndoSnapshot();
       }
+      target.locked = !target.locked;
       if (typeof updateStatusMsg === 'function') {
         updateStatusMsg(target.locked ? `🔒 ${target.name || '객체'} 잠김 (이동/변형 방지)` : `🔓 ${target.name || '객체'} 잠금 해제`);
       }
@@ -16594,6 +17487,7 @@ if (e.target.closest('.layer-item-box')) return;
     }
 
     function alignActiveObject(type) {
+      if ((typeof isCropActive !== 'undefined' && isCropActive) || (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive)) return;
       const curIdx = docState.currentIndex;
       const item = docState.items[curIdx];
       if (!item) return;
@@ -16603,6 +17497,7 @@ if (e.target.closest('.layer-item-box')) return;
       if (selectedLayerIds.size > 1) {
         const layers = getCurrentItemLayers(curIdx).filter(l => selectedLayerIds.has(l.id) && !l.locked);
         if (layers.length === 0) return;
+        if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
         layers.forEach(l => {
           const hw = (l.w || 0.2) / 2;
@@ -16626,14 +17521,17 @@ if (e.target.closest('.layer-item-box')) return;
           else if (type === 'bottom') l.y = maxY - hh;
         });
 
-        if (typeof savePageLayerHistory === 'function') savePageLayerHistory(curIdx);
         requestViewerRedraw();
         updateThumbnailAsync(curIdx);
         updateLayerStageOverlay();
         return;
       }
 
-      // 단일 선택 객체 vs 바탕 이미지 정렬
+      // 단일 선택 객체 vs 바탕 이미지 정렬 (명시적 선택 필수)
+      if (!selectedLayerId && (!selectedLayerIds || selectedLayerIds.size === 0)) {
+        if (typeof updateStatusMsg === 'function') updateStatusMsg('객체 또는 바탕 이미지를 먼저 선택하세요.');
+        return;
+      }
       const sel = getSelectedLayer();
       if (!sel) {
         if (typeof updateStatusMsg === 'function') updateStatusMsg('객체 또는 바탕 이미지를 먼저 선택하세요.');
@@ -16645,6 +17543,7 @@ if (e.target.closest('.layer-item-box')) return;
           if (typeof updateStatusMsg === 'function') updateStatusMsg('🔒 잠긴 객체는 정렬할 수 없습니다.');
           return;
         }
+        if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
         const hw = (sel.w || 0.2) / 2;
         const hh = (sel.h || 0.2) / 2;
         if (type === 'left') sel.x = hw;
@@ -16654,13 +17553,13 @@ if (e.target.closest('.layer-item-box')) return;
         else if (type === 'centerV') sel.y = 0.5;
         else if (type === 'bottom') sel.y = 1.0 - hh;
 
-        if (typeof savePageLayerHistory === 'function') savePageLayerHistory(curIdx);
         requestViewerRedraw();
         updateThumbnailAsync(curIdx);
         updateLayerStageOverlay();
         return;
       }
 
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
       // 바탕 이미지(__base__) 정렬: 가운데는 중앙 복귀, 상/하/좌/우는 현재 위치 기준 실제 이미지 크기의 10%씩 이동
       if (type === 'centerH') {
         cfg.offsetX = 0;
@@ -16683,7 +17582,6 @@ if (e.target.closest('.layer-item-box')) return;
         else if (type === 'top') cfg.offsetY = Math.max(-maxOffY, (cfg.offsetY || 0) - stepY);
         else if (type === 'bottom') cfg.offsetY = Math.min(maxOffY, (cfg.offsetY || 0) + stepY);
       }
-      if (typeof savePageLayerHistory === 'function') savePageLayerHistory(curIdx);
       requestViewerRedraw();
       updateThumbnailAsync(curIdx);
       updateLayerStageOverlay();
@@ -16831,21 +17729,30 @@ if (e.target.closest('.layer-item-box')) return;
               boxEl.appendChild(hEl);
             });
 
+            const moveEl = document.createElement('div');
+            moveEl.className = 'layer-move-handle';
+            moveEl.dataset.handle = 'move';
+            moveEl.title = '드래그하여 위치 이동 (작은 객체 안전 이동 핸들)';
+            moveEl.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;"><polyline points="5 9 2 12 5 15"></polyline><polyline points="9 5 12 2 15 5"></polyline><polyline points="15 19 12 22 9 19"></polyline><polyline points="19 9 22 12 19 15"></polyline><line x1="2" y1="12" x2="22" y2="12"></line><line x1="12" y1="2" x2="12" y2="22"></line></svg>';
+            boxEl.appendChild(moveEl);
+
             const rotEl = document.createElement('div');
             rotEl.className = 'layer-rot-handle';
             rotEl.dataset.handle = 'rot';
             rotEl.title = '드래그하여 회전 (Shift: 15° 단위)';
-            rotEl.textContent = '⟳';
+            rotEl.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><polyline points="21 3 21 9 15 9"></polyline></svg>';
             boxEl.appendChild(rotEl);
           }
 
-          // 기본 이미지가 아닌 경우에만 잠금(🔒) 및 삭제(✕) 버튼 제공
+          // 기본 이미지가 아닌 경우에만 잠금 및 삭제 버튼 제공
           if (!obj.isBase) {
             const lockEl = document.createElement('button');
             lockEl.type = 'button';
             lockEl.className = 'layer-lock-btn' + (isLocked ? ' is-locked' : '');
             lockEl.title = isLocked ? '객체 잠금 해제 (클릭 시 이동/변형 가능)' : '객체 잠금 (실수로 건드리지 않게 고정)';
-            lockEl.textContent = isLocked ? '🔒' : '🔓';
+            lockEl.innerHTML = isLocked
+              ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>'
+              : '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 7.8-1.2"></path></svg>';
             lockEl.onpointerdown = (ev) => {
               if (typeof isSpaceKeyDown !== 'undefined' && isSpaceKeyDown) return;
               ev.stopPropagation();
@@ -16858,7 +17765,7 @@ if (e.target.closest('.layer-item-box')) return;
             delEl.type = 'button';
             delEl.className = 'layer-del-btn';
             delEl.title = '이 객체 삭제';
-            delEl.textContent = '✕';
+            delEl.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
             delEl.onpointerdown = (ev) => {
               if (typeof isSpaceKeyDown !== 'undefined' && isSpaceKeyDown) return;
               ev.stopPropagation();
@@ -16930,6 +17837,10 @@ if (e.target.closest('.layer-item-box')) return;
               updateStatusMsg('🔒 잠긴 객체입니다. 상단 🔒 아이콘을 눌러 잠금을 해제하세요.');
             }
             return;
+          }
+
+          if (typeof beginContinuousUndoCapture === 'function') {
+            beginContinuousUndoCapture();
           }
 
           const liveOverlay = document.getElementById('layerStageOverlay');
@@ -17366,6 +18277,9 @@ if (e.target.closest('.layer-item-box')) return;
         drawPaperWithImage(canvas, item, cfg, { isThumbnail: false });
       }
       updateLayerStageOverlay(false);
+      if (typeof commitContinuousUndoCapture === 'function') {
+        commitContinuousUndoCapture();
+      }
       if (typeof updateThumbnailCanvas === 'function') {
         await updateThumbnailCanvas(curIdx);
       }
@@ -17624,6 +18538,7 @@ if (e.target.closest('.layer-item-box')) return;
     async function applyEyedropperColor(hex) {
       const sel = getSelectedLayer();
       if (sel) {
+        if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
         if (activeEyedropperTarget === 'textColor' && sel.type === 'text') {
           sel.color = (hex === 'transparent') ? '#000000' : hex;
         } else if (activeEyedropperTarget === 'textBg' && sel.type === 'text') {
@@ -17902,6 +18817,7 @@ if (e.target.closest('.layer-item-box')) return;
       const chosen = pendingPaletteColor;
 
       if (sel && target) {
+        if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
         if (target === 'textColor' && sel.type === 'text') {
           sel.color = chosen;
         } else if (target === 'textBg' && sel.type === 'text') {
@@ -18121,7 +19037,14 @@ if (e.target.closest('.layer-item-box')) return;
     async function duplicatePageItem(idx) {
       const src = docState.items[idx];
       if (!src) return;
-      const clone = { ...src };
+      if (typeof pushUndoSnapshot === 'function') pushUndoSnapshot();
+      const clone = { ...src, _croppedCanvas: null };
+      if (src.settings) {
+        clone.settings = JSON.parse(JSON.stringify(src.settings));
+      }
+      if (Array.isArray(src.layers)) {
+        clone.layers = src.layers.map(l => cloneLayerDeep(l, true));
+      }
       if (src.customSettings) {
         clone.customSettings = JSON.parse(JSON.stringify(src.customSettings));
         if (Array.isArray(clone.customSettings.layers)) {
@@ -18134,8 +19057,15 @@ if (e.target.closest('.layer-item-box')) return;
           });
         }
       }
+      if (src._paperCropSnapshot && typeof clonePaperCropSnapshot === 'function') {
+        clone._paperCropSnapshot = clonePaperCropSnapshot(src._paperCropSnapshot);
+      }
       clone.name = (src.name ? `${src.name} (복사)` : '페이지 (복사)');
       docState.items.splice(idx + 1, 0, clone);
+      if (Array.isArray(docState.checkList)) {
+        const chkVal = docState.checkList[idx] !== false;
+        docState.checkList.splice(idx + 1, 0, chkVal);
+      }
       await renderThumbnailList();
       await loadMainViewer(idx + 1);
       if (typeof updateStatusMsg === 'function') {
@@ -18285,11 +19215,25 @@ if (e.target.closest('.layer-item-box')) return;
       if (thumbList) {
         thumbList.addEventListener('contextmenu', async (e) => {
           e.preventDefault();
+          const slotEl = e.target.closest('.thumb-insert-slot');
+          if (slotEl && slotEl.dataset && slotEl.dataset.slotIdx !== undefined) {
+            const slotIdx = Number(slotEl.dataset.slotIdx);
+            setThumbInsertSlot(slotIdx);
+            thumbList.focus({ preventScroll: true });
+            openCustomContextMenu(e.clientX, e.clientY, [
+              { type: 'label', text: getThumbSlotLocationLabel(slotIdx) },
+              { label: '📄 이 곳에 빈 페이지 추가', shortcut: 'Enter', action: () => insertBlankPageAction(null, slotIdx) },
+              { label: '📥 빈 페이지 삽입해서 붙여넣기', shortcut: 'Ctrl+V', action: () => triggerSmartPaste(true, slotIdx) },
+              { label: '📂 이 곳에 파일 삽입', action: () => triggerInsertFileDialog(slotIdx) }
+            ]);
+            return;
+          }
+
           const card = e.target.closest('.thumb-card');
           if (card && card.dataset && card.dataset.idx !== undefined) {
             const idx = Number(card.dataset.idx);
             if (!isNaN(idx) && idx >= 0 && idx < docState.items.length) {
-              thumbEmptyCursorActive = false;
+              setThumbEmptyCursorActive(false);
               if (docState.currentIndex !== idx) {
                 await loadMainViewer(idx);
               }
@@ -18298,6 +19242,8 @@ if (e.target.closest('.layer-item-box')) return;
                 { type: 'label', text: `#${idx + 1} 페이지` },
                 { label: '🔢 페이지 이동...', action: () => openPageJumpPopover(null, { x: e.clientX, y: e.clientY }) },
                 { label: '📄 아래에 빈 페이지 추가', shortcut: 'Enter', action: () => insertBlankPageAction(null, idx + 1) },
+                { label: '📥 아래에 빈 페이지 삽입해서 붙여넣기', action: () => triggerSmartPaste(true, idx + 1) },
+                { label: '📂 아래에 파일 삽입', action: () => triggerInsertFileDialog(idx + 1) },
                 { label: '📑 이 페이지 복제', action: () => duplicatePageItem(idx) },
                 { type: 'sep' },
                 { label: '▲ 위로 이동', disabled: idx <= 0, action: () => moveItemOrder(idx, -1) },
@@ -18312,16 +19258,17 @@ if (e.target.closest('.layer-item-box')) return;
             }
           }
 
-          setThumbEmptyCursorActive(true);
+          const fallbackIdx = docState.items.length;
+          setThumbInsertSlot(fallbackIdx);
           thumbList.focus({ preventScroll: true });
           const chkAll = document.getElementById('chkSelectAll');
           const allChecked = Boolean(chkAll && chkAll.checked);
           openCustomContextMenu(e.clientX, e.clientY, [
-            { type: 'label', text: '페이지 목록' },
+            { type: 'label', text: docState.items.length > 0 ? getThumbSlotLocationLabel(fallbackIdx) : '페이지 목록' },
             { label: '🔢 페이지 이동...', disabled: docState.items.length === 0, action: () => openPageJumpPopover(null, { x: e.clientX, y: e.clientY }) },
-            { label: '📂 PDF / 이미지 추가', action: () => triggerOpenFileDialog() },
-            { label: '📄 맨 끝에 빈 페이지 추가', shortcut: 'Enter', action: () => insertBlankPageAction(null, docState.items.length) },
-            { label: '📥 새 빈 페이지에 붙여넣기', shortcut: 'Ctrl+V', action: () => triggerSmartPaste(true) },
+            { label: docState.items.length > 0 ? '📂 이 곳에 파일 삽입' : '📂 PDF / 이미지 열기', action: () => (docState.items.length > 0 ? triggerInsertFileDialog(fallbackIdx) : triggerOpenFileDialog()) },
+            { label: '📄 이 곳에 빈 페이지 추가', shortcut: 'Enter', action: () => insertBlankPageAction(null, fallbackIdx) },
+            { label: '📥 빈 페이지 삽입해서 붙여넣기', shortcut: 'Ctrl+V', action: () => triggerSmartPaste(true, fallbackIdx) },
             { type: 'sep' },
             {
               label: allChecked ? '☐ 전체 선택 해제' : '☑ 전체 선택',
@@ -18378,8 +19325,8 @@ if (e.target.closest('.layer-item-box')) return;
             openCustomContextMenu(e.clientX, e.clientY, [
               { type: 'label', text: '작업 영역' },
               { label: '📂 PDF / 이미지 열기', action: () => triggerOpenFileDialog() },
-              { label: '📄 새 빈 페이지 만들기', action: () => insertBlankPageAction(null, 0) },
-              { label: '📥 새 빈 페이지에 붙여넣기', shortcut: 'Ctrl+V', action: () => triggerSmartPaste(true) }
+              { label: '📄 이 곳에 빈 페이지 추가', action: () => insertBlankPageAction(null, 0) },
+              { label: '📥 빈 페이지 삽입해서 붙여넣기', shortcut: 'Ctrl+V', action: () => triggerSmartPaste(true, 0) }
             ]);
             return;
           }
@@ -18400,7 +19347,7 @@ if (e.target.closest('.layer-item-box')) return;
           openCustomContextMenu(e.clientX, e.clientY, [
             { type: 'label', text: '캔버스 / 화면' },
             { label: '📥 붙여넣기', shortcut: 'Ctrl+V', action: () => triggerSmartPaste(false) },
-            { label: '📄 뒤에 빈 페이지 추가', action: () => insertBlankPageAction(null, docState.currentIndex + 1) },
+            { label: '📄 아래에 빈 페이지 추가', action: () => insertBlankPageAction(null, docState.currentIndex + 1) },
             { type: 'sep' },
             { label: '🔍 화면 확대', action: () => adjustZoom(0.15) },
             { label: '🔍 화면 축소', action: () => adjustZoom(-0.15) },
@@ -18549,7 +19496,7 @@ if (e.target.closest('.layer-item-box')) return;
       return result;
     }
 
-    async function executeUnifiedPaste({ forceNewPage = false, plainText = '', mediaFiles = [], useAsyncFallback = false } = {}) {
+    async function executeUnifiedPaste({ forceNewPage = false, insertAt = null, plainText = '', mediaFiles = [], useAsyncFallback = false } = {}) {
       if (isSmartPasteRunning) return;
       isSmartPasteRunning = true;
       try {
@@ -18586,11 +19533,14 @@ if (e.target.closest('.layer-item-box')) return;
         }
 
         const hasPages = Boolean(docState && Array.isArray(docState.items) && docState.items.length > 0);
-        const shouldCreateNewBlankPage = Boolean(forceNewPage || thumbEmptyCursorActive || !hasPages);
+        const resolvedInsertAt = (typeof insertAt === 'number' && !isNaN(insertAt))
+          ? Math.max(0, Math.min(docState.items.length, insertAt))
+          : ((typeof getEffectiveThumbInsertIndex === 'function') ? getEffectiveThumbInsertIndex() : docState.items.length);
+        const shouldCreateNewBlankPage = Boolean(forceNewPage || thumbEmptyCursorActive || (typeof thumbInsertSlotIndex !== 'undefined' && thumbInsertSlotIndex !== null) || !hasPages);
         if (shouldCreateNewBlankPage) {
-          setThumbEmptyCursorActive(false);
+          if (typeof setThumbEmptyCursorActive === 'function') setThumbEmptyCursorActive(false);
           if (typeof insertBlankPageAction === 'function') {
-            await insertBlankPageAction(null, docState.items.length);
+            await insertBlankPageAction(null, hasPages ? resolvedInsertAt : 0);
           }
         }
 
@@ -18608,8 +19558,8 @@ if (e.target.closest('.layer-item-box')) return;
       }
     }
 
-    async function triggerSmartPaste(forceNewPage = false) {
-      await executeUnifiedPaste({ forceNewPage: Boolean(forceNewPage), useAsyncFallback: true });
+    async function triggerSmartPaste(forceNewPage = false, explicitInsertAt = null) {
+      await executeUnifiedPaste({ forceNewPage: Boolean(forceNewPage), insertAt: explicitInsertAt, useAsyncFallback: true });
     }
 
     function handleWindowPaste(e) {
@@ -18617,7 +19567,6 @@ if (e.target.closest('.layer-item-box')) return;
         clearTimeout(window._pendingPasteFallbackTimer);
         window._pendingPasteFallbackTimer = null;
       }
-      if (typeof getActiveEditableTarget === 'function' && getActiveEditableTarget(e.target)) return;
       if (e.target && e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"]')) return;
       if ((typeof isCropActive !== 'undefined' && isCropActive) || (typeof isPerspectiveActive !== 'undefined' && isPerspectiveActive)) return;
 
@@ -18633,15 +19582,25 @@ if (e.target.closest('.layer-item-box')) return;
       }
 
       e.preventDefault();
-      const forceNew = !!(typeof thumbEmptyCursorActive !== 'undefined' && thumbEmptyCursorActive);
+      const forceNew = !!(typeof thumbEmptyCursorActive !== 'undefined' && (thumbEmptyCursorActive || thumbInsertSlotIndex !== null));
+      const targetSlot = (forceNew && typeof getEffectiveThumbInsertIndex === 'function') ? getEffectiveThumbInsertIndex() : null;
       executeUnifiedPaste({
         forceNewPage: forceNew,
+        insertAt: targetSlot,
         plainText,
         mediaFiles,
         useAsyncFallback: false
       });
     }
     window.addEventListener('paste', handleWindowPaste);
+
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', () => {
+        if (typeof syncObjectControlLockState === 'function') syncObjectControlLockState();
+      });
+    } else {
+      if (typeof syncObjectControlLockState === 'function') syncObjectControlLockState();
+    }
 
 
   </script>
