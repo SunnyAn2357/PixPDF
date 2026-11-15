@@ -16589,7 +16589,8 @@ if (e.target.closest('.layer-item-box')) return;
       );
     }
 
-    // [핵심] 카멜레온 위장 배경 인페인팅 (15곳 5x3 다중 구역 배경색 샘플링 + 글자/표선 노이즈 배제 + 구간별 양선형 보간 합성)
+    // [V1.4.0 고도화] 상용앱(인페인팅/식자) 방식 카멜레온 위장 배경:
+    // 글상자 바깥 4변 경계 순수 배경색 추출 + Coons Patch 연속 곡면 보간 + 고품질 스무딩 합성
     function drawChameleonBackground(ctx, canvasW, canvasH, cx, cy, boxW, boxH, rotRad, sampleCtx = null) {
       try {
         const cos = Math.cos(rotRad);
@@ -16597,33 +16598,35 @@ if (e.target.closest('.layer-item-box')) return;
         const hw = boxW / 2;
         const hh = boxH / 2;
 
-        // 로컬 좌표 (lx, ly)를 캔버스 픽셀 좌표로 변환하여 주변 샘플 추출
+        // 바깥 경계 샘플링 여유 폭 (글상자 크기에 비례하되 4~18px 범위)
+        const outerMargin = Math.max(4, Math.min(18, Math.round(Math.min(boxW, boxH) * 0.14)));
+        const bandDepth = Math.max(4, Math.min(14, outerMargin));
+
         const cornersLocal = [
-          { x: -hw, y: -hh },
-          { x: hw, y: -hh },
-          { x: hw, y: hh },
-          { x: -hw, y: hh }
+          { x: -hw - outerMargin, y: -hh - outerMargin },
+          { x: hw + outerMargin, y: -hh - outerMargin },
+          { x: hw + outerMargin, y: hh + outerMargin },
+          { x: -hw - outerMargin, y: hh + outerMargin }
         ];
         const cornersCanv = cornersLocal.map(p => ({
           x: cx + p.x * cos - p.y * sin,
           y: cy + p.x * sin + p.y * cos
         }));
 
-        const pad = Math.max(3, Math.round(Math.min(boxW, boxH) * 0.12));
-        const minX = Math.max(0, Math.floor(Math.min(...cornersCanv.map(p => p.x)) - pad));
-        const minY = Math.max(0, Math.floor(Math.min(...cornersCanv.map(p => p.y)) - pad));
-        const maxX = Math.min(canvasW - 1, Math.ceil(Math.max(...cornersCanv.map(p => p.x)) + pad));
-        const maxY = Math.min(canvasH - 1, Math.ceil(Math.max(...cornersCanv.map(p => p.y)) + pad));
+        const minX = Math.max(0, Math.floor(Math.min(...cornersCanv.map(p => p.x))));
+        const minY = Math.max(0, Math.floor(Math.min(...cornersCanv.map(p => p.y))));
+        const maxX = Math.min(canvasW - 1, Math.ceil(Math.max(...cornersCanv.map(p => p.x))));
+        const maxY = Math.min(canvasH - 1, Math.ceil(Math.max(...cornersCanv.map(p => p.y))));
         const rw = Math.max(1, maxX - minX + 1);
         const rh = Math.max(1, maxY - minY + 1);
 
         const imgData = (sampleCtx || ctx).getImageData(minX, minY, rw, rh).data;
 
-        // 지정된 로컬 사각형 구역(lx0~lx1, ly0~ly1)에서 글자 획/표선을 배제한 순수 배경색 추출
-        function sampleRegionCleanColor(lx0, ly0, lx1, ly1) {
+        // 지정된 로컬 영역에서 글자 획·표선 등 이상치를 제외한 순수 배경색 추출 (중앙값 기반 로버스트 평균)
+        function sampleCleanBandColor(lx0, ly0, lx1, ly1) {
           const samples = [];
-          const stepsX = 7;
-          const stepsY = 5;
+          const stepsX = 6;
+          const stepsY = 4;
           for (let sy = 0; sy <= stepsY; sy++) {
             const ly = ly0 + (ly1 - ly0) * (sy / stepsY);
             for (let sx = 0; sx <= stepsX; sx++) {
@@ -16643,12 +16646,12 @@ if (e.target.closest('.layer-item-box')) return;
               }
             }
           }
-          if (samples.length === 0) return { r: 255, g: 255, b: 255 };
+          if (samples.length === 0) return null;
 
-          // 어두운 글자 획이나 표 테두리선(Outlier)을 배제하기 위해 밝기 상위 55~90% 구간의 대표 배경색 평균 산출
+          // 어두운 글자/테두리선 및 극단적 하이라이트 노이즈를 배제하기 위해 밝기 45~85% 구간 평균
           samples.sort((a, b) => a.lum - b.lum);
-          const startIdx = Math.floor(samples.length * 0.55);
-          const endIdx = Math.max(startIdx + 1, Math.ceil(samples.length * 0.90));
+          const startIdx = Math.floor(samples.length * 0.45);
+          const endIdx = Math.max(startIdx + 1, Math.ceil(samples.length * 0.85));
           let sr = 0, sg = 0, sb = 0, cnt = 0;
           for (let i = startIdx; i < endIdx && i < samples.length; i++) {
             sr += samples[i].r;
@@ -16656,6 +16659,7 @@ if (e.target.closest('.layer-item-box')) return;
             sb += samples[i].b;
             cnt++;
           }
+          if (cnt === 0) return samples[Math.floor(samples.length / 2)];
           return {
             r: Math.round(sr / cnt),
             g: Math.round(sg / cnt),
@@ -16663,58 +16667,126 @@ if (e.target.closest('.layer-item-box')) return;
           };
         }
 
-        // 5x3 (총 15곳) 다중 제어점 격자에서 배경색 샘플링
-        const nodesX = 5; // 가로 5구간 제어점 (좌끝 ~ 우끝)
-        const nodesY = 3; // 세로 3구간 제어점 (상단, 중단, 하단)
-        const totalSpanW = boxW + pad * 1.4;
-        const totalSpanH = boxH + pad * 1.4;
-        const winW = totalSpanW / (nodesX - 1);
-        const winH = totalSpanH / (nodesY - 1);
+        // 바깥 4변을 따라 제어점 색 추출 (캔버스 경계 밖이면 인접 내부 가장자리로 폴백)
+        const ctrlCount = 12;
+        const topEdge = [];
+        const bottomEdge = [];
+        const leftEdge = [];
+        const rightEdge = [];
 
-        const nodeColors = [];
-        for (let ny = 0; ny < nodesY; ny++) {
-          const row = [];
-          const cyLocal = -hh - pad * 0.4 + (ny / (nodesY - 1)) * (boxH + pad * 0.8);
-          for (let nx = 0; nx < nodesX; nx++) {
-            const cxLocal = -hw - pad * 0.4 + (nx / (nodesX - 1)) * (boxW + pad * 0.8);
-            row.push(sampleRegionCleanColor(
-              cxLocal - winW * 0.55,
-              cyLocal - winH * 0.55,
-              cxLocal + winW * 0.55,
-              cyLocal + winH * 0.55
-            ));
-          }
-          nodeColors.push(row);
+        const segW = boxW / ctrlCount;
+        const segH = boxH / ctrlCount;
+
+        for (let i = 0; i < ctrlCount; i++) {
+          const t = (i + 0.5) / ctrlCount;
+          const lx = -hw + t * boxW;
+          const ly = -hh + t * boxH;
+
+          const topCol = sampleCleanBandColor(lx - segW * 0.6, -hh - bandDepth, lx + segW * 0.6, -hh - 1)
+            || sampleCleanBandColor(lx - segW * 0.6, -hh, lx + segW * 0.6, -hh + bandDepth);
+          const botCol = sampleCleanBandColor(lx - segW * 0.6, hh + 1, lx + segW * 0.6, hh + bandDepth)
+            || sampleCleanBandColor(lx - segW * 0.6, hh - bandDepth, lx + segW * 0.6, hh);
+          const leftCol = sampleCleanBandColor(-hw - bandDepth, ly - segH * 0.6, -hw - 1, ly + segH * 0.6)
+            || sampleCleanBandColor(-hw, ly - segH * 0.6, -hw + bandDepth, ly + segH * 0.6);
+          const rightCol = sampleCleanBandColor(hw + 1, ly - segH * 0.6, hw + bandDepth, ly + segH * 0.6)
+            || sampleCleanBandColor(hw - bandDepth, ly - segH * 0.6, hw, ly + segH * 0.6);
+
+          topEdge.push(topCol || { r: 255, g: 255, b: 255 });
+          bottomEdge.push(botCol || { r: 255, g: 255, b: 255 });
+          leftEdge.push(leftCol || { r: 255, g: 255, b: 255 });
+          rightEdge.push(rightCol || { r: 255, g: 255, b: 255 });
         }
 
-        // 구간별 양선형 보간(Piecewise Bilinear Patch)으로 24x12 고밀도 격자 채우기
-        const gridX = 24;
-        const gridY = 12;
-        const cellW = boxW / gridX;
-        const cellH = boxH / gridY;
+        // 인접 제어점 1차 가우시안 스무딩 (1-2-1)으로 경계 샘플링 튐(스파이크) 방지
+        function smoothEdgeColors(arr) {
+          const n = arr.length;
+          return arr.map((c, idx) => {
+            const prev = arr[Math.max(0, idx - 1)];
+            const next = arr[Math.min(n - 1, idx + 1)];
+            return {
+              r: Math.round((prev.r + c.r * 2 + next.r) / 4),
+              g: Math.round((prev.g + c.g * 2 + next.g) / 4),
+              b: Math.round((prev.b + c.b * 2 + next.b) / 4)
+            };
+          });
+        }
+        const sTop = smoothEdgeColors(topEdge);
+        const sBot = smoothEdgeColors(bottomEdge);
+        const sLeft = smoothEdgeColors(leftEdge);
+        const sRight = smoothEdgeColors(rightEdge);
 
-        for (let gy = 0; gy < gridY; gy++) {
-          const vTotal = (gy + 0.5) / gridY * (nodesY - 1);
-          const iy = Math.min(nodesY - 2, Math.floor(vTotal));
-          const v = vTotal - iy;
+        function sampleEdgeLinear(edgeArr, t) {
+          const clamped = Math.max(0, Math.min(1, t));
+          const pos = clamped * (edgeArr.length - 1);
+          const i0 = Math.floor(pos);
+          const i1 = Math.min(edgeArr.length - 1, i0 + 1);
+          const frac = pos - i0;
+          const a = edgeArr[i0];
+          const b = edgeArr[i1];
+          return {
+            r: a.r + (b.r - a.r) * frac,
+            g: a.g + (b.g - a.g) * frac,
+            b: a.b + (b.b - a.b) * frac
+          };
+        }
 
-          for (let gx = 0; gx < gridX; gx++) {
-            const uTotal = (gx + 0.5) / gridX * (nodesX - 1);
-            const ix = Math.min(nodesX - 2, Math.floor(uTotal));
-            const u = uTotal - ix;
+        function avgCol(a, b) {
+          return { r: (a.r + b.r) * 0.5, g: (a.g + b.g) * 0.5, b: (a.b + b.b) * 0.5 };
+        }
+        const c00 = avgCol(sTop[0], sLeft[0]);
+        const c10 = avgCol(sTop[sTop.length - 1], sRight[0]);
+        const c01 = avgCol(sBot[0], sLeft[sLeft.length - 1]);
+        const c11 = avgCol(sBot[sBot.length - 1], sRight[sRight.length - 1]);
 
-            const cTL = nodeColors[iy][ix];
-            const cTR = nodeColors[iy][ix + 1];
-            const cBL = nodeColors[iy + 1][ix];
-            const cBR = nodeColors[iy + 1][ix + 1];
+        // Coons Patch(4변 경계 연속 곡면 보간)를 48x32 오프스크린 픽셀 버퍼에 생성 후 고품질 스무딩 확대
+        const patchW = Math.max(16, Math.min(64, Math.round(boxW / 4)));
+        const patchH = Math.max(16, Math.min(64, Math.round(boxH / 4)));
+        const patchCanvas = window._chameleonPatchCanvas || (window._chameleonPatchCanvas = document.createElement('canvas'));
+        if (patchCanvas.width !== patchW) patchCanvas.width = patchW;
+        if (patchCanvas.height !== patchH) patchCanvas.height = patchH;
+        const pCtx = patchCanvas.getContext('2d');
+        const pImg = pCtx.createImageData(patchW, patchH);
+        const pData = pImg.data;
 
-            const r = Math.round((1 - u) * (1 - v) * cTL.r + u * (1 - v) * cTR.r + (1 - u) * v * cBL.r + u * v * cBR.r);
-            const g = Math.round((1 - u) * (1 - v) * cTL.g + u * (1 - v) * cTR.g + (1 - u) * v * cBL.g + u * v * cBR.g);
-            const b = Math.round((1 - u) * (1 - v) * cTL.b + u * (1 - v) * cTR.b + (1 - u) * v * cBL.b + u * v * cBR.b);
-            ctx.fillStyle = `rgb(${r},${g},${b})`;
-            ctx.fillRect(-hw + gx * cellW - 0.5, -hh + gy * cellH - 0.5, cellW + 1, cellH + 1);
+        for (let py = 0; py < patchH; py++) {
+          const v = patchH > 1 ? py / (patchH - 1) : 0.5;
+          const lCol = sampleEdgeLinear(sLeft, v);
+          const rCol = sampleEdgeLinear(sRight, v);
+
+          for (let px = 0; px < patchW; px++) {
+            const u = patchW > 1 ? px / (patchW - 1) : 0.5;
+            const tCol = sampleEdgeLinear(sTop, u);
+            const bCol = sampleEdgeLinear(sBot, u);
+
+            const r = Math.max(0, Math.min(255, Math.round(
+              (1 - v) * tCol.r + v * bCol.r + (1 - u) * lCol.r + u * rCol.r
+              - ((1 - u) * (1 - v) * c00.r + u * (1 - v) * c10.r + (1 - u) * v * c01.r + u * v * c11.r)
+            )));
+            const g = Math.max(0, Math.min(255, Math.round(
+              (1 - v) * tCol.g + v * bCol.g + (1 - u) * lCol.g + u * rCol.g
+              - ((1 - u) * (1 - v) * c00.g + u * (1 - v) * c10.g + (1 - u) * v * c01.g + u * v * c11.g)
+            )));
+            const b = Math.max(0, Math.min(255, Math.round(
+              (1 - v) * tCol.b + v * bCol.b + (1 - u) * lCol.b + u * rCol.b
+              - ((1 - u) * (1 - v) * c00.b + u * (1 - v) * c10.b + (1 - u) * v * c01.b + u * v * c11.b)
+            )));
+
+            // 최외곽 1px만 살짝 부드럽게 페더링해 네모 경계선 이질감 제거
+            const isBorder = (px === 0 || px === patchW - 1 || py === 0 || py === patchH - 1);
+            const idx = (py * patchW + px) * 4;
+            pData[idx] = r;
+            pData[idx + 1] = g;
+            pData[idx + 2] = b;
+            pData[idx + 3] = isBorder ? 225 : 255;
           }
         }
+        pCtx.putImageData(pImg, 0, 0);
+
+        ctx.save();
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(patchCanvas, -hw, -hh, boxW, boxH);
+        ctx.restore();
       } catch (e) {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(-boxW / 2, -boxH / 2, boxW, boxH);
